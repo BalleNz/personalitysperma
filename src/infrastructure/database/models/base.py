@@ -1,9 +1,9 @@
 from abc import abstractmethod
 from datetime import datetime
-from typing import Type, Any, TypeVar, Union
+from typing import Type, Any, TypeVar, Union, Generic
 
 from pydantic import BaseModel
-from sqlalchemy import func, DateTime
+from sqlalchemy import func, DateTime, TypeDecorator, JSON
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -84,3 +84,22 @@ class IDMixin(DeclarativeBase):
         if model_data:
             return self.schema_class.model_validate(model_data)
         return []
+
+
+class PydanticTypeList(TypeDecorator, Generic[S]):
+    impl = JSON
+    cache_ok = True
+
+    def __init__(self, pydantic_type: Type[S], *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.pydantic_type = pydantic_type
+
+    def process_bind_param(self, value: list[S] | None, dialect):
+        if value is None:
+            return None
+        return [item.model_dump() for item in value]
+
+    def process_result_value(self, value: list | None, dialect):
+        if value is None:
+            return None
+        return [self.pydantic_type(**item) for item in value]
