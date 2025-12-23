@@ -7,16 +7,20 @@ from datetime import datetime
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database.repository.base_repo import BaseRepository
+from infrastructure.database.repository.base_repo import BaseRepository
 from infrastructure.database.models.base import M, S
-from database.models.basic_profiles.traits_core import (
+from infrastructure.database.models.basic_profiles.traits_core import (
     CognitiveProfile, EmotionalProfile, BehavioralProfile,
     SocialProfile
 )
-from database.models.basic_profiles.traits_humor import HumorProfile
-from database.models.basic_profiles.traits_dark import DarkTriads, ClinicalProfile
-from database.models.relationship_profiles.relationships import LoveLanguage, SexualPreference, RelationshipPreference
+from infrastructure.database.models.basic_profiles.traits_humor import HumorProfile
+from infrastructure.database.models.basic_profiles.traits_dark import DarkTriads
+from infrastructure.database.models.clinical.clinical_profile import ClinicalProfile
+from infrastructure.database.models.relationship_profiles.relationships import LoveLanguage, SexualPreference, RelationshipPreference
 from infrastructure.database.models.user import CharacteristicHistory
+from core.schemas.traits_core import CognitiveProfileSchema, BehavioralProfileSchema, EmotionalProfileSchema
+from core.schemas.traits_dark import DarkTriadsSchema
+from core.schemas.traits_humor import HumorProfileSchema
 
 logger = logging.getLogger(__name__)
 
@@ -45,18 +49,18 @@ CHARACTERISTIC_MODELS = {
 
 CHARACTERISTIC_SCHEMAS_TO_MODELS = {
     SocialProfile: SocialProfile,
-    "CognitiveProfileSchema": CognitiveProfile,
-    "EmotionalProfileSchema": EmotionalProfile,
-    "BehavioralProfileSchema": BehavioralProfile,
+    CognitiveProfileSchema: CognitiveProfile,
+    EmotionalProfileSchema: EmotionalProfile,
+    BehavioralProfileSchema: BehavioralProfile,
 
-    "HumorProfileSchema": HumorProfile,
+    HumorProfileSchema: HumorProfile,
 
     "ClinicalProfileSchema": ClinicalProfile,
-    "DarkTriadsSchema": DarkTriads,
+    DarkTriadsSchema: DarkTriads,
 
     "RelationshipPreferenceSchema": RelationshipPreference,
     "LoveLanguageSchema": LoveLanguage,
-    "SexualPreferencSchema": SexualPreference
+    "SexualPreferenceSchema": SexualPreference
 }
 
 

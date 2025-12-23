@@ -4,16 +4,7 @@ from sqlalchemy import Column, Float
 from sqlalchemy.orm import Mapped
 
 from infrastructure.database.models.base import IDMixin, S
-
-
-class ClinicalProfile(IDMixin):
-    """КЛИНИЧЕСКАЯ-ПСИХОЛОГИЯ"""
-
-    __tablename__ = "user_..."
-
-    @property
-    def schema_class(self) -> Type[S]:
-        return ...
+from core.schemas.traits_dark import DarkTriadsSchema
 
 
 class DarkTriads(IDMixin):
@@ -28,4 +19,4 @@ class DarkTriads(IDMixin):
 
     @property
     def schema_class(self) -> Type[S]:
-        return ...
+        return DarkTriadsSchema

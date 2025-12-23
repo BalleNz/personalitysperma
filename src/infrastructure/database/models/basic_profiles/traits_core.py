@@ -4,6 +4,8 @@ from sqlalchemy import Column, Float, ForeignKey, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from infrastructure.database.models.base import IDMixin, S
+from core.schemas.traits_core import BehavioralProfileSchema, EmotionalProfileSchema, CognitiveProfileSchema, \
+    SocialProfileSchema
 
 
 class SocialProfile(IDMixin):
@@ -65,7 +67,7 @@ class SocialProfile(IDMixin):
 
     @property
     def schema_class(self) -> Type[S]:
-        return ...
+        return SocialProfileSchema
 
 
 class CognitiveProfile(IDMixin):
@@ -113,7 +115,7 @@ class CognitiveProfile(IDMixin):
 
     @property
     def schema_class(self) -> Type[S]:
-        return ...
+        return CognitiveProfileSchema
 
 
 class EmotionalProfile(IDMixin):
@@ -160,7 +162,7 @@ class EmotionalProfile(IDMixin):
 
     @property
     def schema_class(self) -> Type[S]:
-        return ...
+        return EmotionalProfileSchema
 
 
 class BehavioralProfile(IDMixin):
@@ -219,4 +221,4 @@ class BehavioralProfile(IDMixin):
 
     @property
     def schema_class(self) -> Type[S]:
-        return ...
+        return BehavioralProfileSchema
