@@ -1,9 +1,10 @@
 from typing import Type
 
-from sqlalchemy import String, Column, Enum, Float, ForeignKey, UUID
+from sqlalchemy import String, Column, Enum, Float, ForeignKey, UUID, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from infrastructure.database.models.base import IDMixin, TimestampsMixin, S
+from core.schemas.user_schemas import UserSchema, CharacteristicHistorySchema
 
 
 class User(IDMixin, TimestampsMixin):
@@ -15,9 +16,7 @@ class User(IDMixin, TimestampsMixin):
     last_name: Mapped[str | None] = mapped_column(String, comment="last name")
 
     # [ base info ]
-    gender: Mapped[str] = mapped_column(Enum(...), nullable=False)  # TODO: Enum
-    orientation: Mapped[str] = mapped_column(Enum(...), nullable=False)
-    # TODO: age
+    age: Mapped[int] = mapped_column(Integer, comment="возраст")
 
     # [ MAIN characteristics ]
     social_profile = relationship("SocialProfile", back_populates="user", uselist=False)
@@ -39,9 +38,7 @@ class User(IDMixin, TimestampsMixin):
 
     @property
     def schema_class(self) -> Type[S]:
-        return ...
-
-# TODO: 3 personal tables. personality_type: Mapped[str | None] = Column(Enum(PersonalityTypeEnum))
+        return UserSchema
 
 
 class CharacteristicHistory(IDMixin, TimestampsMixin):
@@ -50,12 +47,11 @@ class CharacteristicHistory(IDMixin, TimestampsMixin):
 
     user_id = mapped_column(UUID, ForeignKey('users.id'))
 
-    profile_type: Mapped[str] = Column(String)  # 'cognitive', 'emotional', etc.
-    characteristic_name: Mapped[str] = Column(String)
-    old_value: Mapped[float] = Column(Float)
-    new_value: Mapped[float] = Column(Float)
-    source: Mapped[str] = Column(String)  # 'voice_message', 'test', 'manual'
+    profile_type: Mapped[str] = Column(String, comment="название таблицы")  # 'cognitive', 'emotional', etc.
+    characteristic_name: Mapped[str] = Column(String, comment="имя поля")
+    old_value: Mapped[float] = Column(Float, comment="старое значение")
+    new_value: Mapped[float] = Column(Float, comment="новое значение")
 
     @property
     def schema_class(self) -> Type[S]:
-        return ...
+        return CharacteristicHistorySchema

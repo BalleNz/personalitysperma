@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional
 from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field
@@ -68,6 +69,9 @@ class SocialProfileSchema(BaseModel):
         description="0=кооперативный, 1=соревновательный"
     )
 
+    created_at: datetime | None = Field(None)
+    updated_at: datetime | None = Field(None)
+
 
 class CognitiveProfileSchema(BaseModel):
     """Схема когнитивного профиля"""
@@ -124,6 +128,9 @@ class CognitiveProfileSchema(BaseModel):
         description="Адаптивность. 0=ригидный, 1=гибкий"
     )
 
+    created_at: datetime | None = Field(None)
+    updated_at: datetime | None = Field(None)
+
 
 class EmotionalProfileSchema(BaseModel):
     """Схема эмоционального профиля"""
@@ -178,6 +185,9 @@ class EmotionalProfileSchema(BaseModel):
         le=1.0,
         description="Тревожность"
     )
+
+    created_at: datetime | None = Field(None)
+    updated_at: datetime | None = Field(None)
 
 
 class BehavioralProfileSchema(BaseModel):
@@ -241,3 +251,6 @@ class BehavioralProfileSchema(BaseModel):
         le=1.0,
         description="Самоконтроль. 0=импульсивный, 1=сдержанный"
     )
+
+    created_at: datetime | None = Field(None)
+    updated_at: datetime | None = Field(None)

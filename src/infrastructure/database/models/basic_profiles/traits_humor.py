@@ -4,7 +4,7 @@ from sqlalchemy import Enum, Float, ForeignKey, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from core.lexicon.enums import HumorStyleEnum
-from core.schemas.traits_humor import HumorProfileSchema
+from core.schemas.traits.traits_humor import HumorProfileSchema
 from infrastructure.database.models.base import IDMixin, S
 
 

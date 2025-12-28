@@ -4,7 +4,7 @@ from sqlalchemy import Column, Float
 from sqlalchemy.orm import Mapped
 
 from infrastructure.database.models.base import IDMixin, S
-from core.schemas.traits_dark import DarkTriadsSchema
+from core.schemas.traits.traits_dark import DarkTriadsSchema
 
 
 class DarkTriads(IDMixin):

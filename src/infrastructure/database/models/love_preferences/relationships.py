@@ -41,6 +41,10 @@ class SexualPreference(IDMixin):
     __tablename__ = "sexual_preferences"
 
     ...
+
+    gender: Mapped[str] = mapped_column(Enum(...))  # TODO: Enum
+    orientation: Mapped[str] = mapped_column(Enum(...))
+
     # TODO: подумать об объединении с UserLoveLanguage
 
     # TODO: Sexual предпочтения таблица, libido value

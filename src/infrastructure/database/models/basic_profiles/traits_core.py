@@ -4,7 +4,7 @@ from sqlalchemy import Column, Float, ForeignKey, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from infrastructure.database.models.base import IDMixin, S
-from core.schemas.traits_core import BehavioralProfileSchema, EmotionalProfileSchema, CognitiveProfileSchema, \
+from core.schemas.traits.traits_core import BehavioralProfileSchema, EmotionalProfileSchema, CognitiveProfileSchema, \
     SocialProfileSchema
 
 

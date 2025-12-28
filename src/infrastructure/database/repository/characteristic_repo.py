@@ -15,8 +15,8 @@ from infrastructure.database.models.basic_profiles.traits_core import (
 )
 from infrastructure.database.models.basic_profiles.traits_humor import HumorProfile
 from infrastructure.database.models.basic_profiles.traits_dark import DarkTriads
-from infrastructure.database.models.clinical.clinical_profile import ClinicalProfile
-from infrastructure.database.models.relationship_profiles.relationships import LoveLanguage, SexualPreference, RelationshipPreference
+from infrastructure.database.models.clinical_disorders.clinical_profile import ClinicalProfile
+from infrastructure.database.models.love_preferences.relationships import LoveLanguage, SexualPreference, RelationshipPreference
 from infrastructure.database.models.user import CharacteristicHistory
 from core.schemas.traits_core import CognitiveProfileSchema, BehavioralProfileSchema, EmotionalProfileSchema
 from core.schemas.traits_dark import DarkTriadsSchema
