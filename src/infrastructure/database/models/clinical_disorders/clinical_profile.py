@@ -1,13 +1,13 @@
 from typing import Type
 
-from sqlalchemy import ForeignKey, UUID, String, DateTime, Boolean, Text, Float, Integer, CheckConstraint
-from sqlalchemy.orm import mapped_column, relationship
+from sqlalchemy import ForeignKey, UUID, String, Text, Float, Integer
+from sqlalchemy.orm import mapped_column, relationship, Mapped
 
-from infrastructure.database.models.base import IDMixin, S
 from core.schemas.clinical_disorders.clinical_profile import ClinicalProfileSchema
+from infrastructure.database.models.base import TimestampsMixin, IDMixin, S
 
 
-class ClinicalProfile(IDMixin):
+class ClinicalProfile(IDMixin, TimestampsMixin):
     """ОСНОВНОЙ КЛИНИЧЕСКИЙ ПРОФИЛЬ"""
     __tablename__ = "clinical_profiles"
 
@@ -24,8 +24,10 @@ class ClinicalProfile(IDMixin):
     suicide_risk = mapped_column(Float, default=None, comment="Уровень суицидального риска (0-1)")
     suicide_ideation_frequency = mapped_column(String(20), default=None, comment="Частота суицидальных мыслей")  # TODO: enum
 
-    __table_args__ = (
-        CheckConstraint('suicide_risk >= 0 AND suicide_risk <= 1.00', name='ck_suicide_risk_range'),
+    records: Mapped[int | None] = mapped_column(
+        Integer,
+        default=None,
+        comment="количество записей"
     )
 
     @property

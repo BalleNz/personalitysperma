@@ -1,7 +1,7 @@
 from typing import Type
 
 from pydantic import BaseModel
-from sqlalchemy import Float, ForeignKey, UUID
+from sqlalchemy import Float, ForeignKey, UUID, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from infrastructure.database.models.base import TimestampsMixin, IDMixin
@@ -28,6 +28,12 @@ class UserHEXACO(IDMixin, TimestampsMixin):
     agreeableness: Mapped[float | None] = mapped_column(Float, default=None, comment="A: согласность, терпимость, мягкость")
     conscientiousness: Mapped[float | None] = mapped_column(Float, default=None, comment="C: добросовестность, организованность")
     openness: Mapped[float | None] = mapped_column(Float, default=None, comment="O: открытость опыту, креативность")
+
+    records: Mapped[int | None] = mapped_column(
+        Integer,
+        default=None,
+        comment="количество записей"
+    )
 
     @property
     def schema_class(self) -> Type[BaseModel]:

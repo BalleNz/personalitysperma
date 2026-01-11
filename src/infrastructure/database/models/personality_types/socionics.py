@@ -3,7 +3,7 @@ from typing import Type
 from sqlalchemy import UUID, ForeignKey, Enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from core.lexicon.enums.socionics import SocionicsType
+from enums.socionics import SocionicsType
 from core.schemas.personality_types.socionics_type import UserSocionicsSchema
 from infrastructure.database.models.base import IDMixin, S, TimestampsMixin
 
@@ -26,8 +26,7 @@ class UserSocionics(IDMixin, TimestampsMixin):
     user_id: Mapped[UUID] = mapped_column(UUID, ForeignKey('users.id'), nullable=False, unique=True)
     user = relationship("User", back_populates="socionics")
 
-    socionics_type: Mapped[str | None] = mapped_column(SocionicsTypeEnum, default=None,
-                                                       comment="Социотип, например 'ИЛЭ'")
+    socionics_type: Mapped[str | None] = mapped_column(SocionicsTypeEnum, default=None)
 
     @property
     def schema_class(self) -> Type[S]:

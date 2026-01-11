@@ -1,10 +1,10 @@
 from typing import Type
 
-from sqlalchemy import UUID, ForeignKey, Float, CheckConstraint
-from sqlalchemy.orm import mapped_column, relationship
+from sqlalchemy import UUID, ForeignKey, Float, Integer
+from sqlalchemy.orm import mapped_column, relationship, Mapped
 
-from infrastructure.database.models.base import TimestampsMixin, S, IDMixin
 from core.schemas.clinical_disorders.neuro_disorders import NeuroDisordersSchema
+from infrastructure.database.models.base import TimestampsMixin, S, IDMixin
 
 
 class NeuroDisorders(IDMixin, TimestampsMixin):
@@ -30,20 +30,12 @@ class NeuroDisorders(IDMixin, TimestampsMixin):
     bulimia = mapped_column(Float, default=None, comment="Нервная булимия (0-1)")
     binge = mapped_column(Float, default=None, comment="Компульсивное переедание (0-1)")
 
+    records: Mapped[int | None] = mapped_column(
+        Integer,
+        default=None,
+        comment="количество записей"
+    )
+
     @property
     def schema_class(cls) -> Type[S]:
         return NeuroDisordersSchema
-
-    __table_args__ = (
-        CheckConstraint('adhd >= 0 AND adhd <= 1.00', name='ck_adhd_range'),
-        CheckConstraint('adhd_inattention >= 0 AND adhd_inattention <= 1.00', name='ck_adhd_inattention_range'),
-        CheckConstraint('adhd_hyperactivity >= 0 AND adhd_hyperactivity <= 1.00', name='ck_adhd_hyperactivity_range'),
-        CheckConstraint('adhd_impulsivity >= 0 AND adhd_impulsivity <= 1.00', name='ck_adhd_impulsivity_range'),
-        CheckConstraint('autism >= 0 AND autism <= 1.00', name='ck_autism_range'),
-        CheckConstraint('autism_social >= 0 AND autism_social <= 1.00', name='ck_autism_social_range'),
-        CheckConstraint('autism_interests >= 0 AND autism_interests <= 1.00', name='ck_autism_interests_range'),
-        CheckConstraint('eating >= 0 AND eating <= 1.00', name='ck_eating_range'),
-        CheckConstraint('anorexia >= 0 AND anorexia <= 1.00', name='ck_anorexia_range'),
-        CheckConstraint('bulimia >= 0 AND bulimia <= 1.00', name='ck_bulimia_range'),
-        CheckConstraint('binge >= 0 AND binge <= 1.00', name='ck_binge_range'),
-    )

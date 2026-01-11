@@ -1,7 +1,7 @@
 from typing import Type
 
-from sqlalchemy import UUID, ForeignKey, Float, String, CheckConstraint
-from sqlalchemy.orm import mapped_column, relationship
+from sqlalchemy import UUID, ForeignKey, Float, String, CheckConstraint, Integer
+from sqlalchemy.orm import mapped_column, relationship, Mapped
 
 from infrastructure.database.models.base import S, IDMixin, TimestampsMixin
 from core.schemas.clinical_disorders.anxiety_disorders import AnxietyDisordersSchema
@@ -75,43 +75,12 @@ class AnxietyOCDTraumaDisorders(IDMixin, TimestampsMixin):
     did = mapped_column(Float, default=None, comment="Диссоциативное расстройство идентичности (0-1)")
     depersonalization = mapped_column(Float, default=None, comment="Деперсонализация/дереализация (0-1)")
 
+    records: Mapped[int | None] = mapped_column(
+        Integer,
+        default=None,
+        comment="количество записей"
+    )
+
     @property
     def schema_class(cls) -> Type[S]:
         return AnxietyDisordersSchema
-
-    __table_args__ = (
-        CheckConstraint('gad >= 0 AND gad <= 1.00', name='ck_gad_range'),
-        CheckConstraint('gad_worry >= 0 AND gad_worry <= 1.00', name='ck_gad_worry_range'),
-        CheckConstraint('gad_restlessness >= 0 AND gad_restlessness <= 1.00', name='ck_gad_restlessness_range'),
-        CheckConstraint('gad_fatigue >= 0 AND gad_fatigue <= 1.00', name='ck_gad_fatigue_range'),
-        CheckConstraint('gad_concentration >= 0 AND gad_concentration <= 1.00', name='ck_gad_concentration_range'),
-        CheckConstraint('gad_irritability >= 0 AND gad_irritability <= 1.00', name='ck_gad_irritability_range'),
-        CheckConstraint('gad_muscle >= 0 AND gad_muscle <= 1.00', name='ck_gad_muscle_range'),
-        CheckConstraint('gad_sleep >= 0 AND gad_sleep <= 1.00', name='ck_gad_sleep_range'),
-        CheckConstraint('panic >= 0 AND panic <= 1.00', name='ck_panic_range'),
-        CheckConstraint('panic_anticipatory >= 0 AND panic_anticipatory <= 1.00', name='ck_panic_anticipatory_range'),
-        CheckConstraint('social_anxiety >= 0 AND social_anxiety <= 1.00', name='ck_social_anxiety_range'),
-        CheckConstraint('social_avoidance >= 0 AND social_avoidance <= 1.00', name='ck_social_avoidance_range'),
-        CheckConstraint('agoraphobia >= 0 AND agoraphobia <= 1.00', name='ck_agoraphobia_range'),
-        CheckConstraint('specific_phobia >= 0 AND specific_phobia <= 1.00', name='ck_specific_phobia_range'),
-        CheckConstraint('ocd >= 0 AND ocd <= 1.00', name='ck_ocd_range'),
-        CheckConstraint('ocd_obsessions >= 0 AND ocd_obsessions <= 1.00', name='ck_ocd_obsessions_range'),
-        CheckConstraint('ocd_compulsions >= 0 AND ocd_compulsions <= 1.00', name='ck_ocd_compulsions_range'),
-        CheckConstraint('ocd_insight >= 0 AND ocd_insight <= 1.00', name='ck_ocd_insight_range'),
-        CheckConstraint('body_dysmorphia >= 0 AND body_dysmorphia <= 1.00', name='ck_body_dysmorphia_range'),
-        CheckConstraint('bfrb >= 0 AND bfrb <= 1.00', name='ck_bfrb_range'),
-        CheckConstraint('ptsd >= 0 AND ptsd <= 1.00', name='ck_ptsd_range'),
-        CheckConstraint('ptsd_intrusions >= 0 AND ptsd_intrusions <= 1.00', name='ck_ptsd_intrusions_range'),
-        CheckConstraint('ptsd_avoidance >= 0 AND ptsd_avoidance <= 1.00', name='ck_ptsd_avoidance_range'),
-        CheckConstraint('ptsd_cognition >= 0 AND ptsd_cognition <= 1.00', name='ck_ptsd_cognition_range'),
-        CheckConstraint('ptsd_arousal >= 0 AND ptsd_arousal <= 1.00', name='ck_ptsd_arousal_range'),
-        CheckConstraint('acute_stress >= 0 AND acute_stress <= 1.00', name='ck_acute_stress_range'),
-        CheckConstraint('cptsd >= 0 AND cptsd <= 1.00', name='ck_cptsd_range'),
-        CheckConstraint('cptsd_emotion >= 0 AND cptsd_emotion <= 1.00', name='ck_cptsd_emotion_range'),
-        CheckConstraint('cptsd_self >= 0 AND cptsd_self <= 1.00', name='ck_cptsd_self_range'),
-        CheckConstraint('cptsd_relations >= 0 AND cptsd_relations <= 1.00', name='ck_cptsd_relations_range'),
-        CheckConstraint('dissociative >= 0 AND dissociative <= 1.00', name='ck_dissociative_range'),
-        CheckConstraint('amnesia >= 0 AND amnesia <= 1.00', name='ck_amnesia_range'),
-        CheckConstraint('did >= 0 AND did <= 1.00', name='ck_did_range'),
-        CheckConstraint('depersonalization >= 0 AND depersonalization <= 1.00', name='ck_depersonalization_range'),
-    )

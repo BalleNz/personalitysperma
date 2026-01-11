@@ -3,7 +3,7 @@ from uuid import UUID
 
 from pydantic import Field, ConfigDict, BaseModel, computed_field
 
-from core.lexicon.enums import DarkTriadsTypes
+from core.enums.dark_triads import DarkTriadsTypes
 
 
 class DarkTriadsSchema(BaseModel):
@@ -37,6 +37,26 @@ class DarkTriadsSchema(BaseModel):
         le=1.0,
         description="Психотизм: нормальность → необычный опыт (0=нормальный, 1=психотичный)"
     )
+
+    records: int | None = Field(
+        default=None,
+        description="Количество записей"
+    )
+
+    @computed_field
+    @property
+    def accuracy_percent(self) -> float:
+        """Процент точности"""
+        records_count: int | None = self.records
+        if records_count is None or records_count <= 0:
+            return 0.0
+        else:
+            # при 7 записях: 42%
+            # при 17 записях: 63%
+            # при 27 записях: 71%
+            # при 50 записях: 78%
+            margin = 1.5081 / (records_count ** 0.5)
+            return 1 - margin
 
     @computed_field
     @property

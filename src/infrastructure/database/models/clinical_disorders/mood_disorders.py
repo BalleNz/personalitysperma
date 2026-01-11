@@ -1,10 +1,10 @@
-from typing import Union, Type
+from typing import Type
 
-from sqlalchemy import CheckConstraint, Float, ForeignKey, UUID
-from sqlalchemy.orm import mapped_column, relationship
+from sqlalchemy import Float, ForeignKey, UUID, Integer
+from sqlalchemy.orm import mapped_column, relationship, Mapped
 
-from infrastructure.database.models.base import S, IDMixin, TimestampsMixin
 from core.schemas.clinical_disorders.mood_disorders import MoodDisordersSchema
+from infrastructure.database.models.base import S, IDMixin, TimestampsMixin
 
 
 class MoodDisorders(IDMixin, TimestampsMixin):
@@ -36,25 +36,12 @@ class MoodDisorders(IDMixin, TimestampsMixin):
     # [ Циклотимия ]
     cyclothymia = mapped_column(Float, default=None, comment="Циклотимия (0-1)")
 
+    records: Mapped[int | None] = mapped_column(
+        Integer,
+        default=None,
+        comment="количество записей"
+    )
+
     @property
     def schema_class(cls) -> Type[S]:
         return MoodDisordersSchema
-
-    __table_args__ = (
-        CheckConstraint('depression >= 0 AND depression <= 1.00', name='ck_depression_range'),
-        CheckConstraint('depression_sadness >= 0 AND depression_sadness <= 1.00', name='ck_depression_sadness_range'),
-        CheckConstraint('depression_anhedonia >= 0 AND depression_anhedonia <= 1.00', name='ck_depression_anhedonia_range'),
-        CheckConstraint('depression_appetite >= 0 AND depression_appetite <= 1.00', name='ck_depression_appetite_range'),
-        CheckConstraint('depression_sleep >= 0 AND depression_sleep <= 1.00', name='ck_depression_sleep_range'),
-        CheckConstraint('depression_fatigue >= 0 AND depression_fatigue <= 1.00', name='ck_depression_fatigue_range'),
-        CheckConstraint('depression_worthlessness >= 0 AND depression_worthlessness <= 1.00', name='ck_depression_worthlessness_range'),
-        CheckConstraint('depression_concentration >= 0 AND depression_concentration <= 1.00', name='ck_depression_concentration_range'),
-        CheckConstraint('depression_suicidal >= 0 AND depression_suicidal <= 1.00', name='ck_depression_suicidal_range'),
-        CheckConstraint('bipolar >= 0 AND bipolar <= 1.00', name='ck_bipolar_range'),
-        CheckConstraint('bipolar_mania >= 0 AND bipolar_mania <= 1.00', name='ck_bipolar_mania_range'),
-        CheckConstraint('bipolar_hypomania >= 0 AND bipolar_hypomania <= 1.00', name='ck_bipolar_hypomania_range'),
-        CheckConstraint('bipolar_depression >= 0 AND bipolar_depression <= 1.00', name='ck_bipolar_depression_range'),
-        CheckConstraint('bipolar_rapid >= 0 AND bipolar_rapid <= 1.00', name='ck_bipolar_rapid_range'),
-        CheckConstraint('bipolar_psychotic >= 0 AND bipolar_psychotic <= 1.00', name='ck_bipolar_psychotic_range'),
-        CheckConstraint('cyclothymia >= 0 AND cyclothymia <= 1.00', name='ck_cyclothymia_range'),
-    )

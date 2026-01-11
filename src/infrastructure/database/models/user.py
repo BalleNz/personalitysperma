@@ -16,7 +16,7 @@ class User(IDMixin, TimestampsMixin):
     last_name: Mapped[str | None] = mapped_column(String, comment="last name")
 
     # [ base info ]
-    age: Mapped[int] = mapped_column(Integer, comment="возраст")
+    age: Mapped[int] = mapped_column(Integer, comment="возраст (предугадывает нейронка)")
 
     # [ MAIN characteristics ]
     social_profile = relationship("SocialProfile", back_populates="user", uselist=False)
@@ -27,9 +27,16 @@ class User(IDMixin, TimestampsMixin):
 
     # [ DARK characteristics ]
     dark_triads = relationship("DarkTriad", back_populates="user", uselist=False)
+
+    # [ PERSONALITY ]
+    # TODO
+
+    # [ CLINICAL ]
+    # TODO
     clinical_profile = relationship("ClinicalProfile", back_populates="user", uselist=False)
 
-    # [ ROMANCE characteristics ]
+    # [ LOVE characteristics ]
+    # TODO
     love_language = relationship("LoveLanguage", back_populates="user", uselist=False)
     sexual_preference = relationship("SexualPreference", back_populates="user", uselist=False)
 
@@ -39,19 +46,3 @@ class User(IDMixin, TimestampsMixin):
     @property
     def schema_class(self) -> Type[S]:
         return UserSchema
-
-
-class CharacteristicHistory(IDMixin, TimestampsMixin):
-    """История изменений полей"""
-    __tablename__ = "characteristic_history"
-
-    user_id = mapped_column(UUID, ForeignKey('users.id'))
-
-    profile_type: Mapped[str] = Column(String, comment="название таблицы")  # 'cognitive', 'emotional', etc.
-    characteristic_name: Mapped[str] = Column(String, comment="имя поля")
-    old_value: Mapped[float] = Column(Float, comment="старое значение")
-    new_value: Mapped[float] = Column(Float, comment="новое значение")
-
-    @property
-    def schema_class(self) -> Type[S]:
-        return CharacteristicHistorySchema

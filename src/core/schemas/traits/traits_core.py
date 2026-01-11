@@ -1,7 +1,8 @@
 from datetime import datetime
 from typing import Optional
 from uuid import UUID
-from pydantic import BaseModel, ConfigDict, Field
+
+from pydantic import BaseModel, ConfigDict, Field, computed_field
 
 
 class SocialProfileSchema(BaseModel):
@@ -36,7 +37,7 @@ class SocialProfileSchema(BaseModel):
         default=None,
         ge=0.0,
         le=1.0,
-        description="Тактильность"
+        description="Тактильность в социуме"
     )
     extraversion: Optional[float] = Field(
         default=None,
@@ -68,6 +69,26 @@ class SocialProfileSchema(BaseModel):
         le=1.0,
         description="0=кооперативный, 1=соревновательный"
     )
+
+    records: int | None = Field(
+        default=None,
+        description="Количество записей"
+    )
+
+    @computed_field
+    @property
+    def accuracy_percent(self) -> float:
+        """Процент точности"""
+        records_count: int | None = self.records
+        if records_count is None or records_count <= 0:
+            return 0.0
+        else:
+            # при 7 записях: 42%
+            # при 17 записях: 63%
+            # при 27 записях: 71%
+            # при 50 записях: 78%
+            margin = 1.5081 / (records_count ** 0.5)
+            return 1 - margin
 
     created_at: datetime | None = Field(None)
     updated_at: datetime | None = Field(None)
@@ -128,6 +149,26 @@ class CognitiveProfileSchema(BaseModel):
         description="Адаптивность. 0=ригидный, 1=гибкий"
     )
 
+    records: int | None = Field(
+        default=None,
+        description="Количество записей"
+    )
+
+    @computed_field
+    @property
+    def accuracy_percent(self) -> float:
+        """Процент точности"""
+        records_count: int | None = self.records
+        if records_count is None or records_count <= 0:
+            return 0.0
+        else:
+            # при 7 записях: 42%
+            # при 17 записях: 63%
+            # при 27 записях: 71%
+            # при 50 записях: 78%
+            margin = 1.5081 / (records_count ** 0.5)
+            return 1 - margin
+
     created_at: datetime | None = Field(None)
     updated_at: datetime | None = Field(None)
 
@@ -159,7 +200,6 @@ class EmotionalProfileSchema(BaseModel):
         description="Способность к самоиронии"
     )
 
-
     # [ эмоциональность ]
     intimacy_capacity: Optional[float] = Field(
         default=None,
@@ -185,6 +225,26 @@ class EmotionalProfileSchema(BaseModel):
         le=1.0,
         description="Тревожность"
     )
+
+    records: int | None = Field(
+        default=None,
+        description="Количество записей"
+    )
+
+    @computed_field
+    @property
+    def accuracy_percent(self) -> float:
+        """Процент точности"""
+        records_count: int | None = self.records
+        if records_count is None or records_count <= 0:
+            return 0.0
+        else:
+            # при 7 записях: 42%
+            # при 17 записях: 63%
+            # при 27 записях: 71%
+            # при 50 записях: 78%
+            margin = 1.5081 / (records_count ** 0.5)
+            return 1 - margin
 
     created_at: datetime | None = Field(None)
     updated_at: datetime | None = Field(None)
@@ -251,6 +311,26 @@ class BehavioralProfileSchema(BaseModel):
         le=1.0,
         description="Самоконтроль. 0=импульсивный, 1=сдержанный"
     )
+
+    records: int | None = Field(
+        default=None,
+        description="Количество записей"
+    )
+
+    @computed_field
+    @property
+    def accuracy_percent(self) -> float:
+        """Процент точности"""
+        records_count: int | None = self.records
+        if records_count is None or records_count <= 0:
+            return 0.0
+        else:
+            # при 7 записях: 42%
+            # при 17 записях: 63%
+            # при 27 записях: 71%
+            # при 50 записях: 78%
+            margin = 1.5081 / (records_count ** 0.5)
+            return 1 - margin
 
     created_at: datetime | None = Field(None)
     updated_at: datetime | None = Field(None)

@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel, Field, field_validator
 
-from core.lexicon.enums.socionics import (
+from enums.socionics import (
     RelationshipType
 )
 

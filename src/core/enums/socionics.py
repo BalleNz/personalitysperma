@@ -1,13 +1,6 @@
 from enum import Enum
 
 
-class Club(str, Enum):
-    RESEARCHERS = "researchers"
-    SOCIALS = "socials"
-    PRACTICALS = "practicals"
-    HUMANITARIANS = "humanitarians"
-
-
 class SocionicsType(str, Enum):
     # Русские обозначения
     ILE = "ИЛЭ"  # Дон Кихот

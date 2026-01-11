@@ -1,6 +1,6 @@
 from typing import Type
 
-from sqlalchemy import Column, Float, ForeignKey, UUID
+from sqlalchemy import Column, Float, ForeignKey, UUID, Enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from infrastructure.database.models.base import IDMixin, S

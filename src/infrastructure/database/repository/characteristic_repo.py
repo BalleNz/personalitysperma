@@ -26,7 +26,6 @@ logger = logging.getLogger(__name__)
 
 
 class CharacteristicModels(Generic[S, M]):
-
     def get_model_type_from_schema_type(self, schema_type: Type[S]) -> Type[M]:
         return CHARACTERISTIC_SCHEMAS_TO_MODELS[schema_type]
 
@@ -94,6 +93,7 @@ class CharacteristicRepository(BaseRepository):
             logger.error(f"Ошибка при получении профиля {profile_type.__name__} для user_id={user_id}: {e}")
             raise
 
+    # мб удалить?
     async def get_all_profiles(self, user_id: uuid.UUID) -> dict[type[S], S]:
         """
         Получение всех профилей пользователя
@@ -138,8 +138,6 @@ class CharacteristicRepository(BaseRepository):
                 self.session.add(new_profile)
                 await self.session.commit()
                 await self.session.refresh(new_profile)
-
-                # TODO: запись в таблицу историй
 
                 return new_profile.get_schema()
 
