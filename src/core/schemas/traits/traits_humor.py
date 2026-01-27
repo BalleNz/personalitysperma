@@ -1,5 +1,5 @@
 from typing import Optional
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from pydantic import Field, ConfigDict, BaseModel, computed_field
 
@@ -28,7 +28,7 @@ class HumorProfileSchema(BaseModel):
     """Схема профиля чувства юмора"""
     model_config = ConfigDict(from_attributes=True, use_enum_values=True)
 
-    id: Optional[UUID] = None
+    id: Optional[UUID] = Field(default_factory=uuid4)
     user_id: Optional[UUID] = None
 
     # [ affiliative ]
@@ -155,6 +155,10 @@ class HumorProfileSchema(BaseModel):
         records_count: int | None = self.records
         if records_count is None or records_count <= 0:
             return 0.0
+        elif records_count == 1:
+            return 0.04
+        elif records_count == 2:
+            return 0.09
         else:
             # при 7 записях: 42%
             # при 17 записях: 63%

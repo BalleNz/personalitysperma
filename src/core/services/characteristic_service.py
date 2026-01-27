@@ -1,8 +1,14 @@
 import logging
+import uuid
+from typing import Type, Sequence
 
-from core.consts import MIN_CHARS_LENGTH_TO_GENERATE
-from infrastructure.database.models.base import S
-from infrastructure.database.repository.characteristic_repo import CharacteristicRepository
+from src.api.response_schemas.generation import CheckInResponse
+from src.core.consts import MIN_CHARS_LENGTH_TO_GENERATE
+from src.core.schemas.log_schemas import CharacteristicBatchLogSchema
+from src.core.services.assistant_service import AssistantService
+from src.infrastructure.database.models.base import S, M
+from src.infrastructure.database.repository.characteristic_repo import CharacteristicRepository, \
+    CHARACTERISTIC_SCHEMAS_TO_MODELS
 
 logger = logging.getLogger(__name__)
 
@@ -10,45 +16,113 @@ logger = logging.getLogger(__name__)
 class CharacteristicService:
     def __init__(
             self,
-            repo: CharacteristicRepository
+            repo: CharacteristicRepository,
+            assistant_service: AssistantService
     ):
-        self.repo = repo,
+        self.repo = repo
         self.min_chars = MIN_CHARS_LENGTH_TO_GENERATE
+        self.assistant_service = assistant_service
 
-    def should_generate_characteristic(
+    async def check_in(
             self,
-            new_log: str,
-            table_name: ...  # таблица характеристики
-    ) -> bool:
+            message_text: str
+    ) -> CheckInResponse:
+        """CHECK IN"""
+        assistant_response: CheckInResponse = await self.assistant_service.get_check_in_response(
+            user_message=message_text
+        )
+
+        return assistant_response
+
+    async def should_generate_characteristic(
+            self,
+            user_id: uuid.UUID,
+            message_text: str,
+            schema_type: Type[S],  # таблица характеристики
+            telegram_id: str,
+            access_token: str
+    ) -> bool | None:
         """
         Определяет, пора ли генерировать/обновлять характеристику
 
         Если недостаточно длины, записывает лог в таблицу батчей.
         Если достаточно, обновляет таблицу характеристики и удаляет таблицу батчей.
+
+        :param message_text: текст пользователя
+        :param schema_type: схема, полученная из CHECK_IN
         """
-        old_logs: tuple = ...
+        model_type: Type[M] = CHARACTERISTIC_SCHEMAS_TO_MODELS.get(schema_type)
+        if not model_type:
+            raise ValueError(f"Неизвестный тип схемы: {schema_type}")
 
+        # Получаем существующие логи батчей
+        batch_logs: Sequence[CharacteristicBatchLogSchema] = await self.repo.get_batch_logs(
+            user_id=user_id,
+            characteristic_type=model_type
+        )
+
+        old_logs = [log.message for log in batch_logs]
         old_logs_length = sum(len(log) for log in old_logs)
-        new_log_lenght = len(new_log)
+        new_log_length = len(message_text)
 
-        if (old_logs_length + new_log_lenght) >= self.min_chars:
-            # self.generate_with_history(...)
-            ...
-        else:
-            # запись в таблицу батчей
-            ...
+        if (old_logs_length + new_log_length) >= self.min_chars:
+            # генерируем новую характеристику
+            await self.generate_characteristic(
+                user_id=user_id,
+                characteristic_type=schema_type,
+                batch_logs=batch_logs,
+                telegram_id=telegram_id,
+                access_token=access_token
+            )
 
-        ...
+            # Удаляем старые логи батчей после генерации
+            await self.repo.delete_batch_logs(
+                user_id=user_id,
+                characteristic_type=model_type
+            )
 
-    def generate_characteristic(
+            return True
+
+        # иначе запись в таблицу батчей
+        await self.repo.create_log_in_batch(
+            user_id=user_id,
+            characteristic_type=model_type,
+            message=message_text
+        )
+
+        return False
+
+    async def generate_characteristic(
             self,
-
+            user_id: uuid.UUID,
+            characteristic_type: type[S],
+            batch_logs: Sequence[CharacteristicBatchLogSchema],
+            telegram_id: str,
+            access_token: str
     ) -> None:
         """
-        Генерирует характеристику с учетом прошлой (если она есть.)
+        Генерирует и сохраняет характеристику с учетом прошлой (если она есть.)
         """
-        old_characteristic: S = ...
-        new_characteristic: S = ...  # assistant_service...
+        old_characteristic: S | None = await self.repo.cache_service.get_characteristic(
+            characteristic_type=characteristic_type,
+            access_token=access_token,
+            telegram_id=telegram_id
+        )
 
-        # update characteristic
-        self.repo
+        # [ batch logs ]
+        all_text = [log.message for log in batch_logs]
+        if old_characteristic:
+            all_text.append(str(old_characteristic.model_dump()))
+
+        combined_text = ' '.join(all_text)
+
+        new_characteristic: S = await self.assistant_service.generate_characteristic(
+            messages_text=combined_text,
+            characteristic_type=characteristic_type
+        )
+
+        if old_characteristic:
+            # если старая была, нумерация продолжается
+            new_characteristic.records = old_characteristic.record + 1
+
+        await self.repo.append_characteristic(user_id=user_id, characteristic=new_characteristic, telegram_id=telegram_id)

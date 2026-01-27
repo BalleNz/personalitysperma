@@ -1,13 +1,13 @@
 from typing import Type
 
-from sqlalchemy import UUID, ForeignKey, Float, String, CheckConstraint, Integer
+from sqlalchemy import UUID, ForeignKey, Float, String, Integer
 from sqlalchemy.orm import mapped_column, relationship, Mapped
 
-from infrastructure.database.models.base import S, IDMixin, TimestampsMixin
-from core.schemas.clinical_disorders.anxiety_disorders import AnxietyDisordersSchema
+from src.core.schemas.clinical_disorders.anxiety_disorders import AnxietyDisordersSchema
+from src.infrastructure.database.models.base import S, IDMixin, TimestampsMixin
 
 
-class AnxietyOCDTraumaDisorders(IDMixin, TimestampsMixin):
+class AnxietyDisorders(IDMixin, TimestampsMixin):
     """ТРЕВОЖНЫЕ, ОКР И ТРАВМАТИЧЕСКИЕ РАССТРОЙСТВА"""
     __tablename__ = "anxiety_ocd_trauma_disorders"
 
@@ -19,7 +19,7 @@ class AnxietyOCDTraumaDisorders(IDMixin, TimestampsMixin):
         comment="ID пользователя",
         index=True
     )
-    user = relationship("User", back_populates="anxiety_ocd_trauma_disorder")
+    user = relationship("User", back_populates="anxiety_disorders")
 
     # [ Тревожные расстройства ]
     # [ ГТР ]
@@ -40,11 +40,6 @@ class AnxietyOCDTraumaDisorders(IDMixin, TimestampsMixin):
     # [ Социальное ]
     social_anxiety = mapped_column(Float, default=None, comment="Социальная тревога (0-1)")
     social_avoidance = mapped_column(Float, default=None, comment="Избегание социальных ситуаций (0-1)")
-
-    # [ Фобии ]
-    agoraphobia = mapped_column(Float, default=None, comment="Агорафобия (0-1)")
-    specific_phobia = mapped_column(Float, default=None, comment="Специфическая фобия (0-1)")
-    phobia_type = mapped_column(String(50), default=None, comment="Тип фобии")
 
     # [ ОКР и родственные ]
     ocd = mapped_column(Float, default=None, comment="Обсессивно-компульсивное расстройство (0-1)")
@@ -79,6 +74,12 @@ class AnxietyOCDTraumaDisorders(IDMixin, TimestampsMixin):
         Integer,
         default=None,
         comment="количество записей"
+    )
+
+    accuracy_percent: Mapped[int | None] = mapped_column(
+        Float,
+        default=None,
+        comment="процент точности"
     )
 
     @property

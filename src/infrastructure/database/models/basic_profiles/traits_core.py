@@ -3,9 +3,9 @@ from typing import Type
 from sqlalchemy import Float, ForeignKey, UUID, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from core.schemas.traits.traits_core import BehavioralProfileSchema, EmotionalProfileSchema, CognitiveProfileSchema, \
+from src.core.schemas.traits.traits_core import BehavioralProfileSchema, EmotionalProfileSchema, CognitiveProfileSchema, \
     SocialProfileSchema
-from infrastructure.database.models.base import IDMixin, S, TimestampsMixin
+from src.infrastructure.database.models.base import IDMixin, S, TimestampsMixin
 
 
 class SocialProfile(IDMixin, TimestampsMixin):
@@ -71,6 +71,12 @@ class SocialProfile(IDMixin, TimestampsMixin):
         comment="количество записей"
     )
 
+    accuracy_percent: Mapped[int | None] = mapped_column(
+        Float,
+        default=None,
+        comment="процент точности"
+    )
+
     @property
     def schema_class(self) -> Type[S]:
         return SocialProfileSchema
@@ -125,6 +131,12 @@ class CognitiveProfile(IDMixin, TimestampsMixin):
         comment="количество записей"
     )
 
+    accuracy_percent: Mapped[int | None] = mapped_column(
+        Float,
+        default=None,
+        comment="процент точности"
+    )
+
     @property
     def schema_class(self) -> Type[S]:
         return CognitiveProfileSchema
@@ -176,6 +188,12 @@ class EmotionalProfile(IDMixin, TimestampsMixin):
         Integer,
         default=None,
         comment="количество записей"
+    )
+
+    accuracy_percent: Mapped[int | None] = mapped_column(
+        Float,
+        default=None,
+        comment="процент точности"
     )
 
     @property
@@ -241,6 +259,12 @@ class BehavioralProfile(IDMixin, TimestampsMixin):
         Integer,
         default=None,
         comment="количество записей"
+    )
+
+    accuracy_percent: Mapped[int | None] = mapped_column(
+        Float,
+        default=None,
+        comment="процент точности"
     )
 
     @property

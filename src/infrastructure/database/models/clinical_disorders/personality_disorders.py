@@ -3,8 +3,8 @@ from typing import Type
 from sqlalchemy import UUID, ForeignKey, Float, Integer
 from sqlalchemy.orm import mapped_column, relationship, Mapped
 
-from core.schemas.clinical_disorders.personality_disorders import PersonalityDisordersSchema
-from infrastructure.database.models.base import TimestampsMixin, S, IDMixin
+from src.core.schemas.clinical_disorders.personality_disorders import PersonalityDisordersSchema
+from src.infrastructure.database.models.base import TimestampsMixin, S, IDMixin
 
 
 class PersonalityDisorders(IDMixin, TimestampsMixin):
@@ -12,7 +12,7 @@ class PersonalityDisorders(IDMixin, TimestampsMixin):
     __tablename__ = "personality_disorders"
 
     user_id = mapped_column(UUID, ForeignKey('users.id'), nullable=False, unique=True, comment="ID пользователя")
-    user = relationship("User", back_populates="personality_disorder")
+    user = relationship("User", back_populates="personality_disorders")
 
     # [ ПРЛ ]
     bpd_severity = mapped_column(Float, default=None, comment="Тяжесть ПРЛ (0-1)")
@@ -40,6 +40,12 @@ class PersonalityDisorders(IDMixin, TimestampsMixin):
         Integer,
         default=None,
         comment="количество записей"
+    )
+
+    accuracy_percent: Mapped[int | None] = mapped_column(
+        Float,
+        default=None,
+        comment="процент точности"
     )
 
     @property

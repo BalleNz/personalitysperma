@@ -1,21 +1,29 @@
 import asyncio
 import json
+import logging  # noqa
 from uuid import UUID
 
 from aiogram import Dispatcher
 from aiogram.fsm.storage.redis import RedisStorage
-from bot.handlers.start import router as start_router
-from bot.bot_instance import bot
-from config.loggerConfig import configure_logging
-from core.services.dependencies.redis_service_dep import redis_client
+
+from src.bot.bot_instance import bot
+from src.bot.handlers.main import router as main_router
+from src.bot.handlers.start import router as start_router
+from src.bot.handlers.characteristic_listing import router as characteristic_listing_router
+from src.bot.middlewares.depends_injectors import DependencyInjectionMiddleware
+from src.core.services.dependencies.redis_service_dep import redis_client
+from src.infrastructure.config.loggerConfig import configure_logging
 
 
 def setup_auth(dp: Dispatcher):
     # Регистрация middleware
+    dp.update.outer_middleware(DependencyInjectionMiddleware())
 
     # Регистрация хендлеров (порядок важен)
     for router in [
-        start_router
+        start_router,
+        characteristic_listing_router,
+        main_router,
     ]:
         dp.include_router(router)
 
@@ -37,10 +45,13 @@ storage = RedisStorage(
     json_dumps=lambda obj: json.dumps(obj, cls=UUIDEncoder),
     json_loads=json.loads
 )
-# dp = Dispatcher(storage=storage)
 dp = Dispatcher(storage=None)
 
 if __name__ == "__main__":
     setup_auth(dp)
     configure_logging()
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
     asyncio.run(start_polling(dp))

@@ -1,0 +1,93 @@
+from logging.config import fileConfig
+
+from sqlalchemy import engine_from_config
+from sqlalchemy import pool
+
+from alembic import context
+
+config = context.config
+
+if config.config_file_name is not None:
+    fileConfig(config.config_file_name)
+
+from src.infrastructure.config.config import config as app_config
+
+if bool(app_config.DEBUG):
+    database_url = app_config.DATABASE_URL.replace("db:", "localhost:") + "?async_fallback=True"
+database_url = app_config.DATABASE_URL + "?async_fallback=True"
+
+# python 3.14+
+database_url = database_url.replace("+asyncpg", "").rstrip("?async_fallback=True").rstrip("&async_fallback=True")
+
+config.set_main_option("sqlalchemy.url", database_url)
+
+# Импортируем ВСЕ модели и типы ДО определения target_metadata
+from src.infrastructure.database.models.base import *  # noqa
+from src.infrastructure.database.models.logs import *  # noqa
+from src.infrastructure.database.models.user import *  # noqa
+from src.infrastructure.database.models.users_comparison import *  # noqa
+from src.infrastructure.database.models.basic_profiles.traits_core import *  # noqa
+from src.infrastructure.database.models.basic_profiles.traits_dark import *  # noqa
+from src.infrastructure.database.models.basic_profiles.traits_humor import *  # noqa
+from src.infrastructure.database.models.clinical_disorders.clinical_profile import *  # noqa
+from src.infrastructure.database.models.clinical_disorders.anxiety_disorders import *  # noqa
+from src.infrastructure.database.models.clinical_disorders.mood_disorders import *  # noqa
+from src.infrastructure.database.models.clinical_disorders.neuro_disorders import *  # noqa
+from src.infrastructure.database.models.clinical_disorders.personality_disorders import *  # noqa
+from src.infrastructure.database.models.personality_types.hexaco import *  # noqa
+from src.infrastructure.database.models.personality_types.socionics import *  # noqa
+from src.infrastructure.database.models.personality_types.holland_codes import *  # noqa
+# from src.infrastructure.database.models.love_preferences.relationships import *  # noqa
+
+target_metadata = IDMixin.metadata
+print("Tables in metadata:", list(target_metadata.tables.keys()))
+
+
+def run_migrations_offline():
+    """Run migrations in 'offline' mode.
+
+    This configures the context with just a URL
+    and not an Engine, though an Engine is acceptable
+    here as well.  By skipping the Engine creation
+    we don't even need a DBAPI to be available.
+
+    Calls to context.execute() here emit the given string to the
+    script output.
+
+    """
+    for _ in range(2):
+        url = config.get_main_option("sqlalchemy.url")
+        context.configure(
+            url=url,
+            target_metadata=target_metadata,
+            literal_binds=True,
+            dialect_opts={"paramstyle": "named"},
+        )
+
+    with context.begin_transaction():
+        context.run_migrations()
+
+
+def run_migrations_online():
+    print("Making migration on DATABASE_URL: " + database_url)
+
+    connectable = engine_from_config(
+        config.get_section(config.config_ini_section),
+        prefix="sqlalchemy.",
+        poolclass=pool.NullPool,
+    )
+
+    with connectable.connect() as connection:
+        context.configure(
+            connection=connection,
+            target_metadata=target_metadata
+        )
+
+        with context.begin_transaction():
+            context.run_migrations()
+
+
+if context.is_offline_mode():
+    run_migrations_offline()
+else:
+    run_migrations_online()

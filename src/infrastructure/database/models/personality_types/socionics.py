@@ -3,9 +3,9 @@ from typing import Type
 from sqlalchemy import UUID, ForeignKey, Enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from enums.socionics import SocionicsType
-from core.schemas.personality_types.socionics_type import UserSocionicsSchema
-from infrastructure.database.models.base import IDMixin, S, TimestampsMixin
+from src.core.enums.socionics import SocionicsType
+from src.core.schemas.personality_types.socionics_type import UserSocionicsSchema
+from src.infrastructure.database.models.base import IDMixin, S, TimestampsMixin
 
 SocionicsTypeEnum = Enum(
     SocionicsType,

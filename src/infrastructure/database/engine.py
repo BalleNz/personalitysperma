@@ -3,7 +3,7 @@ from typing import Final, AsyncGenerator
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 
-from config.config import config
+from src.infrastructure.config.config import config
 
 DEBUG: Final[bool] = config.DEBUG
 DATABASE_URL: Final[str] = config.DATABASE_URL
@@ -80,12 +80,12 @@ async def clear_metadata_cache():
             await conn.execute(text("""
                 SELECT column_name, data_type 
                 FROM information_schema.columns 
-                WHERE table_name = 'drugs' 
+                WHERE table_name = 'users' 
                 LIMIT 1
             """))
 
             # Еще один запрос для уверенности
-            await conn.execute(text("SELECT COUNT(*) FROM drugs WHERE 1=0"))
+            await conn.execute(text("SELECT COUNT(*) FROM users WHERE 1=0"))
 
             await conn.commit()
 

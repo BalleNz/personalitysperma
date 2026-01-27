@@ -3,8 +3,8 @@ from typing import Type
 from sqlalchemy import Float, ForeignKey, UUID, Integer
 from sqlalchemy.orm import mapped_column, relationship, Mapped
 
-from core.schemas.clinical_disorders.mood_disorders import MoodDisordersSchema
-from infrastructure.database.models.base import S, IDMixin, TimestampsMixin
+from src.core.schemas.clinical_disorders.mood_disorders import MoodDisordersSchema
+from src.infrastructure.database.models.base import S, IDMixin, TimestampsMixin
 
 
 class MoodDisorders(IDMixin, TimestampsMixin):
@@ -12,7 +12,7 @@ class MoodDisorders(IDMixin, TimestampsMixin):
     __tablename__ = "mood_disorders"
 
     user_id = mapped_column(UUID, ForeignKey('users.id'), nullable=False, unique=True, comment="ID пользователя")
-    user = relationship("User", back_populates="mood_disorder")
+    user = relationship("User", back_populates="mood_disorders")
 
     # [ Депрессия ]
     depression = mapped_column(Float, default=None, comment="Уровень депрессии (0-1)")
@@ -40,6 +40,12 @@ class MoodDisorders(IDMixin, TimestampsMixin):
         Integer,
         default=None,
         comment="количество записей"
+    )
+
+    accuracy_percent: Mapped[int | None] = mapped_column(
+        Float,
+        default=None,
+        comment="процент точности"
     )
 
     @property

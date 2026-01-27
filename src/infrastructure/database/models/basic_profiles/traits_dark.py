@@ -1,16 +1,19 @@
 from typing import Type
 
-from sqlalchemy import Float, Integer
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import Float, Integer, UUID, ForeignKey
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from core.schemas.traits.traits_dark import DarkTriadsSchema
-from infrastructure.database.models.base import IDMixin, S, TimestampsMixin
+from src.core.schemas.traits.traits_dark import DarkTriadsSchema
+from src.infrastructure.database.models.base import IDMixin, S, TimestampsMixin
 
 
 class DarkTriads(IDMixin, TimestampsMixin):
     """ТЁМНАЯ ТРИАДА"""
 
     __tablename__ = "user_dark_triads"
+
+    user_id: Mapped[UUID] = mapped_column(UUID, ForeignKey('users.id'), nullable=False, unique=True)
+    user = relationship("User", back_populates="dark_triads")
 
     cynicism: Mapped[float | None] = mapped_column(Float, default=None)  # trust → distrust of others' motives
     narcissism: Mapped[float | None] = mapped_column(Float, default=None)  # modesty → self-admiration
@@ -21,6 +24,12 @@ class DarkTriads(IDMixin, TimestampsMixin):
         Integer,
         default=None,
         comment="количество записей"
+    )
+
+    accuracy_percent: Mapped[int | None] = mapped_column(
+        Float,
+        default=None,
+        comment="процент точности"
     )
 
     @property

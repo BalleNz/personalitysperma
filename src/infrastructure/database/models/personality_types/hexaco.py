@@ -4,11 +4,11 @@ from pydantic import BaseModel
 from sqlalchemy import Float, ForeignKey, UUID, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from infrastructure.database.models.base import TimestampsMixin, IDMixin
-from core.schemas.personality_types.hexaco import UserHexacoSchema
+from src.core.schemas.personality_types.hexaco import UserHexacoSchema
+from src.infrastructure.database.models.base import TimestampsMixin, IDMixin
 
 
-class UserHEXACO(IDMixin, TimestampsMixin):
+class UserHexaco(IDMixin, TimestampsMixin):
     """
     Модель личности HEXACO (6 факторов).
     Ключевая для совместимости — H (Honesty-Humility): низкие значения связаны с манипулятивностью,
@@ -33,6 +33,12 @@ class UserHEXACO(IDMixin, TimestampsMixin):
         Integer,
         default=None,
         comment="количество записей"
+    )
+
+    accuracy_percent: Mapped[int | None] = mapped_column(
+        Float,
+        default=None,
+        comment="процент точности"
     )
 
     @property

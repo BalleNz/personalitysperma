@@ -1,17 +1,17 @@
 from typing import Optional
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from pydantic import Field, ConfigDict, BaseModel, computed_field
 
-from core.enums.dark_triads import DarkTriadsTypes
+from src.core.enums.dark_triads import DarkTriadsTypes
 
 
 class DarkTriadsSchema(BaseModel):
     """Схема темной триады (цинизм, нарциссизм, макиавеллизм, психотизм)"""
     model_config = ConfigDict(from_attributes=True)
 
-    id: Optional[UUID] = None
-    user_id: Optional[UUID] = None
+    id: Optional[UUID] = Field(default_factory=uuid4)
+    user_id: str = Field(description="Идентификатор пользователя")
 
     cynicism: Optional[float] = Field(
         default=None,
@@ -50,6 +50,10 @@ class DarkTriadsSchema(BaseModel):
         records_count: int | None = self.records
         if records_count is None or records_count <= 0:
             return 0.0
+        elif records_count == 1:
+            return 0.04
+        elif records_count == 2:
+            return 0.09
         else:
             # при 7 записях: 42%
             # при 17 записях: 63%

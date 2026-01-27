@@ -3,8 +3,8 @@ from typing import Type
 from sqlalchemy import ForeignKey, UUID, String, Text, Float, Integer
 from sqlalchemy.orm import mapped_column, relationship, Mapped
 
-from core.schemas.clinical_disorders.clinical_profile import ClinicalProfileSchema
-from infrastructure.database.models.base import TimestampsMixin, IDMixin, S
+from src.core.schemas.clinical_disorders.clinical_profile import ClinicalProfileSchema
+from src.infrastructure.database.models.base import TimestampsMixin, IDMixin, S
 
 
 class ClinicalProfile(IDMixin, TimestampsMixin):
@@ -18,7 +18,7 @@ class ClinicalProfile(IDMixin, TimestampsMixin):
     overall_severity = mapped_column(String(20), default="NONE", comment="Общая тяжесть состояния")  # TODO: enum
     diagnosis_status = mapped_column(String(30), default="NOT_DIAGNOSED", comment="Статус диагностики")  # TODO: enum
 
-    notes = mapped_column(Text, default=None, comment="Заметки и комментарии")
+    notes = mapped_column(Text, default=None, comment="Заметки и комментарии исходя из других характеристик")
 
     # [ Суицидальность ]
     suicide_risk = mapped_column(Float, default=None, comment="Уровень суицидального риска (0-1)")
@@ -28,6 +28,12 @@ class ClinicalProfile(IDMixin, TimestampsMixin):
         Integer,
         default=None,
         comment="количество записей"
+    )
+
+    accuracy_percent: Mapped[int | None] = mapped_column(
+        Float,
+        default=None,
+        comment="процент точности"
     )
 
     @property

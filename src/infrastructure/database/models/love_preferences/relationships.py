@@ -3,7 +3,7 @@ from typing import Type
 from sqlalchemy import Column, Float, ForeignKey, UUID, Enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from infrastructure.database.models.base import IDMixin, S
+from src.infrastructure.database.models.base import IDMixin, S
 
 
 class RelationshipPreference(IDMixin):
@@ -24,6 +24,8 @@ class LoveLanguage(IDMixin):
     ...
 
     user_id: ...
+
+    # TODO описание в какого человека бы влюбился / лась
 
     words_of_affirmation: Mapped[float] = Column(Float, default=0.2)
     acts_of_service: Mapped[float] = Column(Float, default=0.2)

@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field
 class AnxietyDisordersSchema(BaseModel):
     """Схема тревожных, ОКР и травматических расстройств"""
     # [ IDs ]
-    id: uuid.UUID = Field(..., description="id")
+    id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4)
     user_id: uuid.UUID = Field(..., description="user id")
 
     # [ ГТР ]
@@ -29,11 +29,6 @@ class AnxietyDisordersSchema(BaseModel):
     # [ Социальное ]
     social_anxiety: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Социальная тревога (0-1)")
     social_avoidance: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Избегание социальных ситуаций (0-1)")
-
-    # [ Фобии ]
-    agoraphobia: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Агорафобия (0-1)")
-    specific_phobia: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Специфическая фобия (0-1)")
-    phobia_type: Optional[str] = Field(default=None, description="Тип фобии")
 
     # [ ОКР и родственные ]
     ocd: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Обсессивно-компульсивное расстройство (0-1)")

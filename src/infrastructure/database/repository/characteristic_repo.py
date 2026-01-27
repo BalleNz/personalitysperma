@@ -1,168 +1,212 @@
 import logging
 import uuid
-from enum import Enum
-from typing import Optional, Dict, Any, List, Type, Generic
-from datetime import datetime
+from typing import Type, Generic, Sequence, Any
 
-from sqlalchemy import select, update
+from sqlalchemy import select, delete
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from infrastructure.database.repository.base_repo import BaseRepository
-from infrastructure.database.models.base import M, S
-from infrastructure.database.models.basic_profiles.traits_core import (
+from src.core.schemas.clinical_disorders.anxiety_disorders import AnxietyDisordersSchema
+from src.core.schemas.clinical_disorders.clinical_profile import ClinicalProfileSchema
+from src.core.schemas.clinical_disorders.mood_disorders import MoodDisordersSchema
+from src.core.schemas.clinical_disorders.neuro_disorders import NeuroDisordersSchema
+from src.core.schemas.clinical_disorders.personality_disorders import PersonalityDisordersSchema
+from src.core.schemas.personality_types.hexaco import UserHexacoSchema
+from src.core.schemas.personality_types.holland_codes import UserHollandCodesSchema
+from src.core.schemas.personality_types.socionics_type import UserSocionicsSchema
+from src.core.schemas.traits.traits_core import CognitiveProfileSchema, EmotionalProfileSchema, BehavioralProfileSchema, \
+    SocialProfileSchema
+from src.core.schemas.traits.traits_dark import DarkTriadsSchema
+from src.core.schemas.traits.traits_humor import HumorProfileSchema
+from src.core.services.cache_services.cache_service import CacheService
+from src.infrastructure.database.models.base import M, S
+from src.infrastructure.database.models.basic_profiles.traits_core import (
     CognitiveProfile, EmotionalProfile, BehavioralProfile,
     SocialProfile
 )
-from infrastructure.database.models.basic_profiles.traits_humor import HumorProfile
-from infrastructure.database.models.basic_profiles.traits_dark import DarkTriads
-from infrastructure.database.models.clinical_disorders.clinical_profile import ClinicalProfile
-from infrastructure.database.models.love_preferences.relationships import LoveLanguage, SexualPreference, RelationshipPreference
-from infrastructure.database.models.user import CharacteristicHistory
-from core.schemas.traits_core import CognitiveProfileSchema, BehavioralProfileSchema, EmotionalProfileSchema
-from core.schemas.traits_dark import DarkTriadsSchema
-from core.schemas.traits_humor import HumorProfileSchema
+from src.infrastructure.database.models.basic_profiles.traits_dark import DarkTriads
+from src.infrastructure.database.models.basic_profiles.traits_humor import HumorProfile
+from src.infrastructure.database.models.clinical_disorders.anxiety_disorders import AnxietyDisorders
+from src.infrastructure.database.models.clinical_disorders.clinical_profile import ClinicalProfile
+from src.infrastructure.database.models.clinical_disorders.mood_disorders import MoodDisorders
+from src.infrastructure.database.models.clinical_disorders.neuro_disorders import NeuroDisorders
+from src.infrastructure.database.models.clinical_disorders.personality_disorders import PersonalityDisorders
+from src.infrastructure.database.models.logs import CharacteristicBatchLog
+from src.infrastructure.database.models.personality_types.hexaco import UserHexaco
+from src.infrastructure.database.models.personality_types.holland_codes import UserHollandCodes
+from src.infrastructure.database.models.personality_types.socionics import UserSocionics
+
+# from src.infrastructure.database.models.love_preferences.relationships import LoveLanguage, SexualPreference, \
+#    RelationshipPreference
 
 logger = logging.getLogger(__name__)
 
 
-class CharacteristicModels(Generic[S, M]):
+class CharacteristicFormat(Generic[S, M]):
     def get_model_type_from_schema_type(self, schema_type: Type[S]) -> Type[M]:
         return CHARACTERISTIC_SCHEMAS_TO_MODELS[schema_type]
 
+    @staticmethod
+    def get_schema_type_from_schema_name(schema_name: str) -> type[S] | None:
+        for schema in CHARACTERISTIC_SCHEMAS_TO_MODELS.keys():
+            if schema_name == schema.__name__:
+                return schema
+        return None
 
-CHARACTERISTIC_MODELS = {
-    "SocialProfile": SocialProfile,
-    "CognitiveProfile": CognitiveProfile,
-    "EmotionalProfile": EmotionalProfile,
-    "BehavioralProfile": BehavioralProfile,
-
-    "HumorProfile": HumorProfile,
-
-    "ClinicalProfile": ClinicalProfile,
-    "DarkTriads": DarkTriads,
-
-    "RelationshipPreference": RelationshipPreference,
-    "LoveLanguage": LoveLanguage,
-    "SexualPreference": SexualPreference
-}
 
 CHARACTERISTIC_SCHEMAS_TO_MODELS = {
-    SocialProfile: SocialProfile,
+    SocialProfileSchema: SocialProfile,
     CognitiveProfileSchema: CognitiveProfile,
     EmotionalProfileSchema: EmotionalProfile,
     BehavioralProfileSchema: BehavioralProfile,
 
-    HumorProfileSchema: HumorProfile,
-
-    "ClinicalProfileSchema": ClinicalProfile,
     DarkTriadsSchema: DarkTriads,
 
-    "RelationshipPreferenceSchema": RelationshipPreference,
-    "LoveLanguageSchema": LoveLanguage,
-    "SexualPreferenceSchema": SexualPreference
+    HumorProfileSchema: HumorProfile,
+
+    ClinicalProfileSchema: ClinicalProfile,
+    MoodDisordersSchema: MoodDisorders,
+    AnxietyDisordersSchema: AnxietyDisorders,
+    NeuroDisordersSchema: NeuroDisorders,
+    PersonalityDisordersSchema: PersonalityDisorders,
+
+    UserHexacoSchema: UserHexaco,
+    UserHollandCodesSchema: UserHollandCodes,
+    UserSocionicsSchema: UserSocionics,
+
+    # "RelationshipPreferenceSchema": RelationshipPreference,
+    # "LoveLanguageSchema": LoveLanguage,
+    # "SexualPreferenceSchema": SexualPreference
 }
 
 
-class CharacteristicRepository(BaseRepository):
+def get_schema_type_from_name(schema_name: str) -> type[S] | None:
+    for schema in CHARACTERISTIC_SCHEMAS_TO_MODELS.keys():
+        if schema_name == schema.__name__:
+            return schema
+
+
+class CharacteristicRepository:
     """Репозиторий для работы со всеми характеристиками пользователя"""
-    def __init__(self, session: AsyncSession):
-        super().__init__(model=..., session=session)
 
-    async def get_profile_by_type(self, user_id: uuid.UUID, profile_type: type[S]) -> S:
-        """Получение профиля юзера по типу схемы"""
-        logger.info(f"Получение профиля типа {profile_type.__name__} для user_id={user_id}")
+    def __init__(self, session: AsyncSession, cache_service: CacheService):
+        self.session = session
+        self.cache_service = cache_service
 
-        try:
-            # [ получение типа модели по типу схемы ]
-            model_type: type[M] = CHARACTERISTIC_SCHEMAS_TO_MODELS.get(profile_type)
-            if not model_type:
-                logger.error(f"Не найден маппинг для схемы {profile_type.__name__}")
-                raise ValueError(f"Неизвестный тип профиля: {profile_type.__name__}")
+    async def get_all_characteristics(
+            self,
+            user_id: uuid.UUID
+    ) -> list[dict]:
+        """
+        Получить все характеристики пользователя.
+        Возвращает список схем разных типов.
+        """
+        characteristics: list[dict[str, dict[str, Any]]] = []
 
-            stmt = select(model_type).where(model_type.user_id == user_id)
+        # Список пар (модель, схема)
+        model_schema_pairs = [
+            (SocialProfile, SocialProfileSchema),
+            (CognitiveProfile, CognitiveProfileSchema),
+            (EmotionalProfile, EmotionalProfileSchema),
+            (BehavioralProfile, BehavioralProfileSchema),
+            (DarkTriads, DarkTriadsSchema),
+            (HumorProfile, HumorProfileSchema),
+            (ClinicalProfile, ClinicalProfileSchema),
+            (MoodDisorders, MoodDisordersSchema),
+            (AnxietyDisorders, AnxietyDisordersSchema),
+            (NeuroDisorders, NeuroDisordersSchema),
+            (PersonalityDisorders, PersonalityDisordersSchema),
+            (UserHexaco, UserHexacoSchema),
+            (UserHollandCodes, UserHollandCodesSchema),
+            (UserSocionics, UserSocionicsSchema),
+        ]
+
+        for model_cls, schema_cls in model_schema_pairs:
+            stmt = select(model_cls).where(model_cls.user_id == user_id)
             result = await self.session.execute(stmt)
-            profile_model = result.scalar_one_or_none()
+            instance = result.scalar_one_or_none()
 
-            if not profile_model:
-                logger.info(f"Профиль типа {profile_type.__name__} не найден для user_id={user_id}")
-                raise ValueError(f"Профиль типа {profile_type.__name__} не найден для user_id={user_id}")
+            if instance:
+                schema: S = schema_cls.model_validate(instance)
+                characteristics.append(
+                    {
+                        "type": schema_cls.__name__,
+                        "characteristic": schema
+                    }
+                )
 
-            return profile_model.get_schema()
+        return characteristics
 
-        except Exception as e:
-            logger.error(f"Ошибка при получении профиля {profile_type.__name__} для user_id={user_id}: {e}")
-            raise
-
-    # мб удалить?
-    async def get_all_profiles(self, user_id: uuid.UUID) -> dict[type[S], S]:
-        """
-        Получение всех профилей пользователя
-
-        :param user_id: ID пользователя
-        :return: Словарь со всеми профилями
-        """
-        profiles = {}
-
-        for profile_type, model in CHARACTERISTIC_SCHEMAS_TO_MODELS.items():
-            profile: S = await self.get_profile_by_type(user_id, profile_type)
-            if profile:
-                profiles[profile_type] = profile
-        return profiles
-
-    async def update_characteristic(
+    async def append_characteristic(
             self,
             user_id: uuid.UUID,
-            characteristic: S
-    ) -> Optional[Any]:
+            characteristic: S,
+            telegram_id: str
+    ) -> None:
         """
-        Обновление конкретной характеристики
+        Добавление новой характеристики юзера
         """
-        try:
-            schema_type: type[S] = type(characteristic)
-            model_type: type[M] = CHARACTERISTIC_SCHEMAS_TO_MODELS.get(schema_type)
+        char_data = characteristic.model_dump(exclude={"created_at", "updated_at"})  # даты на стороне БД
+        char_data["user_id"] = user_id
 
-            if not model_type:
-                logger.error(f"Не найден маппинг для схемы {schema_type.__name__}")
-                raise ValueError(f"Неизвестный тип характеристики: {schema_type.__name__}")
+        model_class: type[M] = CHARACTERISTIC_SCHEMAS_TO_MODELS.get(type(characteristic))
 
-            stmt = select(model_type).where(model_type.user_id == user_id)
-            result = await self.session.execute(stmt)
-            existing_profile = result.scalar_one_or_none()
+        stmt = (
+            insert(model_class)
+            .values(char_data)
+            .returning(None)
+        )
 
-            if not existing_profile:
-                logger.info(f"Профиль не найден, создаем новый для user_id={user_id}")
+        await self.session.execute(stmt)
+        await self.session.commit()
 
-                # [ новый профиль ]
-                new_profile: M = model_type.from_pydantic(characteristic)
-                new_profile.user_id = user_id
-                self.session.add(new_profile)
-                await self.session.commit()
-                await self.session.refresh(new_profile)
+        await self.cache_service.redis_service._invalidate_characteristics(telegram_id)
 
-                return new_profile.get_schema()
+    async def create_log_in_batch(
+            self,
+            user_id: uuid.UUID,
+            characteristic_type: type[M],
+            message: str
+    ) -> None:
+        """Создает лог в таблице батчей"""
+        batch_log = CharacteristicBatchLog(
+            user_id=user_id,
+            characteristic_type=characteristic_type.__name__,
+            message=message
+        )
 
-            update_data: dict = characteristic.model_dump(exclude_unset=True, exclude_none=True)
+        self.session.add(batch_log)
+        await self.session.commit()
+        await self.session.refresh(batch_log)
 
-            if not update_data:
-                logger.info(f"Нет данных для обновления профиля {schema_type.__name__} для user_id={user_id}")
-                return existing_profile.get_schema()
+    async def get_batch_logs(
+            self,
+            user_id: uuid.UUID,
+            characteristic_type: type[M]
+    ) -> Sequence[S]:
+        """Все батчи конкретной характеристики юзера"""
+        characteristic_type_name = characteristic_type.__name__  # просто название модели в строчном виде
 
-            stmt_update = (
-                update(model_type)
-                .where(model_type.user_id == user_id)
-                .values(**update_data)
-                .returning(model_type)
-            )
+        stmt = select(CharacteristicBatchLog).where(
+            CharacteristicBatchLog.user_id == user_id,
+            CharacteristicBatchLog.characteristic_type == characteristic_type_name
+        ).order_by(CharacteristicBatchLog.created_at.asc())
 
-            result = await self.session.execute(stmt_update)
-            updated_profile = result.scalar_one()
-            await self.session.commit()
-            await self.session.refresh(updated_profile)
+        result = await self.session.execute(stmt)
+        return [model.get_schema() for model in result.scalars().all()]
 
-            logger.info(f"Характеристики успешно обновлены для user_id={user_id}")
-            return updated_profile.get_schema()
+    async def delete_batch_logs(
+            self,
+            user_id: uuid.UUID,
+            characteristic_type: type[M]
+    ):
+        """Удаляет все батчи конкретной характеристики у юзера"""
+        characteristic_type_name = characteristic_type.__name__
 
-        except Exception as e:
-            await self.session.rollback()
-            logger.error(f"Ошибка при обновлении характеристики для user_id={user_id}: {e}")
-            raise
+        stmt = delete(CharacteristicBatchLog).where(
+            CharacteristicBatchLog.user_id == user_id,
+            CharacteristicBatchLog.characteristic_type == characteristic_type_name
+        )
+
+        await self.session.execute(stmt)
+        await self.session.commit()

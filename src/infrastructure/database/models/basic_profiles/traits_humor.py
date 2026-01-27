@@ -3,8 +3,8 @@ from typing import Type
 from sqlalchemy import Float, ForeignKey, UUID, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from core.schemas.traits.traits_humor import HumorProfileSchema
-from infrastructure.database.models.base import IDMixin, S, TimestampsMixin
+from src.core.schemas.traits.traits_humor import HumorProfileSchema
+from src.infrastructure.database.models.base import IDMixin, S, TimestampsMixin
 
 
 class HumorProfile(IDMixin, TimestampsMixin):
@@ -13,7 +13,7 @@ class HumorProfile(IDMixin, TimestampsMixin):
     __tablename__ = "user_humor_sense"
 
     user_id: Mapped[UUID] = mapped_column(UUID, ForeignKey('users.id'), nullable=False, unique=True)
-    user = relationship("User", back_populates="humor_sense")
+    user = relationship("User", back_populates="humor_profile")
 
     # [ affiliative ]
     affiliative_humor: Mapped[float | None] = mapped_column(Float, default=None,
@@ -63,6 +63,12 @@ class HumorProfile(IDMixin, TimestampsMixin):
         Integer,
         default=None,
         comment="количество записей"
+    )
+
+    accuracy_percent: Mapped[int | None] = mapped_column(
+        Float,
+        default=None,
+        comment="процент точности"
     )
 
     @property

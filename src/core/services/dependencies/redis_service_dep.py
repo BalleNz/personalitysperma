@@ -1,7 +1,7 @@
 from redis.asyncio import Redis
 
-from core.services.cache_services.redis_service import RedisService
-from config.redis_config import REDIS_POOL
+from src.core.services.cache_services.redis_service import RedisService
+from src.infrastructure.config.redis_config import REDIS_POOL
 
 redis_client = Redis(connection_pool=REDIS_POOL)
 

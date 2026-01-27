@@ -12,7 +12,7 @@ def configure_logging():
                 "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
             },
         },
-        "handlers": {
+        "routers": {
             "console": {
                 "class": "logging.StreamHandler",
                 "formatter": "default",
@@ -21,14 +21,14 @@ def configure_logging():
         },
         "root": {
             "level": "INFO",
-            "handlers": ["console"],
+            "routers": ["console"],
         },
         "loggers": {
-            "arq": {
+            "src": {
                 "level": "INFO",
                 "propagate": True
             },
-            "drug_search": {
+            "bot": {
                 "level": "INFO",
                 "propagate": True
             }

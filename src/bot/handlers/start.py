@@ -5,7 +5,9 @@ from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
-from bot.lexicon.message_text import MessageText
+from src.bot.keyboards.reply import MAIN_KEYBOARD
+from src.bot.lexicon.message_text import MessageText
+from src.core.services.api_client.personalityGPT_api import PersonalityGPT_APIClient
 
 router = Router(name=__name__)
 logger = logging.getLogger(name=__name__)
@@ -15,8 +17,8 @@ logger = logging.getLogger(name=__name__)
 async def start_dialog(
         message: Message,
         state: FSMContext,
-        # api_client: ...,
-        # access_token: str,
+        api_client: PersonalityGPT_APIClient,
+        access_token: str,
         bot: Bot
 ):
     await state.clear()
@@ -29,6 +31,7 @@ async def start_dialog(
     # )
 
     # [ referrals check ]
+    """    
     if len(command_parts) > 1 and command_parts[1].startswith('ref_'):
         token = command_parts[1][4:]  # skip: 'ref_'
         referrer_telegram_id = decode_referral_token(token)
@@ -44,7 +47,7 @@ async def start_dialog(
                 )
             except Exception as ex:
                 logger.error(ex)
-                pass
+                pass"""
 
-    await message.answer(text=MessageText.HELLO)
+    await message.answer(text=MessageText.HELLO, reply_markup=MAIN_KEYBOARD)
     logger.info(f"User {user_id} has started dialog.")

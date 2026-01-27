@@ -1,4 +1,4 @@
-from prompts.prompts import RECORDS_INSTRUCTION, MAIN_INSTRUCTION
+from src.core.prompts.prompts import RECORDS_INSTRUCTION, MAIN_INSTRUCTION
 
 GET_SOCIAL_PROFILE: str = f"""
 Ты – профессиональный клинический психолог.
@@ -11,7 +11,7 @@ GET_SOCIAL_PROFILE: str = f"""
 2. На вход может (не обязательно) подаваться актуальная характеристика пользователя
 
 Пример входных данных (если запись первая, то будет одно единственное поле: "user_speech"):
-{
+{{
     "locus_control": <...>,
     "independence": <...>,
     "empathy": <...>,
@@ -23,7 +23,7 @@ GET_SOCIAL_PROFILE: str = f"""
     "competitiveness": <...>,
     "records": "4",
     "user_speech": <разговор пользователя>
-}
+}}
 
 ПОЯСНЕНИЕ К ПОЛЯМ:
 - locus_control: 0=другие люди виноваты в моих проблемах, 1=сам отвечаю за свою жизнь.
@@ -40,7 +40,7 @@ GET_SOCIAL_PROFILE: str = f"""
 {MAIN_INSTRUCTION}
 
 Пример выходных данных:
-{
+{{
     "locus_control": <...>,
     "independence": <...>,
     "empathy": <...>,
@@ -51,7 +51,7 @@ GET_SOCIAL_PROFILE: str = f"""
     "social_confidence": <...>,
     "competitiveness": <...>,
     "records": "5"
-}
+}}
 
 """
 
@@ -67,7 +67,7 @@ GET_COGNITIVE_PROFILE: str = f"""
 2. На вход может (не обязательно) подаваться актуальная характеристика пользователя
 
 Пример входных данных (если запись первая, то будет одно единственное поле: "user_speech"):
-{
+{{
     "reflectiveness": <...>,
     "intuitiveness": <...>,
     "fantasy_prone": <...>,
@@ -77,7 +77,7 @@ GET_COGNITIVE_PROFILE: str = f"""
     "mental_flexibility": <...>,
     "records": "4",
     "user_speech": <разговор пользователя>
-}
+}}
 
 ПОЯСНЕНИЕ К ПОЛЯМ:
 - reflectiveness: Степень склонности к саморефлексии и анализу собственных мыслей и переживаний.
@@ -92,7 +92,7 @@ GET_COGNITIVE_PROFILE: str = f"""
 {MAIN_INSTRUCTION}
 
 Пример выходных данных:
-{
+{{
     "reflectiveness": <...>,
     "intuitiveness": <...>,
     "fantasy_prone": <...>,
@@ -101,7 +101,7 @@ GET_COGNITIVE_PROFILE: str = f"""
     "tolerance_for_ambiguity": <...>,
     "mental_flexibility": <...>,
     "records": "5"
-}
+}}
 
 """
 
@@ -117,7 +117,7 @@ GET_EMOTIONAL_PROFILE: str = f"""
 2. На вход может (не обязательно) подаваться актуальная характеристика пользователя
 
 Пример входных данных (если запись первая, то будет одно единственное поле: "user_speech"):
-{
+{{
     "optimism": <...>,
     "self_esteem": <...>,
     "self_irony": <...>,
@@ -127,7 +127,7 @@ GET_EMOTIONAL_PROFILE: str = f"""
     "anxiety_level": <...>,
     "records": "3",
     "user_speech": <разговор пользователя>
-}
+}}
 
 ПОЯСНЕНИЕ К ПОЛЯМ:
 - optimism: Уровень позитивного восприятия будущего и событий (0 = пессимист, 1 = оптимист).
@@ -142,7 +142,7 @@ GET_EMOTIONAL_PROFILE: str = f"""
 {MAIN_INSTRUCTION}
 
 Пример выходных данных:
-{
+{{
     "optimism": <...>,
     "self_esteem": <...>,
     "self_irony": <...>,
@@ -151,7 +151,7 @@ GET_EMOTIONAL_PROFILE: str = f"""
     "emotional_expressiveness": <...>,
     "anxiety_level": <...>,
     "records": "5"
-}
+}}
 
 """
 
@@ -167,7 +167,7 @@ GET_BEHAVIORAL_PROFILE: str = f"""
 2. На вход может (не обязательно) подаваться актуальная характеристика пользователя
 
 Пример входных данных (если запись первая, то будет одно единственное поле: "user_speech"):
-{
+{{
     "patience": <...>,
     "stress_tolerance": <...>,
     "ambition": <...>,
@@ -176,9 +176,9 @@ GET_BEHAVIORAL_PROFILE: str = f"""
     "need_for_order": <...>,
     "perfectionism": <...>,
     "impulse_control": <...>,
-    "records": "4,
+    "records": "4",
     "user_speech": <разговор пользователя>
-}
+}}
 
 ПОЯСНЕНИЕ К ПОЛЯМ:
 - patience: Терпение в условиях стресса (0 = нетерпеливый, 1 = терпеливый).
@@ -194,7 +194,7 @@ GET_BEHAVIORAL_PROFILE: str = f"""
 {MAIN_INSTRUCTION}
 
 Пример выходных данных:
-{
+{{
     "patience": <...>,
     "stress_tolerance": <...>,
     "ambition": <...>,
@@ -204,6 +204,6 @@ GET_BEHAVIORAL_PROFILE: str = f"""
     "perfectionism": <...>,
     "impulse_control": <...>,
     "records": "5"
-}
+}}
 
 """

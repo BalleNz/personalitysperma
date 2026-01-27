@@ -1,6 +1,7 @@
 from abc import abstractmethod
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Type, Any, TypeVar, Union, Generic
+from uuid import uuid4
 
 from pydantic import BaseModel
 from sqlalchemy import func, DateTime, TypeDecorator, JSON
@@ -24,8 +25,17 @@ class TimestampsMixin:
     automatically tracking the creation and last update times of database records.
     """
 
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now()
+    )
 
 
 class IDMixin(DeclarativeBase):
@@ -34,7 +44,12 @@ class IDMixin(DeclarativeBase):
     """
     __abstract__ = True
 
-    id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=func.gen_random_uuid())
+    id: Mapped[UUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid4,
+        server_default=func.gen_random_uuid()
+    )
 
     @property
     @abstractmethod

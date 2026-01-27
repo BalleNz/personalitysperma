@@ -5,8 +5,11 @@ import aiohttp
 from openai import AsyncOpenAI, NOT_GIVEN, NotGiven, APIError
 from pydantic import ValidationError
 
-from config.config import config
-from infrastructure.database.models.base import S
+from src.core.prompts import GET_PROMPT_BY_SCHEMA_TYPE
+from src.api.response_schemas.generation import CheckInResponse
+from src.core.prompts.prompts import CHECK_IN
+from src.infrastructure.config.config import config
+from src.infrastructure.database.models.base import S
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +56,7 @@ class AssistantService:
             pydantic_model: Type[S],
             temperature: float = 0.3,
             max_tokens: int | NotGiven = NOT_GIVEN
-    ):
+    ) -> S | str:
         try:
             await self.check_balance()
 
@@ -87,3 +90,23 @@ class AssistantService:
         except Exception as ex:
             logger.error(f"Error in get_response: {ex}")
             raise
+
+    async def get_check_in_response(self, user_message: str) -> CheckInResponse:
+        """получить check in"""
+        return await self.get_response(
+            user_message,
+            prompt=CHECK_IN,
+            pydantic_model=CheckInResponse
+        )
+
+    async def generate_characteristic(self, characteristic_type: type[S], messages_text: str):
+        """генерация характеристики"""
+
+        prompt = GET_PROMPT_BY_SCHEMA_TYPE.get(characteristic_type)
+        pydantic_model: type[S] = characteristic_type
+
+        return await self.get_response(
+            messages_text,
+            prompt=prompt,
+            pydantic_model=pydantic_model
+        )

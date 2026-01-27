@@ -4,8 +4,8 @@ from pydantic import BaseModel
 from sqlalchemy import UUID, ForeignKey, Float, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from infrastructure.database.models.base import IDMixin, TimestampsMixin
-from core.schemas.personality_types.holland_codes import UserHollandCodesSchema
+from src.infrastructure.database.models.base import IDMixin, TimestampsMixin
+from src.core.schemas.personality_types.holland_codes import UserHollandCodesSchema
 
 
 class UserHollandCodes(IDMixin, TimestampsMixin):

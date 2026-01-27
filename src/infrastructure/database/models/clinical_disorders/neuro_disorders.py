@@ -3,8 +3,8 @@ from typing import Type
 from sqlalchemy import UUID, ForeignKey, Float, Integer
 from sqlalchemy.orm import mapped_column, relationship, Mapped
 
-from core.schemas.clinical_disorders.neuro_disorders import NeuroDisordersSchema
-from infrastructure.database.models.base import TimestampsMixin, S, IDMixin
+from src.core.schemas.clinical_disorders.neuro_disorders import NeuroDisordersSchema
+from src.infrastructure.database.models.base import TimestampsMixin, S, IDMixin
 
 
 class NeuroDisorders(IDMixin, TimestampsMixin):
@@ -12,7 +12,7 @@ class NeuroDisorders(IDMixin, TimestampsMixin):
     __tablename__ = "neuro_disorders"
 
     user_id = mapped_column(UUID, ForeignKey('users.id'), nullable=False, unique=True, comment="ID пользователя")
-    user = relationship("User", back_populates="neurodevelopmental_eating_disorder")
+    user = relationship("User", back_populates="neuro_disorders")
 
     # [ Нейроразвития и неврологические ]
     adhd = mapped_column(Float, default=None, comment="вероятность СДВГ (0-1)")
@@ -34,6 +34,12 @@ class NeuroDisorders(IDMixin, TimestampsMixin):
         Integer,
         default=None,
         comment="количество записей"
+    )
+
+    accuracy_percent: Mapped[int | None] = mapped_column(
+        Float,
+        default=None,
+        comment="процент точности"
     )
 
     @property

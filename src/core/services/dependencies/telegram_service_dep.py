@@ -1,4 +1,4 @@
-from drug_search.core.services.telegram_service import TelegramService
+from src.core.services.telegram_service import TelegramService
 
 telegram_service = TelegramService()
 

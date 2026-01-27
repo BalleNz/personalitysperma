@@ -1,25 +1,29 @@
 from aiogram import Router
 from aiogram.types import Message
 
+from response_schemas.generation import CheckInResponse
+from src.api.request_schemas.generation import CheckInRequest
+from src.core.services.api_client.personalityGPT_api import PersonalityGPT_APIClient
+
 router = Router()
 
 
-@router.message
+@router.message()
 async def main(
         message: Message,
+        api_client: PersonalityGPT_APIClient,
+        access_token: str
 ):
-    """Главное действие пользователя"""
-    # TODO:
-    #  1) либо запись в дневник и короткий ответ на сообщение
-    #  2) если есть > 5-10 сообщений (смотреть по сумме символов), то делаем определение характеристик
+    """Главное действие пользователя:
+    — check_in:
+    —— generation (with notification) / add to batches"""
 
-    # TODO (Frontend: Bot):
-    #  1) Введение дневника
-    #  2) Рандомное подкидывание людей со схожими интересами / характеристикой
-    #  *) Записи / Логи, обработанные нейронкой
+    message_reply = await message.reply("Ожидание ответа..")
 
-    # TODO FUTURE (Frontend: WebApp):
-    #  1) Поиск людей с фильтром совместимости
-    #  2)
+    api_request: CheckInRequest = CheckInRequest(
+        message=message.text
+    )
 
-    ...
+    check_in_response: CheckInResponse = await api_client.check_in(access_token, api_request)
+    await message.reply(check_in_response.precise_question)
+    await message_reply.delete()

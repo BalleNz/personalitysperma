@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field
 
@@ -9,7 +9,7 @@ class SocialProfileSchema(BaseModel):
     """Схема социального профиля"""
     model_config = ConfigDict(from_attributes=True)
 
-    id: Optional[UUID] = None
+    id: Optional[UUID] = Field(default_factory=uuid4)
     user_id: Optional[UUID] = None
 
     # [ society influence ]
@@ -82,6 +82,10 @@ class SocialProfileSchema(BaseModel):
         records_count: int | None = self.records
         if records_count is None or records_count <= 0:
             return 0.0
+        elif records_count == 1:
+            return 0.04
+        elif records_count == 2:
+            return 0.09
         else:
             # при 7 записях: 42%
             # при 17 записях: 63%
@@ -98,7 +102,7 @@ class CognitiveProfileSchema(BaseModel):
     """Схема когнитивного профиля"""
     model_config = ConfigDict(from_attributes=True)
 
-    id: Optional[UUID] = None
+    id: Optional[UUID] = Field(default_factory=uuid4)
     user_id: Optional[UUID] = None
 
     # [ ДСМ ]
@@ -161,6 +165,10 @@ class CognitiveProfileSchema(BaseModel):
         records_count: int | None = self.records
         if records_count is None or records_count <= 0:
             return 0.0
+        elif records_count == 1:
+            return 0.04
+        elif records_count == 2:
+            return 0.09
         else:
             # при 7 записях: 42%
             # при 17 записях: 63%
@@ -177,7 +185,7 @@ class EmotionalProfileSchema(BaseModel):
     """Схема эмоционального профиля"""
     model_config = ConfigDict(from_attributes=True)
 
-    id: Optional[UUID] = None
+    id: Optional[UUID] = Field(default_factory=uuid4)
     user_id: Optional[UUID] = None
 
     # [ отношение к миру ]
@@ -238,6 +246,10 @@ class EmotionalProfileSchema(BaseModel):
         records_count: int | None = self.records
         if records_count is None or records_count <= 0:
             return 0.0
+        elif records_count == 1:
+            return 0.04
+        elif records_count == 2:
+            return 0.09
         else:
             # при 7 записях: 42%
             # при 17 записях: 63%
@@ -254,7 +266,7 @@ class BehavioralProfileSchema(BaseModel):
     """Схема поведенческого профиля"""
     model_config = ConfigDict(from_attributes=True)
 
-    id: Optional[UUID] = None
+    id: Optional[UUID] = Field(default_factory=uuid4)
     user_id: Optional[UUID] = None
 
     # [ стресс ]
@@ -324,6 +336,10 @@ class BehavioralProfileSchema(BaseModel):
         records_count: int | None = self.records
         if records_count is None or records_count <= 0:
             return 0.0
+        elif records_count == 1:
+            return 0.04
+        elif records_count == 2:
+            return 0.09
         else:
             # при 7 записях: 42%
             # при 17 записях: 63%

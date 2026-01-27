@@ -1,14 +1,16 @@
 from typing import List, Optional
+from uuid import uuid4, UUID
 
 from pydantic import BaseModel, Field, field_validator
 
-from enums.socionics import (
+from src.core.enums.socionics import (
     RelationshipType
 )
 
 
 class UserSocionicsSchema(BaseModel):
     """Схема соционического профиля пользователя"""
+    id: Optional[UUID] = Field(default_factory=uuid4)
 
     # Основное поле - задаётся при создании
     socionics_type: str = Field(
@@ -339,6 +341,7 @@ class UserSocionicsSchema(BaseModel):
 # [ СХЕМА СРАВНЕНИЯ ]
 class SocionicsComparisonSchema(BaseModel):
     """Схема для сравнения двух соционических типов"""
+    id: Optional[UUID] = Field(default_factory=uuid4)
 
     type_a: str = Field(..., description="Первый тип")
     type_b: str = Field(..., description="Второй тип")

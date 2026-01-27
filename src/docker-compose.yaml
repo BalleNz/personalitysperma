@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:latest
+    container_name: db
+    environment:
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_DB: ${DATABASE_NAME}
+    ports:
+      - "5433:5432"              # изменил внешний порт, чтобы не конфликтовать с локальным postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/18/docker
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER} -d ${DATABASE_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: always
+
+  fastapi:
+    build: .
+    container_name: backend-api
+    env_file:
+      - .env
+    ports:
+      - "8001:8000"              # другой внешний порт
+    command: python3 asgi.py
+    environment:
+      DEBUG: "False"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./alembic:/app/alembic
+      - ./alembic.ini:/app/alembic.ini
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: always
+
+  arq_worker:
+    build: .
+    container_name: background-worker
+    env_file:
+      - .env
+    environment:
+      - DEBUG=false
+      - PYTHONUNBUFFERED=1
+      - LOG_LEVEL=INFO
+    depends_on:
+      - redis
+      - db
+    command: arq drug_search.infrastructure.arq_config.WorkerSettings
+    restart: unless-stopped
+
+  bot:
+    build: .
+    container_name: telegram-bot
+    env_file:
+      - .env
+    environment:
+      - DEBUG=false
+    depends_on:
+      - fastapi
+    command: python3 drug_search/bot/bot_app.py
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+    name: pg_data
+  redisdata:
+    name: redis_data

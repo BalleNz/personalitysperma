@@ -1,10 +1,14 @@
 from typing import Optional
+from uuid import uuid4, UUID
 
 from pydantic import BaseModel, Field
 
 
 class PersonalityDisordersSchema(BaseModel):
     """Базовая схема расстройств личности и настроения"""
+    id: Optional[UUID] = Field(default_factory=uuid4)
+    user_id: str = Field(description="Идентификатор пользователя")
+
     # [ ПРЛ ]
     bpd_severity: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Тяжесть ПРЛ (0-1)")
     bpd_abandonment: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Страх брошенности (0-1)")

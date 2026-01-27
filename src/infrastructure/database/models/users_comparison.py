@@ -1,6 +1,6 @@
-from sqlalchemy import Column, Text, Float, Integer, ForeignKey
+from sqlalchemy import Column, Text, Float, Integer, ForeignKey, UUID as PG_UUID
 
-from infrastructure.database.models.base import IDMixin, TimestampsMixin
+from src.infrastructure.database.models.base import IDMixin, TimestampsMixin
 
 
 class UsersComparison(IDMixin, TimestampsMixin):
@@ -16,7 +16,7 @@ class UsersComparison(IDMixin, TimestampsMixin):
 
     # Ссылки на сравниваемых пользователей
     user_a_id = Column(
-        Integer,
+        PG_UUID,
         ForeignKey('users.id', ondelete='CASCADE'),
         nullable=False,
         index=True,
@@ -24,7 +24,7 @@ class UsersComparison(IDMixin, TimestampsMixin):
     )
 
     user_b_id = Column(
-        Integer,
+        PG_UUID,
         ForeignKey('users.id', ondelete='CASCADE'),
         nullable=False,
         index=True,
