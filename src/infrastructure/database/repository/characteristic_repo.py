@@ -2,7 +2,7 @@ import logging
 import uuid
 from typing import Type, Generic, Sequence, Any
 
-from sqlalchemy import select, delete
+from sqlalchemy import select, delete, desc
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -55,6 +55,7 @@ class CharacteristicFormat(Generic[S, M]):
 
 
 CHARACTERISTIC_SCHEMAS_TO_MODELS = {
+    # [ traits core ]
     SocialProfileSchema: SocialProfile,
     CognitiveProfileSchema: CognitiveProfile,
     EmotionalProfileSchema: EmotionalProfile,
@@ -122,7 +123,12 @@ class CharacteristicRepository:
         ]
 
         for model_cls, schema_cls in model_schema_pairs:
-            stmt = select(model_cls).where(model_cls.user_id == user_id)
+            stmt = (
+                select(model_cls)
+                .where(model_cls.user_id == user_id)
+                .order_by(desc(model_cls.created_at))
+                .limit(1)
+            )
             result = await self.session.execute(stmt)
             instance = result.scalar_one_or_none()
 

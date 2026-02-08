@@ -59,6 +59,17 @@ class UserLog(IDMixin, TimestampsMixin):
         nullable=False
     )
 
+    __table_args__ = (
+        # Составной индекс: пользователь + дата создания
+        Index('idx_userlog_user_date', 'user_id', 'created_at'),
+
+        # Индекс по дате создания (для временных выборок)
+        Index('idx_userlog_date', 'created_at'),
+
+        Index('idx_userlog_user_created_at', 'user_id', 'created_at')
+
+    )
+
     @property
     def schema_class(cls) -> Type[S]:
         return UserLogSchema

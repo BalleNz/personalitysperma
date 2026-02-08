@@ -11,7 +11,7 @@ class PersonalityDisorders(IDMixin, TimestampsMixin):
     """РАССТРОЙСТВА ЛИЧНОСТИ"""
     __tablename__ = "personality_disorders"
 
-    user_id = mapped_column(UUID, ForeignKey('users.id'), nullable=False, unique=True, comment="ID пользователя")
+    user_id = mapped_column(UUID, ForeignKey('users.id', ondelete="CASCADE"), nullable=False, comment="ID пользователя")
     user = relationship("User", back_populates="personality_disorders")
 
     # [ ПРЛ ]

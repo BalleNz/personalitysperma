@@ -26,8 +26,9 @@ def create_async_db_engine_and_session(
         pool_recycle=pool_recycle,
         connect_args={
             "server_settings": {
-                "timezone": "UTC",  # Явно указываем UTC для каждого соединения
-            }
+                "timezone": "Europe/Moscow",
+                "timezone_abbreviations": "Default",
+            },
         }
     )
     return engine, async_sessionmaker(engine, expire_on_commit=False)
@@ -64,8 +65,9 @@ async def clear_metadata_cache():
             pool_recycle=1800,
             connect_args={
                 "server_settings": {
-                    "timezone": "UTC",
-                }
+                    "timezone": "Europe/Moscow",
+                    "timezone_abbreviations": "Default",
+                },
             }
         )
 
@@ -107,6 +109,7 @@ async def clear_metadata_cache():
 
     except Exception as e:
         print(f"❌ Error during aggressive cache clearance: {e}")
+
 
 engine, async_session_maker = create_async_db_engine_and_session(
     database_url=DATABASE_URL,

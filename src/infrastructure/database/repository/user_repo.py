@@ -1,12 +1,15 @@
+import datetime
 import logging
 import uuid
-
-from sqlalchemy import select
+from collections import defaultdict
+import pytz
+from sqlalchemy import select, update, func, text
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from src.core.schemas.user_schemas import UserSchema, UserTelegramDataSchema
+from src.infrastructure.database.models.logs import UserLog
 from src.infrastructure.database.models.user import User
 from src.infrastructure.database.repository.base_repo import BaseRepository
 
@@ -97,6 +100,83 @@ class UserRepository(BaseRepository):
         user = result.scalar_one()
         await self.session.commit()
         return UserSchema.model_validate(user.__dict__)
+
+    async def increase_used_voice_message(self, user_id: uuid.UUID) -> None:
+        """Увеличивает использованные голосовые сообщения на 1"""
+        await self.session.execute(
+            update(User)
+            .where(
+                User.id == user_id,
+                User.used_voice_messages > 0
+            )
+            .values(used_voice_messages=User.used_voice_messages - 1)
+        )
+        await self.session.flush()
+
+    async def get_active_user_logs(
+            self,
+            date_filter: datetime.date,
+            max_logs_per_user: int,
+            max_chars: int = 500
+    ) -> dict[uuid.UUID, list[tuple[str, str]]]:
+        """
+        Получение всех логов активных за сегодня юзеров
+        """
+        MSK_TZ = pytz.timezone('Europe/Moscow')
+
+        start_date = MSK_TZ.localize(
+            datetime.datetime.combine(date_filter, datetime.datetime.min.time())
+        )
+        end_date = MSK_TZ.localize(
+            datetime.datetime.combine(
+                date_filter + datetime.timedelta(days=1),
+                datetime.datetime.min.time()
+            )
+        )
+        stmt = (
+            select(
+                UserLog.user_id,
+                func.substr(UserLog.log, 1, max_chars).label('short_log'),
+                func.to_char(UserLog.created_at, 'HH24:MI').label('time_only')
+            )
+            .where(
+                UserLog.created_at >= start_date,  # диапазон дат эффективнее работает
+                UserLog.created_at <= end_date
+            )
+            .order_by(UserLog.user_id, UserLog.created_at.desc())
+        )
+
+        result = await self.session.execute(stmt)
+        rows = result.all()
+
+        user_logs: dict[uuid.UUID, list[tuple[str, str]]] = defaultdict(list)
+        for user_id, log_text, time_str in rows:
+            if len(user_logs[user_id]) < max_logs_per_user:
+                user_logs[user_id].append((log_text, time_str))
+
+        return dict(user_logs)
+
+    async def create_log(self, user_id: uuid.UUID, log_text: str) -> None:
+        """Сохраняет лог юзера"""
+        stmt = """
+            INSERT INTO user_logs (id, user_id, log)
+            VALUES (:id, :user_id, :log)
+        """
+
+        params = {
+            "id": uuid.uuid4(),
+            "user_id": user_id,
+            "log": log_text,
+        }
+
+        try:
+            await self.session.execute(text(stmt), params)
+            await self.session.commit()
+            logger.info(f"Лог создан для пользователя {user_id}")
+        except Exception as e:
+            await self.session.rollback()
+            logger.error(f"Ошибка создания лога: {e}")
+            raise
 
     def __del__(self):
         logger.info("USER REPO IS COLLECTED BY GARBAGE COLLECTOR")

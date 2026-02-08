@@ -7,6 +7,10 @@ class MessageText:
              "Начни общаться со мной или расскажи о себе в голосовом или текстовом сообщении."
     )
 
+    # [ query messages ]
+    VOICE_PROCESS = "Обработка голосового сообщения.."
+    VOICE_LIMIT = "У тебя закончились голосовые сообщения!"
+
     # [ MESSAGES ABOVE KEYBOARD ]
     CHARACTERISTIC_LISTING_MESSAGE = "🌀 Выбери доступную для тебя характеристику!"
     CHARACTERISTIC_LISTING_MESSAGE_EMPTY = "На данный момент у вас нет характеристик! Продолжи заполнять свой дневник!"
@@ -14,9 +18,13 @@ class MessageText:
     # [ LISTING FORMATTER ]
     CHARACTERISTIC_LISTING = (
         "🌀 <b>{characteristic_name}</b>\n\n"
-        "<blockquote>"
         "{characteristic}"
-        "</blockquote>\n\n"
+        "<b>Точность оценки:</b> {accuracy_percent}%\n"
+        "<b>Последнее обновление:</b> {last_update}"
+    )
+    CHARACTERISTIC_LISTING_GROUP = (
+        "🌀 <b>{group_name}</b>\n\n"
+        "{all_text}"
         "<b>Точность оценки:</b> {accuracy_percent}%\n"
         "<b>Последнее обновление:</b> {last_update}"
     )

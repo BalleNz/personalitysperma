@@ -1,4 +1,4 @@
-from prompts.prompts import RECORDS_INSTRUCTION, MAIN_INSTRUCTION
+from prompts.check_in_instructions import RECORDS_INSTRUCTION, MAIN_INSTRUCTION
 
 GET_HUMOR_PROFILE: str = f"""
 Ты – профессиональный клинический психолог, который углубленно знает механизмы определения юмора.

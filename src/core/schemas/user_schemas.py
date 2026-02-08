@@ -38,6 +38,15 @@ class UserSchema(BaseModel):
     last_name: Optional[str] = Field(None, description="Фамилия пользователя")
     age: int | None = Field(None, description="приблизительный возраст пользователя")
 
+    # [ charges ]
+    used_voice_messages: int = Field(..., description="количество бесплатных голосовых")
+    full_access: int | bool = Field(..., description="полный доступ")
+
+    dark_triads_full: bool = Field(..., description="доступ к темной триаде")
+    humor_access: bool = Field(..., description="доступ к стилю юмора")
+    clinical_access: bool = Field(..., description="доступ к клинике")
+    love_access: bool = Field(..., description="доступ к секс портрету")
+
     created_at: datetime | None = Field(None)
     updated_at: datetime | None = Field(None)
 

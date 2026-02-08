@@ -23,6 +23,9 @@ class Config(BaseSettings):
     # Режим разработки True/False
     DEBUG: ClassVar[bool] = environ.get("DEBUG", "true").lower() == "true"
 
+    # Speech API
+    SPEECH_API_KEY: ClassVar[str] = environ.get("SPEECH_API_KEY", "")
+
     # Deepseek API
     DEEPSEEK_API_KEY: ClassVar[str] = environ.get("DEEPSEEK_API_KEY", "")
     MINIMUM_USD_ON_BALANCE: ClassVar[float] = 1

@@ -1,4 +1,4 @@
-from database.repository.user_repo import UserRepository
+from src.infrastructure.database.repository.user_repo import UserRepository
 
 
 class UserService:

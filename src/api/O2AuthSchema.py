@@ -7,10 +7,9 @@ def jwt_openapi(app: FastAPI):
         return app.openapi_schema
 
     openapi_schema = get_openapi(
-        title="DrugSeek API",
+        title="sperm",
         version="1.0.0",
-        description="Приложение позволяет делать запросы зарегистрированным пользователям "
-                    "для поиска подробного описания препаратов в DeepSeek",
+        description="sosi",
         routes=app.routes
     )
 

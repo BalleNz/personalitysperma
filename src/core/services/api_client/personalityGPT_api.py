@@ -26,6 +26,14 @@ class PersonalityGPT_APIClient(BaseHttpClient):
             access_token=access_token
         )
 
+    async def increase_used_voices(self, access_token: str) -> None:
+        """Отнимает 1 голосовой запрос + invalidate cache"""
+        return await self._request(
+            HTTPMethod.PUT,
+            endpoint="/v1/user/increase_used_voices",
+            access_token=access_token
+        )
+
     # [ CHARACTERISTIC ]
     async def check_in(self, access_token: str, request: CheckInRequest) -> CheckInResponse:
         """CHECK IN:

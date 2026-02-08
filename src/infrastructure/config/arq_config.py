@@ -1,14 +1,24 @@
 import logging
 
 from arq.connections import RedisSettings
+from arq.cron import CronJob
 
-from config import config
-from config.loggerConfig import configure_logging
-
+from src.infrastructure.config.config import config
+from src.infrastructure.config.loggerConfig import configure_logging
+from src.core.task_logic.tasks import summarize_daily_logs
 
 class WorkerSettings:
     # Функции которые может выполнять worker
     functions = [
+    ]
+
+    cron_jobs = [
+        CronJob()
+        {
+            "func": summarize_daily_logs,
+            "cron": "52 23 * * *",  # каждый день в 23:59
+            "kwargs": {},
+        }
     ]
 
     # Настройки Redis

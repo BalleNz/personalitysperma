@@ -23,7 +23,7 @@ class UserSocionics(IDMixin, TimestampsMixin):
 
     __tablename__ = "user_socionics"
 
-    user_id: Mapped[UUID] = mapped_column(UUID, ForeignKey('users.id'), nullable=False, unique=True)
+    user_id: Mapped[UUID] = mapped_column(UUID, ForeignKey('users.id', ondelete="CASCADE"), nullable=False)
     user = relationship("User", back_populates="socionics")
 
     socionics_type: Mapped[str | None] = mapped_column(SocionicsTypeEnum, default=None)

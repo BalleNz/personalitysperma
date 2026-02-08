@@ -1,4 +1,4 @@
-from src.core.prompts.prompts import RECORDS_INSTRUCTION, MAIN_INSTRUCTION
+from src.core.prompts.check_in_instructions import RECORDS_INSTRUCTION, MAIN_INSTRUCTION
 
 GET_SOCIAL_PROFILE: str = f"""
 Ты – профессиональный клинический психолог.

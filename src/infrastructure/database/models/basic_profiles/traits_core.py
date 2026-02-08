@@ -13,7 +13,7 @@ class SocialProfile(IDMixin, TimestampsMixin):
 
     __tablename__ = "social_profiles"
 
-    user_id = mapped_column(UUID, ForeignKey('users.id'), nullable=False, unique=True)
+    user_id = mapped_column(UUID, ForeignKey('users.id', ondelete="CASCADE"), nullable=False)
     user = relationship("User", back_populates="social_profile")
 
     # [ society influence ]
@@ -87,7 +87,7 @@ class CognitiveProfile(IDMixin, TimestampsMixin):
 
     __tablename__ = "cognitive_profiles"
 
-    user_id = mapped_column(UUID, ForeignKey('users.id'), nullable=False, unique=True)
+    user_id = mapped_column(UUID, ForeignKey('users.id', ondelete="CASCADE"), nullable=False)
     user = relationship("User", back_populates="cognitive_profile")
 
     # [ ДСМ ]
@@ -147,7 +147,7 @@ class EmotionalProfile(IDMixin, TimestampsMixin):
 
     __tablename__ = "emotional_profiles"
 
-    user_id = mapped_column(UUID, ForeignKey('users.id'), nullable=False, unique=True)
+    user_id = mapped_column(UUID, ForeignKey('users.id', ondelete="CASCADE"), nullable=False)
     user = relationship("User", back_populates="emotional_profile")
 
     # [ отношение к миру ]
@@ -206,7 +206,7 @@ class BehavioralProfile(IDMixin, TimestampsMixin):
 
     __tablename__ = "user_behavioral_profiles"
 
-    user_id = mapped_column(UUID, ForeignKey('users.id'), nullable=False, unique=True)
+    user_id = mapped_column(UUID, ForeignKey('users.id', ondelete="CASCADE"), nullable=False)
     user = relationship("User", back_populates="behavioral_profile")
 
     # [ стресс ]
@@ -238,11 +238,6 @@ class BehavioralProfile(IDMixin, TimestampsMixin):
     )
 
     # [ перфекционизм ]
-    need_for_order: Mapped[float | None] = mapped_column(
-        Float,
-        default=None,
-        comment="Нуждаемость в порядке."
-    )
     perfectionism: Mapped[float | None] = mapped_column(
         Float,
         default=None,

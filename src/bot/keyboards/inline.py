@@ -1,9 +1,18 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-from src.bot.callbacks.callbacks import GetCharacteristicCallback
+from src.bot.callbacks.callbacks import GetCharacteristicCallback, BackToListingCallback, GetFullAccessCallback
 from src.bot.lexicon.button_text import ButtonText
-from src.core.schemas.traits.traits_core import CognitiveProfileSchema, SocialProfileSchema, BehavioralProfileSchema
-from src.core.schemas.traits.traits_core import EmotionalProfileSchema
+
+back_from_listing_keyboard = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [
+            InlineKeyboardButton(
+                text=ButtonText.ARROW_LEFT,
+                callback_data=BackToListingCallback().pack()
+            )
+        ]
+    ]
+)
 
 
 def get_characteristic_listing_keyboard() -> InlineKeyboardMarkup:
@@ -11,33 +20,9 @@ def get_characteristic_listing_keyboard() -> InlineKeyboardMarkup:
         inline_keyboard=[
             [
                 InlineKeyboardButton(
-                    text=ButtonText.EMOTIONAL_CHARACTERISTIC,
+                    text=ButtonText.TRAITS_CORE,
                     callback_data=GetCharacteristicCallback(
-                        characteristic_name=EmotionalProfileSchema.__name__
-                    ).pack()
-                ),
-            ],
-            [
-                InlineKeyboardButton(
-                    text=ButtonText.BEHAVIORAL_CHARACTERISTIC,
-                    callback_data=GetCharacteristicCallback(
-                        characteristic_name=BehavioralProfileSchema.__name__
-                    ).pack()
-                ),
-            ],
-            [
-                InlineKeyboardButton(
-                    text=ButtonText.SOCIAL_CHARACTERISTIC,
-                    callback_data=GetCharacteristicCallback(
-                        characteristic_name=SocialProfileSchema.__name__
-                    ).pack()
-                ),
-            ],
-            [
-                InlineKeyboardButton(
-                    text=ButtonText.COGNITIVE_CHARACTERISTIC,
-                    callback_data=GetCharacteristicCallback(
-                        characteristic_name=CognitiveProfileSchema.__name__
+                        characteristic_name="EmotionalProfileSchema"  # мб потом сделать чище
                     ).pack()
                 ),
             ],
@@ -45,3 +30,18 @@ def get_characteristic_listing_keyboard() -> InlineKeyboardMarkup:
     )
 
     return CHARACTERISTIC_LISTING_KEYBOARD
+
+
+def get_full_access_keyboard() -> InlineKeyboardMarkup:
+    GET_FULL_ACCESS_KEYBOARD: InlineKeyboardMarkup = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text=ButtonText.GET_FULL_ACCESS,
+                    callback_data=GetFullAccessCallback().pack()
+                )
+            ]
+        ]
+    )
+
+    return GET_FULL_ACCESS_KEYBOARD

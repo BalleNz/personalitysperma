@@ -22,12 +22,3 @@ async def get_user_service(
         repo: UserRepository = Depends(get_user_repository)
 ) -> UserService:
     return UserService(repo=repo)
-
-
-async def get_user_service_with_assistant(
-        repo: UserRepository = Depends(get_user_repository)
-) -> UserService:
-    """Для зависимостей, которые используют другие зависимости"""
-    return UserService(
-        repo=repo
-    )

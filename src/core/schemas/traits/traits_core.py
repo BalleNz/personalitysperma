@@ -304,12 +304,6 @@ class BehavioralProfileSchema(BaseModel):
     )
 
     # [ перфекционизм ]
-    need_for_order: Optional[float] = Field(
-        default=None,
-        ge=0.0,
-        le=1.0,
-        description="Нуждаемость в порядке"
-    )
     perfectionism: Optional[float] = Field(
         default=None,
         ge=0.0,

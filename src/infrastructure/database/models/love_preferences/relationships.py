@@ -52,7 +52,7 @@ class SexualPreference(IDMixin):
     # TODO: Sexual предпочтения таблица, libido value
     # sex_drive_type: Mapped[... | None] = Column(Enum(SexDriveTypeEnum))
 
-    user_id = mapped_column(UUID, ForeignKey('users.id'), nullable=False, unique=True)
+    user_id = mapped_column(UUID, ForeignKey('users.id'), nullable=False)
     user = relationship("User", back_populates="sexual_preference")
 
     libido: Mapped[float] = Column(Float, default=0.5)  # 0-1

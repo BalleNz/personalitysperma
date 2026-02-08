@@ -1,3 +1,4 @@
+import datetime
 import logging
 from typing import Type
 
@@ -5,9 +6,11 @@ import aiohttp
 from openai import AsyncOpenAI, NOT_GIVEN, NotGiven, APIError
 from pydantic import ValidationError
 
-from src.core.prompts import GET_PROMPT_BY_SCHEMA_TYPE
+from src.core.schemas.assistant_response import SummaryResponseSchema
 from src.api.response_schemas.generation import CheckInResponse
-from src.core.prompts.prompts import CHECK_IN
+from src.core.prompts import GET_PROMPT_BY_SCHEMA_TYPE
+from src.core.prompts.check_in_instructions import CHECK_IN
+from src.core.prompts.summarize_daily_logs import GET_SUMMARY_LOG_FROM_DAILY_LOGS
 from src.infrastructure.config.config import config
 from src.infrastructure.database.models.base import S
 
@@ -109,4 +112,17 @@ class AssistantService:
             messages_text,
             prompt=prompt,
             pydantic_model=pydantic_model
+        )
+
+    async def summarize_user_daily_logs(self, date_string: str, user_logs: str) -> SummaryResponseSchema:
+        """создает один рассказ из всех логов"""
+
+        prompt: str = GET_SUMMARY_LOG_FROM_DAILY_LOGS
+
+        pydantic_model: type[S] = SummaryResponseSchema
+
+        return await self.get_response(
+            input_query=user_logs,
+            pydantic_model=pydantic_model,
+            prompt=prompt
         )

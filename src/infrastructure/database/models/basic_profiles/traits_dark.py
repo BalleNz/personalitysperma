@@ -12,7 +12,7 @@ class DarkTriads(IDMixin, TimestampsMixin):
 
     __tablename__ = "user_dark_triads"
 
-    user_id: Mapped[UUID] = mapped_column(UUID, ForeignKey('users.id'), nullable=False, unique=True)
+    user_id: Mapped[UUID] = mapped_column(UUID, ForeignKey('users.id', ondelete="CASCADE"), nullable=False)
     user = relationship("User", back_populates="dark_triads")
 
     cynicism: Mapped[float | None] = mapped_column(Float, default=None)  # trust → distrust of others' motives

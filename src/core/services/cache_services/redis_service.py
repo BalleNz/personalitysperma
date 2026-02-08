@@ -57,8 +57,11 @@ class RedisService:
 
     async def get_user_profile(self, telegram_id: str) -> UserSchema | None:
         """Получение профиля юзера из кэша"""
-        redis_key = self._get_token_key(telegram_id)
-        return await self.redis.get(redis_key)
+        redis_key = self._get_user_profile_key(telegram_id)
+        cache_data = await self.redis.get(redis_key)
+        if cache_data:
+            return UserSchema.model_validate_json(cache_data)
+        return None
 
     # [ SETTERS ]
     async def set_access_token(

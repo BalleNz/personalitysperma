@@ -13,9 +13,8 @@ class AnxietyDisorders(IDMixin, TimestampsMixin):
 
     user_id = mapped_column(
         UUID,
-        ForeignKey('users.id'),
+        ForeignKey('users.id', ondelete="CASCADE"),
         nullable=False,
-        unique=True,
         comment="ID пользователя",
         index=True
     )

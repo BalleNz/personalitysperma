@@ -123,6 +123,7 @@ class CharacteristicService:
 
         if old_characteristic:
             # если старая была, нумерация продолжается
-            new_characteristic.records = old_characteristic.record + 1
+            new_characteristic.records = old_characteristic.records + 1
 
-        await self.repo.append_characteristic(user_id=user_id, characteristic=new_characteristic, telegram_id=telegram_id)
+        await self.repo.append_characteristic(user_id=user_id, characteristic=new_characteristic,
+                                              telegram_id=telegram_id)

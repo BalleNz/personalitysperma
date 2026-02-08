@@ -65,7 +65,7 @@ services:
     depends_on:
       - redis
       - db
-    command: arq drug_search.infrastructure.arq_config.WorkerSettings
+    command: arq infrastructure.config.arq_config.WorkerSettings
     restart: unless-stopped
 
   bot:
@@ -77,7 +77,7 @@ services:
       - DEBUG=false
     depends_on:
       - fastapi
-    command: python3 drug_search/bot/bot_app.py
+    command: python3 src/bot/bot_app.py
     restart: unless-stopped
 
 volumes:

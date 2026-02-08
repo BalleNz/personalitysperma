@@ -1,14 +1,29 @@
-import datetime
 import logging
 from typing import Optional, Any
 
 from src.api.response_schemas.characteristic import GetAllCharacteristicResponse
+from src.core.schemas.traits.traits_core import EmotionalProfileSchema, BehavioralProfileSchema, CognitiveProfileSchema, \
+    SocialProfileSchema
 from src.core.schemas.user_schemas import UserSchema, UserTelegramDataSchema
 from src.core.services.api_client.personalityGPT_api import PersonalityGPT_APIClient
 from src.core.services.cache_services.redis_service import RedisService
 from src.infrastructure.database.models.base import S
 
 logger = logging.getLogger(__name__)
+
+BASIC_CHARACTERISTICS = {
+    "SocialProfileSchema",
+    "CognitiveProfileSchema",
+    "EmotionalProfileSchema",
+    "BehavioralProfileSchema",
+}
+
+SCHEMA_CLS = {
+    "SocialProfileSchema": SocialProfileSchema,
+    "CognitiveProfileSchema": CognitiveProfileSchema,
+    "EmotionalProfileSchema": EmotionalProfileSchema,
+    "BehavioralProfileSchema": BehavioralProfileSchema,
+}
 
 
 class CacheService:
@@ -51,9 +66,7 @@ class CacheService:
         """Получение информации о юзере"""
         cache_data: Optional[UserSchema] = await self.redis_service.get_user_profile(telegram_id)
         if cache_data:
-            if cache_data.subscription_end and (
-                    not cache_data.subscription_end < datetime.datetime.now() and not cache_data.tokens_last_refresh < datetime.datetime.now()):
-                return cache_data
+            return cache_data
 
         fresh_data: UserSchema = await self.api_client.get_current_user(access_token)
 
@@ -107,9 +120,9 @@ class CacheService:
             self,
             access_token: str,
             telegram_id: str,
-            characteristic_type: type[S],
+            characteristic_type: type[S] | str,
             expiry: int = 86400 * 7
-    ) -> type[S] | None:
+    ) -> S | list[S] | None:
         """
         Получить одну конкретную характеристику.
         Использует get_all_characteristics внутри.
@@ -121,12 +134,22 @@ class CacheService:
             expiry=expiry
         )
 
-        type_name = characteristic_type.__name__
-        if type_name in all_chars:
-            try:
-                return characteristic_type.model_validate(all_chars[type_name])
-            except Exception as e:
-                logger.error(f"Ошибка валидации характеристики {type_name} для {telegram_id}: {e}")
-                return None
+        # [ если надо вернуть много схем ]
+        characteristics: list[S] = []
+        schema_names = []
+        match characteristic_type.__name__:
+            case "EmotionalProfileSchema":
+                schema_names = BASIC_CHARACTERISTICS
 
-        return None
+        if schema_names:
+            for schema_name in schema_names:
+                characteristics.append(
+                    SCHEMA_CLS[schema_name].model_validate(
+                        all_chars[schema_name]
+                    )
+                )
+            return characteristics
+
+        return characteristic_type.model_validate(
+            all_chars[characteristic_type.__name__]
+        )

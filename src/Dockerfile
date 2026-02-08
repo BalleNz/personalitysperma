@@ -2,7 +2,7 @@ FROM python:3.14-slim
 
 WORKDIR /src
 
-ENV PYTHONPATH=/src
+ENV PYTHONPATH=/
 
 RUN apt-get update && apt-get install -y \
     curl \

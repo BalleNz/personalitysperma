@@ -19,7 +19,7 @@ class UserHollandCodes(IDMixin, TimestampsMixin):
 
     __tablename__ = "user_holland_codes"
 
-    user_id: Mapped[UUID] = mapped_column(UUID, ForeignKey('users.id'), nullable=False, unique=True)
+    user_id: Mapped[UUID] = mapped_column(UUID, ForeignKey('users.id', ondelete="CASCADE"), nullable=False)
     user = relationship("User", back_populates="holland_codes")
 
     # Основные шесть шкал (0.0 — 1.0, где 1.0 = максимально выражено)
