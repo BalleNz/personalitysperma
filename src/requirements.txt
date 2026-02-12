@@ -114,6 +114,7 @@ pyjwt==2.10.1
     # via
     #   -r requirements.in
     #   redis
+pytz==2025.2
 pymed==0.8.9
     # via -r requirements.in
 pytest==9.0.2
@@ -138,6 +139,7 @@ starlette==0.50.0
     # via fastapi
 tqdm==4.67.1
     # via openai
+watchfiles==1.1.1
 typing-extensions==4.15.0
     # via
     #   aiogram

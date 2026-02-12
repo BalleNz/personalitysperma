@@ -1,13 +1,12 @@
 import json
 import logging
 from enum import Enum
-from typing import Optional, Sequence, Any
+from typing import Optional, Any
 
 from redis.asyncio import Redis
 
 from src.core.schemas.user_schemas import UserSchema
 from src.infrastructure.config.config import config
-from src.infrastructure.database.models.base import S
 
 logger = logging.getLogger(__name__)
 
@@ -40,9 +39,9 @@ class RedisService:
         Получить все характеристики одним словарем: {"SocialProfileSchema": {...}, ... }
         """
         redis_key = self._get_characteristics_key(telegram_id)
-        cached_json = await self.redis.get(redis_key)
+        cached_json: dict = await self.redis.get(redis_key)
 
-        if cached_json:
+        if cached_json is not None and cached_json.__len__() > 2:  # str format: {}
             try:
                 return json.loads(cached_json)
             except json.JSONDecodeError:

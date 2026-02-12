@@ -1,4 +1,4 @@
-from prompts.check_in_instructions import RECORDS_INSTRUCTION, MAIN_INSTRUCTION
+from src.core.prompts.check_in_instructions import RECORDS_INSTRUCTION, MAIN_INSTRUCTION
 
 GET_HUMOR_PROFILE: str = f"""
 Ты – профессиональный клинический психолог, который углубленно знает механизмы определения юмора.
@@ -10,7 +10,7 @@ GET_HUMOR_PROFILE: str = f"""
 2. На вход может (не обязательно) подаваться актуальная характеристика пользователя
 
 Пример входных данных (если запись первая, то будет одно единственное поле: "user_speech"):
-{
+{{
     "dominant_style": <...>,
     "affiliative_humor": <...>,
     "self_enhancing_humor": <...>,
@@ -31,7 +31,7 @@ GET_HUMOR_PROFILE: str = f"""
     "humor_in_social": <...>,
     "records": "4",
     "user_speech": <разговор пользователя>
-}
+}}
 
 ОЧЕНЬ СТРОГО: ПОЯСНЕНИЕ К ПОЛЯМ:
 - affiliative_humor: Дружеский, групповой юмор для укрепления социальных связей (0 = редко использует, 1 = часто использует).
@@ -55,8 +55,8 @@ GET_HUMOR_PROFILE: str = f"""
 
 {MAIN_INSTRUCTION}
 
-Пример выходных данных:
-{
+Пример выходных данных JSON:
+{{
     "dominant_style": <...>,
     "affiliative_humor": <...>,
     "self_enhancing_humor": <...>,
@@ -76,6 +76,6 @@ GET_HUMOR_PROFILE: str = f"""
     "humor_in_stress": <...>,
     "humor_in_social": <...>,
     "records": "5"
-}
+}}
 
 """

@@ -55,17 +55,18 @@ services:
 
   arq_worker:
     build: .
-    container_name: background-worker
+    container_name: worker
     env_file:
       - .env
     environment:
+      - DATABASE_URL=${DATABASE_URL_containers}
       - DEBUG=false
       - PYTHONUNBUFFERED=1
       - LOG_LEVEL=INFO
     depends_on:
       - redis
       - db
-    command: arq infrastructure.config.arq_config.WorkerSettings
+    command: arq infrastructure.config.arq_config.WorkerSettings --watch core/task_logic
     restart: unless-stopped
 
   bot:

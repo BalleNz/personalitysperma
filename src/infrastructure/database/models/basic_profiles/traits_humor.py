@@ -1,6 +1,8 @@
 from typing import Type
 
 from sqlalchemy import Float, ForeignKey, UUID, Integer
+from sqlalchemy import String
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.core.schemas.traits.traits_humor import HumorProfileSchema
@@ -69,6 +71,12 @@ class HumorProfile(IDMixin, TimestampsMixin):
         Float,
         default=None,
         comment="процент точности"
+    )
+
+    dominant_humor: Mapped[list[str] | None] = mapped_column(
+        ARRAY(String),
+        nullable=True,
+        default=None,
     )
 
     @property

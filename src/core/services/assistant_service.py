@@ -1,16 +1,16 @@
-import datetime
+import json
 import logging
-from typing import Type
+from typing import Type, Any
 
 import aiohttp
 from openai import AsyncOpenAI, NOT_GIVEN, NotGiven, APIError
 from pydantic import ValidationError
 
-from src.core.schemas.assistant_response import SummaryResponseSchema
 from src.api.response_schemas.generation import CheckInResponse
 from src.core.prompts import GET_PROMPT_BY_SCHEMA_TYPE
 from src.core.prompts.check_in_instructions import CHECK_IN
 from src.core.prompts.summarize_daily_logs import GET_SUMMARY_LOG_FROM_DAILY_LOGS
+from src.core.schemas.assistant_response import SummaryResponseSchema
 from src.infrastructure.config.config import config
 from src.infrastructure.database.models.base import S
 
@@ -46,7 +46,7 @@ class AssistantService:
                         return
 
                     logger.error(f"На балансе недостаточно денег: {balance_now} < {config.MINIMUM_USD_ON_BALANCE}")
-                    raise APIError("На балансе DeepseekAPI недостаточно денег!")
+                    raise APIError(message="На балансе DeepseekAPI недостаточно денег!")
 
         except aiohttp.ClientError as e:
             logger.error(f"Ошибка при проверке баланса: {e}")
@@ -94,12 +94,25 @@ class AssistantService:
             logger.error(f"Error in get_response: {ex}")
             raise
 
-    async def get_check_in_response(self, user_message: str) -> CheckInResponse:
+    async def get_check_in_response(
+            self,
+            user_message: str,
+            user_characteristics: dict[str, dict[str, Any]] | None = None,
+    ) -> CheckInResponse:
         """получить check in"""
+        profile_text = ""
+        if user_characteristics:
+            profile_text = "\n\nТекущий профиль пользователя:\n" + \
+                           json.dumps(user_characteristics, ensure_ascii=False, indent=2)
+
+        full_prompt: str = CHECK_IN + profile_text
+
         return await self.get_response(
-            user_message,
-            prompt=CHECK_IN,
-            pydantic_model=CheckInResponse
+            input_query=user_message,
+            prompt=full_prompt,
+            pydantic_model=CheckInResponse,
+            temperature=0.4,  # чуть выше, чтобы был живой стиль
+            max_tokens=600,
         )
 
     async def generate_characteristic(self, characteristic_type: type[S], messages_text: str):

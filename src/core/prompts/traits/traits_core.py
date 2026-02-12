@@ -39,7 +39,7 @@ GET_SOCIAL_PROFILE: str = f"""
 
 {MAIN_INSTRUCTION}
 
-Пример выходных данных:
+Пример выходных данных JSON:
 {{
     "locus_control": <...>,
     "independence": <...>,
@@ -91,7 +91,7 @@ GET_COGNITIVE_PROFILE: str = f"""
 
 {MAIN_INSTRUCTION}
 
-Пример выходных данных:
+Пример выходных данных JSON:
 {{
     "reflectiveness": <...>,
     "intuitiveness": <...>,
@@ -141,7 +141,7 @@ GET_EMOTIONAL_PROFILE: str = f"""
 
 {MAIN_INSTRUCTION}
 
-Пример выходных данных:
+Пример выходных данных JSON:
 {{
     "optimism": <...>,
     "self_esteem": <...>,
@@ -193,7 +193,7 @@ GET_BEHAVIORAL_PROFILE: str = f"""
 
 {MAIN_INSTRUCTION}
 
-Пример выходных данных:
+Пример выходных данных JSON:
 {{
     "patience": <...>,
     "stress_tolerance": <...>,

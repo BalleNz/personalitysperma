@@ -2,7 +2,7 @@ import logging
 from typing import Optional, Any
 
 from src.api.response_schemas.characteristic import GetAllCharacteristicResponse
-from src.core.schemas.traits.traits_core import EmotionalProfileSchema, BehavioralProfileSchema, CognitiveProfileSchema, \
+from src.core.schemas.traits.traits_basic import EmotionalProfileSchema, BehavioralProfileSchema, CognitiveProfileSchema, \
     SocialProfileSchema
 from src.core.schemas.user_schemas import UserSchema, UserTelegramDataSchema
 from src.core.services.api_client.personalityGPT_api import PersonalityGPT_APIClient
@@ -11,14 +11,17 @@ from src.infrastructure.database.models.base import S
 
 logger = logging.getLogger(__name__)
 
-BASIC_CHARACTERISTICS = {
-    "SocialProfileSchema",
-    "CognitiveProfileSchema",
-    "EmotionalProfileSchema",
-    "BehavioralProfileSchema",
+GROUP_REGISTRY: dict[str, list[type[S]]] = {
+    "basic": [
+        SocialProfileSchema,
+        CognitiveProfileSchema,
+        EmotionalProfileSchema,
+        BehavioralProfileSchema,
+    ],
+    # ...
 }
 
-SCHEMA_CLS = {
+SCHEMA_REGISTRY = {
     "SocialProfileSchema": SocialProfileSchema,
     "CognitiveProfileSchema": CognitiveProfileSchema,
     "EmotionalProfileSchema": EmotionalProfileSchema,
@@ -120,36 +123,40 @@ class CacheService:
             self,
             access_token: str,
             telegram_id: str,
-            characteristic_type: type[S] | str,
+            characteristic_type: str,
+            group: str | None = None,
             expiry: int = 86400 * 7
     ) -> S | list[S] | None:
         """
         Получить одну конкретную характеристику.
         Использует get_all_characteristics внутри.
         """
-        logger.info(f"Получение профиля типа {characteristic_type.__name__} для {telegram_id}")
-        all_chars = await self.get_all_characteristics(
-            access_token=access_token,
-            telegram_id=telegram_id,
-            expiry=expiry
+        logger.info(f"Получение профиля типа {characteristic_type} для {telegram_id}")
+        all_chars = await self.get_all_characteristics(access_token, telegram_id, expiry)
+
+        if group:
+            schemas = GROUP_REGISTRY.get(group, [])
+            if not schemas:
+                raise ValueError(f"Unknown group: {group}")
+            result = []
+            for sch_cls in schemas:
+                raw = all_chars.get(sch_cls.__name__)
+                if raw:
+                    result.append(sch_cls.model_validate(raw))
+            return result if result else None
+
+        # [ одна характеристика ]
+        type_name = (
+            characteristic_type.__name__
+            if isinstance(characteristic_type, type)
+            else characteristic_type
         )
+        raw = all_chars.get(type_name)
+        if not raw:
+            return None
 
-        # [ если надо вернуть много схем ]
-        characteristics: list[S] = []
-        schema_names = []
-        match characteristic_type.__name__:
-            case "EmotionalProfileSchema":
-                schema_names = BASIC_CHARACTERISTICS
+        cls = SCHEMA_REGISTRY.get(type_name)
+        if not cls:
+            raise ValueError(f"Unknown schema: {type_name}")
 
-        if schema_names:
-            for schema_name in schema_names:
-                characteristics.append(
-                    SCHEMA_CLS[schema_name].model_validate(
-                        all_chars[schema_name]
-                    )
-                )
-            return characteristics
-
-        return characteristic_type.model_validate(
-            all_chars[characteristic_type.__name__]
-        )
+        return cls.model_validate(raw)

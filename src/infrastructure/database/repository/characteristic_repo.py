@@ -14,13 +14,14 @@ from src.core.schemas.clinical_disorders.personality_disorders import Personalit
 from src.core.schemas.personality_types.hexaco import UserHexacoSchema
 from src.core.schemas.personality_types.holland_codes import UserHollandCodesSchema
 from src.core.schemas.personality_types.socionics_type import UserSocionicsSchema
-from src.core.schemas.traits.traits_core import CognitiveProfileSchema, EmotionalProfileSchema, BehavioralProfileSchema, \
+from src.core.schemas.traits.traits_basic import CognitiveProfileSchema, EmotionalProfileSchema, \
+    BehavioralProfileSchema, \
     SocialProfileSchema
 from src.core.schemas.traits.traits_dark import DarkTriadsSchema
 from src.core.schemas.traits.traits_humor import HumorProfileSchema
 from src.core.services.cache_services.cache_service import CacheService
 from src.infrastructure.database.models.base import M, S
-from src.infrastructure.database.models.basic_profiles.traits_core import (
+from src.infrastructure.database.models.basic_profiles.traits_basic import (
     CognitiveProfile, EmotionalProfile, BehavioralProfile,
     SocialProfile
 )
@@ -47,10 +48,10 @@ class CharacteristicFormat(Generic[S, M]):
         return CHARACTERISTIC_SCHEMAS_TO_MODELS[schema_type]
 
     @staticmethod
-    def get_schema_type_from_schema_name(schema_name: str) -> type[S] | None:
-        for schema in CHARACTERISTIC_SCHEMAS_TO_MODELS.keys():
-            if schema_name == schema.__name__:
-                return schema
+    def get_cls_from_schema_name(schema_name: str) -> type[S] | None:
+        for cls in CHARACTERISTIC_SCHEMAS_TO_MODELS.keys():
+            if schema_name == cls.__name__:
+                return cls
         return None
 
 
@@ -152,7 +153,7 @@ class CharacteristicRepository:
         """
         Добавление новой характеристики юзера
         """
-        char_data = characteristic.model_dump(exclude={"created_at", "updated_at"})  # даты на стороне БД
+        char_data = characteristic.model_dump(exclude={"created_at", "updated_at", "GROUP"})  # даты на стороне БД
         char_data["user_id"] = user_id
 
         model_class: type[M] = CHARACTERISTIC_SCHEMAS_TO_MODELS.get(type(characteristic))

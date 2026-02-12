@@ -1,8 +1,7 @@
 import datetime
 import logging
 import math
-from dataclasses import fields
-from typing import Optional, Any
+from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -16,7 +15,7 @@ from src.core.schemas.clinical_disorders.personality_disorders import Personalit
 from src.core.schemas.personality_types.hexaco import UserHexacoSchema
 from src.core.schemas.personality_types.holland_codes import UserHollandCodesSchema
 from src.core.schemas.personality_types.socionics_type import UserSocionicsSchema
-from src.core.schemas.traits.traits_core import (
+from src.core.schemas.traits.traits_basic import (
     SocialProfileSchema,
     CognitiveProfileSchema,
     EmotionalProfileSchema,
@@ -144,7 +143,7 @@ class PersonalityMessageFormatter:
         last_update_text = get_date_word_from_iso(last_update)
 
         return MessageText.CHARACTERISTIC_LISTING.format(
-            characteristic_name=ButtonText.TRAITS_CORE,
+            characteristic_name=ButtonText.TRAITS_BASIC,
             characteristic=all_text,
             accuracy_percent=math.ceil(accuracy_percent * 100),
             last_update=last_update_text
@@ -255,7 +254,7 @@ class PersonalityMessageFormatter:
         if full_access:
             fields = (
                 f"<b>— Решительность:</b> {math.ceil(100 * schema.decisiveness)}%" if schema.decisiveness is not None else "",
-                f"<b>— Устойчивость к стрессу:</b> {math.ceil(100 * schema.stress_tolerance)}%" if schema.stress_tolerance is not None else "",
+                f"<b>— Стрессоустойчивость:</b> {math.ceil(100 * schema.stress_tolerance)}%" if schema.stress_tolerance is not None else "",
                 f"<b>— Терпение:</b> {math.ceil(100 * schema.patience)}%" if schema.patience is not None else "",
                 f"<b>— Амбициозность:</b> {math.ceil(100 * schema.ambition)}%" if schema.ambition is not None else "",
                 f"<b>— Склонность к риску:</b> {math.ceil(100 * schema.risk_taking)}%" if schema.risk_taking is not None else "",
@@ -265,7 +264,7 @@ class PersonalityMessageFormatter:
         else:
             fields = (
                 f"<b>— Решительность:</b> {math.ceil(100 * schema.decisiveness)}%" if schema.decisiveness is not None else "",
-                f"<b>— Устойчивость к стрессу:</b> {math.ceil(100 * schema.stress_tolerance)}%" if schema.stress_tolerance is not None else "",
+                f"<b>— Стрессоустойчивость:</b> {math.ceil(100 * schema.stress_tolerance)}%" if schema.stress_tolerance is not None else "",
                 f"<b>— ...</b>",
                 f"<i>для просмотра ещё 5 полей необходим полный доступ</i>"
             )
@@ -357,7 +356,7 @@ class PersonalityMessageFormatter:
 
         @staticmethod
         def get_characteristic_text_by_schema(
-                schema_type: str,
+                formatter_name: str,
                 # ... accesses for profiles
         ):
             # [ base ]
@@ -375,8 +374,8 @@ class PersonalityMessageFormatter:
             # MOOD_DISORDERS = PersonalityMessageFormatter.format_mood_disorders
             # ...
 
-            match schema_type:
-                case "EmotionalProfileSchema":
+            match formatter_name:
+                case "basic":
                     return TRAITS_CORE
                 case DarkTriadsSchema.__name__:
                     return DARK_TRIADS

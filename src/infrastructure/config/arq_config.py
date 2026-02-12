@@ -1,24 +1,30 @@
 import logging
+from typing import cast
 
 from arq.connections import RedisSettings
-from arq.cron import CronJob
+from arq.cron import cron
+from arq.typing import WorkerCoroutine
 
+from src.core.task_logic.tasks.summarize_daily_logs import summarize_daily_logs
 from src.infrastructure.config.config import config
 from src.infrastructure.config.loggerConfig import configure_logging
-from src.core.task_logic.tasks import summarize_daily_logs
+
 
 class WorkerSettings:
     # Функции которые может выполнять worker
     functions = [
+        summarize_daily_logs
     ]
 
     cron_jobs = [
-        CronJob()
-        {
-            "func": summarize_daily_logs,
-            "cron": "52 23 * * *",  # каждый день в 23:59
-            "kwargs": {},
-        }
+        cron(
+            cast(WorkerCoroutine, summarize_daily_logs),
+            minute=55,
+            hour=20,  # 23:55 (важно для datetime) MSK каждый день
+            # unique=True,              # если нужно избегать дубликатов
+            # timeout=600,              # можно переопределить глобальный
+            # max_tries=3,
+        )
     ]
 
     # Настройки Redis

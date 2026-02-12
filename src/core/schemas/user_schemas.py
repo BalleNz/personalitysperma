@@ -4,6 +4,7 @@ from uuid import UUID
 
 from pydantic import Field, BaseModel
 
+from src.core.schemas.diary_schema import DiarySchema
 from src.core.schemas.clinical_disorders.anxiety_disorders import AnxietyDisordersSchema
 from src.core.schemas.clinical_disorders.clinical_profile import ClinicalProfileSchema
 from src.core.schemas.clinical_disorders.mood_disorders import MoodDisordersSchema
@@ -12,7 +13,7 @@ from src.core.schemas.clinical_disorders.personality_disorders import Personalit
 from src.core.schemas.personality_types.hexaco import UserHexacoSchema
 from src.core.schemas.personality_types.holland_codes import UserHollandCodesSchema
 from src.core.schemas.personality_types.socionics_type import UserSocionicsSchema
-from src.core.schemas.traits.traits_core import BehavioralProfileSchema, EmotionalProfileSchema, CognitiveProfileSchema, \
+from src.core.schemas.traits.traits_basic import BehavioralProfileSchema, EmotionalProfileSchema, CognitiveProfileSchema, \
     SocialProfileSchema
 from src.core.schemas.traits.traits_dark import DarkTriadsSchema
 from src.core.schemas.traits.traits_humor import HumorProfileSchema
@@ -49,6 +50,9 @@ class UserSchema(BaseModel):
 
     created_at: datetime | None = Field(None)
     updated_at: datetime | None = Field(None)
+
+    # [ diary ]
+    diary: list[DiarySchema] | None = None
 
     # [ traits core ]
     social_profile: Optional[SocialProfileSchema] = None

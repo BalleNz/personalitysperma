@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, Any
 
 from aiogram import Router, F
 from aiogram.types import Message, InlineKeyboardMarkup, CallbackQuery
@@ -9,7 +9,6 @@ from src.bot.lexicon.button_text import ButtonText
 from src.bot.lexicon.message_text import MessageText
 from src.bot.utils.message_formatters import PersonalityMessageFormatter
 from src.core.schemas.user_schemas import UserSchema
-from src.core.services.api_client.personalityGPT_api import PersonalityGPT_APIClient
 from src.core.services.cache_services.cache_service import CacheService
 from src.infrastructure.database.models.base import S
 from src.infrastructure.database.repository.characteristic_repo import CharacteristicFormat
@@ -18,9 +17,12 @@ router = Router()
 
 
 async def show_listing(
-        message: Message | CallbackQuery
+        message: Message | CallbackQuery,
+        user_characteristics: dict[str, dict[str, Any]]
 ):
-    keyboard: InlineKeyboardMarkup = get_characteristic_listing_keyboard()
+    keyboard: InlineKeyboardMarkup = get_characteristic_listing_keyboard(
+        user_characteristics
+    )
 
     if type(message) == Message:
         await message.reply(
@@ -36,22 +38,41 @@ async def show_listing(
 
 @router.callback_query(BackToListingCallback.filter())
 async def back(
-        callback_query: CallbackQuery
+        callback_query: CallbackQuery,
+        cache_service: CacheService,
+        access_token: str
 ):
+    """Открывает меню с листингом характеристик"""
+
+    user_characteristics: dict[str, dict[str, Any]] = await cache_service.get_all_characteristics(
+        access_token,
+        str(callback_query.message.from_user.id)
+    )
+
     await callback_query.answer()
 
     await show_listing(
-        callback_query
+        callback_query,
+        user_characteristics
     )
 
 
 @router.message(F.text == ButtonText.CHARACTETISTIC_LISTING)
 async def characteristic_listing_menu(
-        message: Message
+        message: Message,
+        cache_service: CacheService,
+        access_token: str
 ):
-    """Открывает меню с inline листингом характеристик"""
+    """Открывает меню с листингом характеристик"""
+
+    user_characteristics: dict[str, dict[str, Any]] = await cache_service.get_all_characteristics(
+        access_token,
+        str(message.from_user.id)
+    )
+
     await show_listing(
-        message
+        message,
+        user_characteristics
     )
 
 
@@ -63,24 +84,29 @@ async def show_characteristic(
         cache_service: CacheService
 ):
     telegram_id: str = str(callback.from_user.id)
-    characteristic_name: str = callback_data.characteristic_name
-    characteristic_type: type[S] = CharacteristicFormat.get_schema_type_from_schema_name(characteristic_name)
+
+    characteristic_name: str | None = callback_data.characteristic_name
+    characteristic_type: type[S] = CharacteristicFormat.get_cls_from_schema_name(characteristic_name)
+
+    # [ if group ]
+    characteristic_group: str | None = callback_data.characteristic_group
 
     user: UserSchema = await cache_service.get_user_profile(access_token, telegram_id)
 
     characteristic: S | list[S] = await cache_service.get_characteristic(
         access_token=access_token,
         telegram_id=telegram_id,
-        characteristic_type=characteristic_type
+        characteristic_type=characteristic_type,
+        group=characteristic_group
     )
 
     characteristic_formatter: Callable[[S], str] = (
         PersonalityMessageFormatter.characteristic_formatter.get_characteristic_text_by_schema(
-            schema_type=characteristic_type.__name__
+            formatter_name=characteristic_group or characteristic_type.__name__
         )
     )
 
-    text = characteristic_formatter(characteristic, user.full_access)
+    text = characteristic_formatter(characteristic, user.full_access)  # сделать чище
 
     keyboard = back_from_listing_keyboard
 

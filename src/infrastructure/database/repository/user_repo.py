@@ -2,6 +2,7 @@ import datetime
 import logging
 import uuid
 from collections import defaultdict
+
 import pytz
 from sqlalchemy import select, update, func, text
 from sqlalchemy.dialects.postgresql import insert
@@ -42,32 +43,8 @@ class UserRepository(BaseRepository):
                 User.id == user_id
             )
             .options(
-                # core traits
-                selectinload(User.social_profile),
-                selectinload(User.cognitive_profile),
-                selectinload(User.emotional_profile),
-                selectinload(User.behavioral_profile),
-
-                # Юмор, тёмная триада
-                selectinload(User.humor_profile),
-                selectinload(User.dark_triads),
-
-                # HEXACO, Соционика, Holland
-                selectinload(User.hexaco),
-                selectinload(User.socionics),
-                selectinload(User.holland_codes),
-
-                # Клинические / патологические профили
-                selectinload(User.personality_disorders),
-                selectinload(User.anxiety_disorders),
-                selectinload(User.mood_disorders),
-                selectinload(User.clinical_profile),
-                selectinload(User.neuro_disorders),
-
-                # Отношения / любовь / сексуальность
-                # selectinload(User.relationship_preference),
-                # selectinload(User.love_language),
-                # selectinload(User.sexual_preference)
+                # [ diary ]
+                selectinload(User.diary),
             )
         )
         result = await self.session.execute(stmt)
@@ -176,6 +153,48 @@ class UserRepository(BaseRepository):
         except Exception as e:
             await self.session.rollback()
             logger.error(f"Ошибка создания лога: {e}")
+            raise
+
+    async def bulk_create_diary_records(self, records: list[tuple[uuid.UUID, str]]) -> int:
+        """
+        Массово создаёт записи в дневник (user_diary).
+
+        Args:
+            records: список кортежей (user_id: UUID, text: str)
+
+        Returns:
+            int: количество успешно вставленных записей
+        """
+        if not records:
+            logger.info("Нет записей для массового создания в дневник")
+            return 0
+
+        data = [
+            {
+                "id": str(uuid.uuid4()),
+                "user_id": str(user_id),
+                "text": text_content
+            }
+            for user_id, text_content in records
+        ]
+
+        # Используем text() + executemany-style
+        stmt = text("""
+                INSERT INTO user_diary (id, user_id, text)
+                VALUES (:id, :user_id, :text)
+                ON CONFLICT (user_id) DO NOTHING
+            """)
+
+        try:
+            # Важно: execute со списком словарей → SQLAlchemy сам сделает executemany
+            result = await self.session.execute(stmt, data)
+            await self.session.commit()
+            count = result.rowcount
+            logger.info(f"Вставлено {count} записей")
+            return count
+        except Exception as e:
+            await self.session.rollback()
+            logger.error("Bulk insert failed", exc_info=True)
             raise
 
     def __del__(self):

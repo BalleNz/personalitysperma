@@ -7,6 +7,7 @@ from uuid import UUID
 
 import aiohttp
 from pydantic import BaseModel
+from aiohttp import TCPConnector
 
 from src.infrastructure.config.config import config
 
@@ -27,8 +28,14 @@ class BaseHttpClient:
 
     async def _ensure_session(self):
         if self._session is None:
+            connector = TCPConnector(
+                force_close=True,           # ← главное изменение
+                enable_cleanup_closed=True, # помогает при частых обрывах
+                limit=100                   # можно уменьшить при необходимости
+            )
             self._session = aiohttp.ClientSession(
                 base_url=self.base_url,
+                connector=connector,
             )
 
     async def close(self):

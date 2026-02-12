@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field, computed_field
 class SocialProfileSchema(BaseModel):
     """Схема социального профиля"""
     model_config = ConfigDict(from_attributes=True)
+    GROUP: str = "basic"
 
     id: Optional[UUID] = Field(default_factory=uuid4)
     user_id: Optional[UUID] = None
@@ -101,6 +102,7 @@ class SocialProfileSchema(BaseModel):
 class CognitiveProfileSchema(BaseModel):
     """Схема когнитивного профиля"""
     model_config = ConfigDict(from_attributes=True)
+    GROUP: str = "basic"
 
     id: Optional[UUID] = Field(default_factory=uuid4)
     user_id: Optional[UUID] = None
@@ -184,6 +186,7 @@ class CognitiveProfileSchema(BaseModel):
 class EmotionalProfileSchema(BaseModel):
     """Схема эмоционального профиля"""
     model_config = ConfigDict(from_attributes=True)
+    GROUP: str = "basic"
 
     id: Optional[UUID] = Field(default_factory=uuid4)
     user_id: Optional[UUID] = None
@@ -265,6 +268,7 @@ class EmotionalProfileSchema(BaseModel):
 class BehavioralProfileSchema(BaseModel):
     """Схема поведенческого профиля"""
     model_config = ConfigDict(from_attributes=True)
+    GROUP: str = "basic"
 
     id: Optional[UUID] = Field(default_factory=uuid4)
     user_id: Optional[UUID] = None

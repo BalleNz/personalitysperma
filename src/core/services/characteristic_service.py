@@ -1,6 +1,6 @@
 import logging
 import uuid
-from typing import Type, Sequence
+from typing import Type, Sequence, Any
 
 from src.api.response_schemas.generation import CheckInResponse
 from src.core.consts import MIN_CHARS_LENGTH_TO_GENERATE
@@ -25,13 +25,17 @@ class CharacteristicService:
 
     async def check_in(
             self,
-            message_text: str
+            message_text: str,
+            user_characteristics: dict[str, dict[str, Any]] | None = None,
     ) -> CheckInResponse:
-        """CHECK IN"""
-        assistant_response: CheckInResponse = await self.assistant_service.get_check_in_response(
-            user_message=message_text
-        )
+        """check in
 
+        ответы с учетом текущих профилей пользователя (5 самых важных)
+        """
+        assistant_response: CheckInResponse = await self.assistant_service.get_check_in_response(
+            user_message=message_text,
+            user_characteristics=user_characteristics or {},  # передаём профиль
+        )
         return assistant_response
 
     async def should_generate_characteristic(
@@ -104,7 +108,7 @@ class CharacteristicService:
         Генерирует и сохраняет характеристику с учетом прошлой (если она есть.)
         """
         old_characteristic: S | None = await self.repo.cache_service.get_characteristic(
-            characteristic_type=characteristic_type,
+            characteristic_type=characteristic_type.__name__,
             access_token=access_token,
             telegram_id=telegram_id
         )

@@ -27,8 +27,8 @@ async def increase_used_voices(
         user_service: Annotated[UserService, Depends(get_user_service)],
         redis_service: Annotated[RedisService, Depends(get_redis_service)],
 ):
-    """Увеличисает количество используемых голосовых на 1 и инвалидирует кэш"""
-    if not user.full_access and user.used_voice_messages < consts.FREE_VOICE_MESSAGES_COUNT:
+    """Увеличивает количество используемых голосовых на 1 и инвалидирует кэш"""
+    if not user.full_access and user.used_voice_messages > consts.FREE_VOICE_MESSAGES_COUNT:
         raise HTTPException(
             status_code=status.HTTP_402_PAYMENT_REQUIRED,
             detail="Лимит голосовых кончился"
