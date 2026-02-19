@@ -9,10 +9,11 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from src.infrastructure.database.models.diary import UserDiary
-from src.core.schemas.diary_schema import DiarySchema
+from enums.user import GENDER
 from src.core.enums.user import TALKING_MODES
+from src.core.schemas.diary_schema import DiarySchema
 from src.core.schemas.user_schemas import UserSchema, UserTelegramDataSchema
+from src.infrastructure.database.models.diary import UserDiary
 from src.infrastructure.database.models.logs import UserLog
 from src.infrastructure.database.models.user import User
 from src.infrastructure.database.repository.base_repo import BaseRepository
@@ -112,7 +113,7 @@ class UserRepository(BaseRepository):
             self,
             date_filter: datetime.date,
             max_logs_per_user: int,
-            max_chars: int = 500
+            max_chars: int
     ) -> dict[uuid.UUID, list[tuple[str, str]]]:
         """
         Получение всех логов активных за сегодня юзеров
@@ -214,6 +215,29 @@ class UserRepository(BaseRepository):
         except Exception as e:
             await self.session.rollback()
             logger.error("Bulk insert failed", exc_info=True)
+            raise
+
+    async def change_gender(
+            self,
+            user_id: uuid.UUID,
+            gender: GENDER
+    ) -> None:
+        stmt = (
+            update(User)
+            .where(User.id == user_id)
+            .values(gender=gender.value)
+            .returning(User.id)
+        )
+
+        try:
+            await self.session.execute(stmt)
+
+            await self.session.commit()
+            logger.info(f"Гендер пользователя {user_id} изменён на {gender.value}")
+
+        except Exception as e:
+            await self.session.rollback()
+            logger.error(f"Ошибка при смене gender для пользователя {user_id}: {e}", exc_info=True)
             raise
 
     async def change_talking_mode(

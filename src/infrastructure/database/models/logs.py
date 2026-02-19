@@ -13,7 +13,7 @@ class CharacteristicBatchLog(IDMixin, TimestampsMixin):
 
     user_id: Mapped[UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("users.id"),
+        ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
         index=True
     )
@@ -49,7 +49,7 @@ class UserLog(IDMixin, TimestampsMixin):
 
     user_id: Mapped[UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("users.id"),
+        ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
         index=True
     )

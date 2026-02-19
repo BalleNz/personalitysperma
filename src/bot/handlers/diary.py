@@ -3,6 +3,7 @@ import logging
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery
 
+from schemas.user_schemas import UserSchema
 from src.bot.callbacks.callbacks import DiaryPaginationCallback, DiaryGetCallback
 from src.bot.keyboards.inline import get_diary_listing_keyboard, get_diary_entry_keyboard
 from src.bot.lexicon.button_text import ButtonText
@@ -116,11 +117,13 @@ async def show_diaries(
     else:
         user_id = str(message.message.from_user.id)
 
+    user: UserSchema = await cache_service.get_user_profile(user_id, access_token)
+
     diaries = await cache_service.get_diary(
         access_token,
         user_id
     )
-    text: str = MessageText.DIARY_LISTING
+    text: str = MessageText.get_diary_listing_text(user.gender)
 
     keyboard = get_diary_listing_keyboard(
         diaries=diaries,

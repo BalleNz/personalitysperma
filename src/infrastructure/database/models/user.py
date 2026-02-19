@@ -3,7 +3,7 @@ from typing import Type
 from sqlalchemy import String, Integer, Boolean, text, Enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.core.enums.user import TALKING_MODES
+from src.core.enums.user import TALKING_MODES, GENDER
 from src.core.schemas.user_schemas import UserSchema
 from src.infrastructure.database.models.base import IDMixin, TimestampsMixin, S
 from src.infrastructure.database.models.basic_profiles.traits_basic import SocialProfile, BehavioralProfile, \
@@ -24,6 +24,12 @@ from src.infrastructure.database.models.personality_types.socionics import UserS
 TALKING_MODES_SQL = Enum(
     TALKING_MODES,
     name="talking_modes",
+    values_callable=lambda obj: [e.value for e in obj]
+)
+
+GENDER_SQL = Enum(
+    GENDER,
+    name="gender",
     values_callable=lambda obj: [e.value for e in obj]
 )
 
@@ -87,12 +93,15 @@ class User(IDMixin, TimestampsMixin):
         comment="романтические предпочтения доступ"
     )
 
-    # [ base info ]
+    # [ INFO ]
+    gender: Mapped[str] = mapped_column(
+        GENDER_SQL,
+        comment="gender",
+        server_default=GENDER.MALE.value
+    )
     age: Mapped[int | None] = mapped_column(Integer, comment="возраст (предугадывает нейронка)")
 
-    # [ RELATIONSHIPS ]
-
-    # [ diary ]
+    # [ DIARY ]
     diary: Mapped["UserDiary | None"] = relationship(
         UserDiary, back_populates="user", uselist=True,
         cascade="all, delete-orphan",

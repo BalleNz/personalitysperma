@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 33295b103050
+Revision ID: cdf0161e7777
 Revises: 
-Create Date: 2026-02-13 14:48:50.006958
+Create Date: 2026-02-20 02:23:17.345965
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = '33295b103050'
+revision = 'cdf0161e7777'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -23,13 +23,14 @@ def upgrade():
     sa.Column('username', sa.String(), nullable=False, comment='username'),
     sa.Column('first_name', sa.String(), nullable=True, comment='first name'),
     sa.Column('last_name', sa.String(), nullable=True, comment='last name'),
-    sa.Column('talk_mode', sa.Enum('research', 'psycho', name='talking_modes'), server_default='psycho', nullable=False, comment='режим общения'),
+    sa.Column('talk_mode', sa.Enum('research', 'psycho', name='talking_modes'), server_default='research', nullable=False, comment='режим общения'),
     sa.Column('used_voice_messages', sa.Integer(), server_default='0', nullable=False, comment='использовано голосовых сообщений'),
     sa.Column('full_access', sa.Boolean(), server_default=sa.text('false'), nullable=False, comment='полный доступ: безлимит гс, базовая характеристика'),
     sa.Column('dark_triads_full', sa.Boolean(), server_default=sa.text('false'), nullable=False, comment='тёмная триада'),
     sa.Column('humor_access', sa.Boolean(), server_default=sa.text('false'), nullable=False, comment='базовая характеристика доступ'),
     sa.Column('clinical_access', sa.Boolean(), server_default=sa.text('false'), nullable=False, comment='клиническая характеристика доступ'),
     sa.Column('love_access', sa.Boolean(), server_default=sa.text('false'), nullable=False, comment='романтические предпочтения доступ'),
+    sa.Column('gender', sa.Enum('male', 'girl', 'neutral', name='gender'), server_default='male', nullable=False, comment='gender'),
     sa.Column('age', sa.Integer(), nullable=True, comment='возраст (предугадывает нейронка)'),
     sa.Column('id', sa.UUID(), server_default=sa.text('gen_random_uuid()'), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
@@ -88,7 +89,7 @@ def upgrade():
     sa.Column('id', sa.UUID(), server_default=sa.text('gen_random_uuid()'), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index('ix_batch_user_type_created', 'characteristic_batch_logs', ['user_id', 'characteristic_type', 'created_at'], unique=False)
@@ -270,13 +271,15 @@ def upgrade():
     )
     op.create_table('user_diary',
     sa.Column('user_id', sa.UUID(), nullable=False),
+    sa.Column('context_text', sa.String(), nullable=False),
     sa.Column('text', sa.String(), nullable=False),
+    sa.Column('created_at', sa.Date(), nullable=False),
     sa.Column('id', sa.UUID(), server_default=sa.text('gen_random_uuid()'), nullable=False),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
-    sa.PrimaryKeyConstraint('id')
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('user_id', 'created_at', name='uq_user_diary_one_per_day')
     )
+    op.create_index(op.f('ix_user_diary_created_at'), 'user_diary', ['created_at'], unique=True)
     op.create_index(op.f('ix_user_diary_user_id'), 'user_diary', ['user_id'], unique=False)
     op.create_table('user_hexaco',
     sa.Column('user_id', sa.UUID(), nullable=False),
@@ -347,7 +350,7 @@ def upgrade():
     sa.Column('id', sa.UUID(), server_default=sa.text('gen_random_uuid()'), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index('idx_userlog_date', 'user_logs', ['created_at'], unique=False)
@@ -400,6 +403,7 @@ def downgrade():
     op.drop_table('user_holland_codes')
     op.drop_table('user_hexaco')
     op.drop_index(op.f('ix_user_diary_user_id'), table_name='user_diary')
+    op.drop_index(op.f('ix_user_diary_created_at'), table_name='user_diary')
     op.drop_table('user_diary')
     op.drop_table('user_dark_triads')
     op.drop_table('user_behavioral_profiles')

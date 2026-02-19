@@ -1,53 +1,56 @@
 import logging
 
-from aiogram import Router, Bot
+from aiogram import Router
 from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message
+from aiogram.types import Message, CallbackQuery
 
-from keyboards.reply import MAIN_KEYBOARD_PSYCHO
+from src.bot.callbacks.callbacks import SelectGenderCallback
+from src.bot.keyboards.inline import gender_select_keyboard
+from src.bot.keyboards.reply import MAIN_KEYBOARD_PSYCHO
 from src.bot.lexicon.message_text import MessageText
+from src.core.enums.user import GENDER
 from src.core.services.api_client.personalityGPT_api import PersonalityGPT_APIClient
+from src.core.services.cache_services.cache_service import CacheService
 
 router = Router(name=__name__)
 logger = logging.getLogger(name=__name__)
 
 
+@router.callback_query(SelectGenderCallback.filter())
+async def select_gender(
+        callback: CallbackQuery,
+        callback_data: SelectGenderCallback,
+        api_client: PersonalityGPT_APIClient,
+        cache_service: CacheService,
+        access_token: str,
+):
+    await callback.answer()
+
+    gender = callback_data.gender
+
+    await api_client.change_gender(
+        gender,
+        access_token
+    )
+
+    text: str = MessageText.HELLO_MALE if gender == GENDER.MALE else MessageText.HELLO_GIRL
+
+    await callback.message.delete()
+    await callback.message.answer(
+        text,
+        reply_markup=MAIN_KEYBOARD_PSYCHO
+    )
+
+
 @router.message(CommandStart())
 async def start_dialog(
         message: Message,
-        state: FSMContext,
-        api_client: PersonalityGPT_APIClient,
-        access_token: str,
-        bot: Bot
+        state: FSMContext
 ):
     await state.clear()
 
     user_id = str(message.from_user.id)
-    command_parts = message.text.split()
 
-    # user: UserSchema = await api_client.get_current_user(
-    #     access_token
-    # )
-
-    # [ referrals check ]
-    """    
-    if len(command_parts) > 1 and command_parts[1].startswith('ref_'):
-        token = command_parts[1][4:]  # skip: 'ref_'
-        referrer_telegram_id = decode_referral_token(token)
-
-        if referrer_telegram_id and referrer_telegram_id != user_id:
-            logger.info(f"REFERRAL: User {user_id} came from {referrer_telegram_id} (token: {token})")
-
-            try:
-                await api_client.new_referral(
-                    access_token=access_token,
-                    referrer_telegram_id=referrer_telegram_id,
-                    referral_telegram_id=user_id
-                )
-            except Exception as ex:
-                logger.error(ex)
-                pass"""
-
-    await message.answer(text=MessageText.HELLO, reply_markup=MAIN_KEYBOARD_PSYCHO)
+    await message.answer(text=MessageText.HELLO_GENDER_SELECT, reply_markup=gender_select_keyboard)
     logger.info(f"User {user_id} has started dialog.")

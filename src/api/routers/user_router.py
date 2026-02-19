@@ -4,6 +4,7 @@ from fastapi import APIRouter, HTTPException, status
 from fastapi.params import Depends
 
 from enums.user import TALKING_MODES
+from request_schemas.user import ChangeGenderRequest
 from src.api.utils.auth import get_auth_user
 from src.core import consts
 from src.core.schemas.user_schemas import UserSchema
@@ -47,6 +48,24 @@ async def increase_used_voices(
 
     await user_service.repo.increase_used_voice_message(user.id)
     await redis_service._invalidate_user_profile(user.telegram_id)
+
+
+@router.put(path="/change_gender")
+async def change_gender(
+        user: Annotated[UserSchema, Depends(get_auth_user)],
+        request: ChangeGenderRequest,
+        user_service: Annotated[UserService, Depends(get_user_service)],
+        redis_service: Annotated[RedisService, Depends(get_redis_service)],
+):
+    """меняет гендер"""
+    await user_service.repo.change_gender(
+        user.id,
+        request.gender
+    )
+
+    await redis_service._invalidate_user_profile(
+        user.telegram_id
+    )
 
 
 @router.put(path="/change_talking_mode")

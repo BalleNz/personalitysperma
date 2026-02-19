@@ -4,7 +4,7 @@ from uuid import UUID
 
 from pydantic import Field, BaseModel
 
-from src.core.enums.user import TALKING_MODES
+from src.core.enums.user import TALKING_MODES, GENDER
 from src.core.schemas.clinical_disorders.anxiety_disorders import AnxietyDisordersSchema
 from src.core.schemas.clinical_disorders.clinical_profile import ClinicalProfileSchema
 from src.core.schemas.clinical_disorders.mood_disorders import MoodDisordersSchema
@@ -40,6 +40,8 @@ class UserSchema(BaseModel):
     first_name: Optional[str] = Field(None, description="Имя пользователя")
     last_name: Optional[str] = Field(None, description="Фамилия пользователя")
     age: int | None = Field(None, description="приблизительный возраст пользователя")
+
+    gender: GENDER = Field(..., description="пол")
 
     # [ settings ]
     talk_mode: TALKING_MODES = Field(..., description="режим общения")

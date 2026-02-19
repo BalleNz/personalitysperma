@@ -1,6 +1,14 @@
 from aiogram.filters.callback_data import CallbackData
 
+from src.core.enums.user import GENDER
 
+
+# [ START ]
+class SelectGenderCallback(CallbackData, prefix="gender_select"):
+    gender: GENDER
+
+
+# [ CHARACTERISTICS ]
 class GetCharacteristicCallback(CallbackData, prefix="get_char"):
     characteristic_name: str | None = None
     characteristic_group: str | None = None

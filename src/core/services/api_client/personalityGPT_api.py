@@ -1,3 +1,4 @@
+from enums.user import GENDER
 from schemas.diary_schema import DiarySchema
 from src.api.request_schemas.generation import CheckInRequest
 from src.api.response_schemas.characteristic import GetAllCharacteristicResponse
@@ -72,4 +73,15 @@ class PersonalityGPT_APIClient(BaseHttpClient):
             HTTPMethod.PUT,
             endpoint="/v1/user/change_talking_mode",
             access_token=access_token
+        )
+
+    async def change_gender(self, gender: GENDER, access_token: str) -> None:
+        """поменять гендер"""
+        await self._request(
+            HTTPMethod.PUT,
+            endpoint="/v1/user/change_gender",
+            access_token=access_token,
+            request_body={
+                "gender": gender
+            }
         )
