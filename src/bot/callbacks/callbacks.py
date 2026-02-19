@@ -12,3 +12,15 @@ class BackToListingCallback(CallbackData, prefix="back"):
 
 class GetFullAccessCallback(CallbackData, prefix="full_access"):
     pass
+
+
+# [ diary ]
+class DiaryPaginationCallback(CallbackData, prefix="pagination"):
+    page: int
+    arrow: str | None = None  # left / right
+
+
+class DiaryGetCallback(CallbackData, prefix="diary_get"):
+    page: int | None
+    diaries_count: int  # количество записей
+    current_diary: int | None = None  # текущая запись в нумерации

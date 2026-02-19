@@ -1,3 +1,4 @@
+from schemas.diary_schema import DiarySchema
 from src.api.request_schemas.generation import CheckInRequest
 from src.api.response_schemas.characteristic import GetAllCharacteristicResponse
 from src.api.response_schemas.generation import CheckInResponse
@@ -7,7 +8,7 @@ from src.core.services.api_client.base_http_client import BaseHttpClient, HTTPMe
 
 class PersonalityGPT_APIClient(BaseHttpClient):
     """Универсальный клиент для DrugSearch API"""
-    # [ AUTH ]
+
     async def telegram_auth(self, telegram_user_data: UserTelegramDataSchema) -> str:
         response: dict = await self._request(
             HTTPMethod.POST,
@@ -34,6 +35,14 @@ class PersonalityGPT_APIClient(BaseHttpClient):
             access_token=access_token
         )
 
+    # [ DIARY ]
+    async def get_diary(self, access_token: str) -> list[DiarySchema]:
+        return await self._request(
+            HTTPMethod.GET,
+            endpoint="/v1/user/diary",
+            access_token=access_token
+        )
+
     # [ CHARACTERISTIC ]
     async def check_in(self, access_token: str, request: CheckInRequest) -> CheckInResponse:
         """CHECK IN:
@@ -56,6 +65,11 @@ class PersonalityGPT_APIClient(BaseHttpClient):
         )
         return response
 
-    # [ Admin ]
-
-    # [ REFERRALS ]
+    # [ SETTINGS ]
+    async def change_talk_mode(self, access_token: str) -> None:
+        """меняет режим общения"""
+        await self._request(
+            HTTPMethod.PUT,
+            endpoint="/v1/user/change_talking_mode",
+            access_token=access_token
+        )

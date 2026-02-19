@@ -1,8 +1,9 @@
 from typing import Type
 
-from sqlalchemy import String, Integer, Boolean, text
+from sqlalchemy import String, Integer, Boolean, text, Enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from src.core.enums.user import TALKING_MODES
 from src.core.schemas.user_schemas import UserSchema
 from src.infrastructure.database.models.base import IDMixin, TimestampsMixin, S
 from src.infrastructure.database.models.basic_profiles.traits_basic import SocialProfile, BehavioralProfile, \
@@ -20,6 +21,12 @@ from src.infrastructure.database.models.personality_types.hexaco import UserHexa
 from src.infrastructure.database.models.personality_types.holland_codes import UserHollandCodes
 from src.infrastructure.database.models.personality_types.socionics import UserSocionics
 
+TALKING_MODES_SQL = Enum(
+    TALKING_MODES,
+    name="talking_modes",
+    values_callable=lambda obj: [e.value for e in obj]
+)
+
 
 class User(IDMixin, TimestampsMixin):
     __tablename__ = "users"
@@ -28,6 +35,13 @@ class User(IDMixin, TimestampsMixin):
     username: Mapped[str] = mapped_column(String, comment="username")
     first_name: Mapped[str | None] = mapped_column(String, comment="first name")
     last_name: Mapped[str | None] = mapped_column(String, comment="last name")
+
+    # [ MODE ]
+    talk_mode: Mapped[str] = mapped_column(
+        TALKING_MODES_SQL,
+        comment="режим общения",
+        server_default=TALKING_MODES.RESEARCH.value
+    )
 
     # [ ACCESSES ]
     used_voice_messages: Mapped[int] = mapped_column(

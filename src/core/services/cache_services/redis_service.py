@@ -5,6 +5,7 @@ from typing import Optional, Any
 
 from redis.asyncio import Redis
 
+from src.core.schemas.diary_schema import DiarySchema
 from src.core.schemas.user_schemas import UserSchema
 from src.infrastructure.config.config import config
 
@@ -33,7 +34,25 @@ class RedisService:
     def _get_characteristics_key(telegram_id: str) -> str:
         return f"user:{telegram_id}:characteristics"
 
+    @staticmethod
+    def _get_diary_key(telegram_id: str) -> str:
+        return f"user:{telegram_id}:diary"
+
     # [ GETTERS ]
+    async def get_diary(self, telegram_id: str) -> list[DiarySchema] | None:
+        redis_key = self._get_diary_key(telegram_id)
+        cached = await self.redis.get(redis_key)
+        if not cached:
+            return None
+
+        try:
+            raw_list = json.loads(cached)
+            return [DiarySchema.model_validate(item) for item in raw_list]
+        except Exception as e:
+            logger.warning(f"Diary cache decode error {telegram_id}: {e}")
+            await self.redis.delete(redis_key)
+            return None
+
     async def get_characteristics(self, telegram_id: str) -> dict[str, dict[str, Any]] | None:
         """
         Получить все характеристики одним словарем: {"SocialProfileSchema": {...}, ... }
@@ -103,6 +122,24 @@ class RedisService:
             ex=expire_seconds
         )
 
+    async def set_diary(
+            self,
+            telegram_id: str,
+            entries: list[DiarySchema],
+            expire_seconds: int = 86400 * 7
+    ) -> None:
+        if not entries:
+            await self.redis.delete(self._get_diary_key(telegram_id))
+            return
+
+        redis_key = self._get_diary_key(telegram_id)
+        raw = [e.model_dump(mode="json") for e in entries]
+        await self.redis.set(
+            redis_key,
+            json.dumps(raw, ensure_ascii=False),
+            ex=expire_seconds
+        )
+
     # [ INVALIDATE ]
     async def _invalidate_user_profile(self, telegram_id: str) -> None:
         """Инвалидация кэша профиля пользователя"""
@@ -113,3 +150,7 @@ class RedisService:
         """Инвалидация кэша характеристик"""
         cache_key = self._get_characteristics_key(telegram_id)
         await self.redis.delete(cache_key)
+
+    async def invalidate_all_diaries(self):
+        async for key in self.redis.scan_iter("user:*:diary"):
+            await self.redis.delete(key)

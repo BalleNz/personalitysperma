@@ -5,7 +5,7 @@ from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
-from src.bot.keyboards.reply import MAIN_KEYBOARD
+from keyboards.reply import MAIN_KEYBOARD_PSYCHO
 from src.bot.lexicon.message_text import MessageText
 from src.core.services.api_client.personalityGPT_api import PersonalityGPT_APIClient
 
@@ -49,5 +49,5 @@ async def start_dialog(
                 logger.error(ex)
                 pass"""
 
-    await message.answer(text=MessageText.HELLO, reply_markup=MAIN_KEYBOARD)
+    await message.answer(text=MessageText.HELLO, reply_markup=MAIN_KEYBOARD_PSYCHO)
     logger.info(f"User {user_id} has started dialog.")

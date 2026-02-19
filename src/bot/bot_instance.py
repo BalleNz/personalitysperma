@@ -2,7 +2,7 @@ import aiogram
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 
-from config.config import config
+from src.infrastructure.config.config import config
 
 bot = aiogram.Bot(
     token=config.TELEGRAM_BOT_TOKEN,

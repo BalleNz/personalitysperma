@@ -57,7 +57,7 @@ async def back(
     )
 
 
-@router.message(F.text == ButtonText.CHARACTETISTIC_LISTING)
+@router.message(F.text == ButtonText.MY_PERSONALITY)
 async def characteristic_listing_menu(
         message: Message,
         cache_service: CacheService,

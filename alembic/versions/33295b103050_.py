@@ -1,16 +1,16 @@
 """empty message
 
-Revision ID: 423e44b7e415
+Revision ID: 33295b103050
 Revises: 
-Create Date: 2026-02-09 19:23:15.473161
+Create Date: 2026-02-13 14:48:50.006958
 
 """
 from alembic import op
 import sqlalchemy as sa
-
+from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = '423e44b7e415'
+revision = '33295b103050'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -23,6 +23,7 @@ def upgrade():
     sa.Column('username', sa.String(), nullable=False, comment='username'),
     sa.Column('first_name', sa.String(), nullable=True, comment='first name'),
     sa.Column('last_name', sa.String(), nullable=True, comment='last name'),
+    sa.Column('talk_mode', sa.Enum('research', 'psycho', name='talking_modes'), server_default='psycho', nullable=False, comment='режим общения'),
     sa.Column('used_voice_messages', sa.Integer(), server_default='0', nullable=False, comment='использовано голосовых сообщений'),
     sa.Column('full_access', sa.Boolean(), server_default=sa.text('false'), nullable=False, comment='полный доступ: безлимит гс, базовая характеристика'),
     sa.Column('dark_triads_full', sa.Boolean(), server_default=sa.text('false'), nullable=False, comment='тёмная триада'),
@@ -333,6 +334,7 @@ def upgrade():
     sa.Column('dry_deadpan', sa.Float(), nullable=True, comment='Сухой юмор: deadpan, без эмоций (0=не замечает, 1=мастер)'),
     sa.Column('records', sa.Integer(), nullable=True, comment='количество записей'),
     sa.Column('accuracy_percent', sa.Float(), nullable=True, comment='процент точности'),
+    sa.Column('dominant_humor', postgresql.ARRAY(sa.String()), nullable=True),
     sa.Column('id', sa.UUID(), server_default=sa.text('gen_random_uuid()'), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),

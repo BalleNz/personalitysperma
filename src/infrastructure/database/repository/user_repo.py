@@ -4,11 +4,14 @@ import uuid
 from collections import defaultdict
 
 import pytz
-from sqlalchemy import select, update, func, text
+from sqlalchemy import select, update, func, text, desc
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from src.infrastructure.database.models.diary import UserDiary
+from src.core.schemas.diary_schema import DiarySchema
+from src.core.enums.user import TALKING_MODES
 from src.core.schemas.user_schemas import UserSchema, UserTelegramDataSchema
 from src.infrastructure.database.models.logs import UserLog
 from src.infrastructure.database.models.user import User
@@ -37,7 +40,7 @@ class UserRepository(BaseRepository):
         return user.get_schema()
 
     async def get_user(self, user_id: uuid.UUID) -> UserSchema | None:
-        """Возвращает модель юзер со всеми смежными таблицами"""
+        """Возвращает модель юзера"""
         stmt = (
             select(User).where(
                 User.id == user_id
@@ -53,6 +56,21 @@ class UserRepository(BaseRepository):
             return None
 
         return user.get_schema()
+
+    async def get_user_diary(self, user_id: uuid.UUID) -> list[DiarySchema] | None:
+        """возвращает записи с дневника пользователя"""
+        stmt = (
+            select(UserDiary).where(
+                User.id == user_id
+            )
+            .order_by(desc(UserDiary.created_at))
+        )
+        result = await self.session.execute(stmt)
+        diary_list: list[UserDiary] | None = result.scalars().all()
+        if not diary_list:
+            return None
+
+        return [DiarySchema.model_validate(diary) for diary in diary_list]
 
     async def get_or_create_from_telegram(self, telegram_user: UserTelegramDataSchema) -> UserSchema | None:
         """
@@ -155,7 +173,7 @@ class UserRepository(BaseRepository):
             logger.error(f"Ошибка создания лога: {e}")
             raise
 
-    async def bulk_create_diary_records(self, records: list[tuple[uuid.UUID, str]]) -> int:
+    async def bulk_create_diary_records(self, records: list[tuple[uuid.UUID, str, str]]) -> int:
         """
         Массово создаёт записи в дневник (user_diary).
 
@@ -173,17 +191,18 @@ class UserRepository(BaseRepository):
             {
                 "id": str(uuid.uuid4()),
                 "user_id": str(user_id),
-                "text": text_content
+                "text": text_content,
+                "created_at": datetime.date.today(),
+                "context_text": context_text
             }
-            for user_id, text_content in records
+            for user_id, text_content, context_text in records
         ]
 
-        # Используем text() + executemany-style
         stmt = text("""
-                INSERT INTO user_diary (id, user_id, text)
-                VALUES (:id, :user_id, :text)
-                ON CONFLICT (user_id) DO NOTHING
-            """)
+            INSERT INTO user_diary (id, user_id, created_at, text, context_text)
+            VALUES (:id, :user_id, :created_at, :text, :context_text)
+            ON CONFLICT (user_id, created_at) DO NOTHING
+        """)
 
         try:
             # Важно: execute со списком словарей → SQLAlchemy сам сделает executemany
@@ -195,6 +214,29 @@ class UserRepository(BaseRepository):
         except Exception as e:
             await self.session.rollback()
             logger.error("Bulk insert failed", exc_info=True)
+            raise
+
+    async def change_talking_mode(
+            self,
+            user_id: uuid.UUID,
+            mode: TALKING_MODES
+    ) -> None:
+        stmt = (
+            update(User)
+            .where(User.id == user_id)
+            .values(talk_mode=mode.value)
+            .returning(User.id)
+        )
+
+        try:
+            await self.session.execute(stmt)
+
+            await self.session.commit()
+            logger.info(f"Режим общения пользователя {user_id} изменён на {mode.value}")
+
+        except Exception as e:
+            await self.session.rollback()
+            logger.error(f"Ошибка при смене talk_mode для пользователя {user_id}: {e}", exc_info=True)
             raise
 
     def __del__(self):

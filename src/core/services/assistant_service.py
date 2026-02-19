@@ -9,7 +9,7 @@ from pydantic import ValidationError
 from src.api.response_schemas.generation import CheckInResponse
 from src.core.prompts import GET_PROMPT_BY_SCHEMA_TYPE
 from src.core.prompts.check_in_instructions import CHECK_IN
-from src.core.prompts.summarize_daily_logs import GET_SUMMARY_LOG_FROM_DAILY_LOGS
+from src.core.prompts.diary import GET_SUMMARY_LOG_FROM_DAILY_LOGS
 from src.core.schemas.assistant_response import SummaryResponseSchema
 from src.infrastructure.config.config import config
 from src.infrastructure.database.models.base import S

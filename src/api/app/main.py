@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 
+from src.infrastructure.config.loggerConfig import configure_logging
 from src.api.O2AuthSchema import jwt_openapi
 from src.api.routers import auth_router
 from src.api.routers import generation_router
@@ -23,6 +24,8 @@ def get_app() -> FastAPI:
 
     # custom auth schema after including routers
     app.openapi = lambda: jwt_openapi(app)
+
+    configure_logging()
 
     return app
 

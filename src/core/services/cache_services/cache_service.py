@@ -1,6 +1,7 @@
 import logging
 from typing import Optional, Any
 
+from schemas.diary_schema import DiarySchema
 from src.api.response_schemas.characteristic import GetAllCharacteristicResponse
 from src.core.schemas.traits.traits_basic import EmotionalProfileSchema, BehavioralProfileSchema, CognitiveProfileSchema, \
     SocialProfileSchema
@@ -160,3 +161,28 @@ class CacheService:
             raise ValueError(f"Unknown schema: {type_name}")
 
         return cls.model_validate(raw)
+
+    async def get_diary(
+            self,
+            access_token: str,
+            telegram_id: str,
+            force_refresh: bool = False,
+            expiry: int = 86400 * 3,
+    ) -> list[DiarySchema] | None:
+        if not force_refresh:
+            cached = await self.redis_service.get_diary(telegram_id)
+            if cached is not None:
+                return cached
+
+        try:
+            entries = await self.api_client.get_diary(access_token)
+
+            if entries and isinstance(entries[0], dict):
+                entries = [DiarySchema.model_validate(e) for e in entries]
+
+            await self.redis_service.set_diary(telegram_id, entries, expiry)
+            return entries
+
+        except Exception as e:
+            logger.error(f"Ошибка получения дневника {telegram_id}", exc_info=True)
+            return None

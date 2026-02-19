@@ -4,16 +4,18 @@ from uuid import UUID
 
 from pydantic import Field, BaseModel
 
-from src.core.schemas.diary_schema import DiarySchema
+from src.core.enums.user import TALKING_MODES
 from src.core.schemas.clinical_disorders.anxiety_disorders import AnxietyDisordersSchema
 from src.core.schemas.clinical_disorders.clinical_profile import ClinicalProfileSchema
 from src.core.schemas.clinical_disorders.mood_disorders import MoodDisordersSchema
 from src.core.schemas.clinical_disorders.neuro_disorders import NeuroDisordersSchema
 from src.core.schemas.clinical_disorders.personality_disorders import PersonalityDisordersSchema
+from src.core.schemas.diary_schema import DiarySchema
 from src.core.schemas.personality_types.hexaco import UserHexacoSchema
 from src.core.schemas.personality_types.holland_codes import UserHollandCodesSchema
 from src.core.schemas.personality_types.socionics_type import UserSocionicsSchema
-from src.core.schemas.traits.traits_basic import BehavioralProfileSchema, EmotionalProfileSchema, CognitiveProfileSchema, \
+from src.core.schemas.traits.traits_basic import BehavioralProfileSchema, EmotionalProfileSchema, \
+    CognitiveProfileSchema, \
     SocialProfileSchema
 from src.core.schemas.traits.traits_dark import DarkTriadsSchema
 from src.core.schemas.traits.traits_humor import HumorProfileSchema
@@ -38,6 +40,9 @@ class UserSchema(BaseModel):
     first_name: Optional[str] = Field(None, description="Имя пользователя")
     last_name: Optional[str] = Field(None, description="Фамилия пользователя")
     age: int | None = Field(None, description="приблизительный возраст пользователя")
+
+    # [ settings ]
+    talk_mode: TALKING_MODES = Field(..., description="режим общения")
 
     # [ charges ]
     used_voice_messages: int = Field(..., description="количество бесплатных голосовых")
