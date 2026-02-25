@@ -9,8 +9,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from enums.user import GENDER
-from src.core.enums.user import TALKING_MODES
+from src.core.enums.user import GENDER, TALKING_MODES
 from src.core.schemas.diary_schema import DiarySchema
 from src.core.schemas.user_schemas import UserSchema, UserTelegramDataSchema
 from src.infrastructure.database.models.diary import UserDiary
@@ -62,7 +61,7 @@ class UserRepository(BaseRepository):
         """возвращает записи с дневника пользователя"""
         stmt = (
             select(UserDiary).where(
-                User.id == user_id
+                UserDiary.id == user_id
             )
             .order_by(desc(UserDiary.created_at))
         )

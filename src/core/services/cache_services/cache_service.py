@@ -1,9 +1,11 @@
 import logging
 from typing import Optional, Any
 
-from schemas.diary_schema import DiarySchema
+from src.core.schemas.diary_schema import DiarySchema
 from src.api.response_schemas.characteristic import GetAllCharacteristicResponse
-from src.core.schemas.traits.traits_basic import EmotionalProfileSchema, BehavioralProfileSchema, CognitiveProfileSchema, \
+from src.core.schemas.personality_types.socionics_type import UserSocionicsSchema
+from src.core.schemas.traits.traits_basic import EmotionalProfileSchema, BehavioralProfileSchema, \
+    CognitiveProfileSchema, \
     SocialProfileSchema
 from src.core.schemas.user_schemas import UserSchema, UserTelegramDataSchema
 from src.core.services.api_client.personalityGPT_api import PersonalityGPT_APIClient
@@ -27,6 +29,8 @@ SCHEMA_REGISTRY = {
     "CognitiveProfileSchema": CognitiveProfileSchema,
     "EmotionalProfileSchema": EmotionalProfileSchema,
     "BehavioralProfileSchema": BehavioralProfileSchema,
+
+    "UserSocionicsSchema": UserSocionicsSchema,
 }
 
 

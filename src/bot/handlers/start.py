@@ -6,12 +6,11 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
 
 from src.bot.callbacks.callbacks import SelectGenderCallback
-from src.bot.keyboards.inline import gender_select_keyboard
+from src.bot.keyboards.inline.start import gender_select_keyboard
 from src.bot.keyboards.reply import MAIN_KEYBOARD_PSYCHO
 from src.bot.lexicon.message_text import MessageText
 from src.core.enums.user import GENDER
 from src.core.services.api_client.personalityGPT_api import PersonalityGPT_APIClient
-from src.core.services.cache_services.cache_service import CacheService
 
 router = Router(name=__name__)
 logger = logging.getLogger(name=__name__)
@@ -22,7 +21,6 @@ async def select_gender(
         callback: CallbackQuery,
         callback_data: SelectGenderCallback,
         api_client: PersonalityGPT_APIClient,
-        cache_service: CacheService,
         access_token: str,
 ):
     await callback.answer()

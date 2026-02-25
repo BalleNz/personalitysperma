@@ -3,11 +3,11 @@ from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, Header, BackgroundTasks
 
-from services.cache_services.cache_service import CacheService
 from src.api.request_schemas.generation import CheckInRequest
 from src.api.response_schemas.generation import CheckInResponse
 from src.api.utils.auth import get_auth_user
 from src.core.schemas.user_schemas import UserSchema
+from src.core.services.cache_services.cache_service import CacheService
 from src.core.services.characteristic_service import CharacteristicService
 from src.core.services.dependencies.cache_service_dep import get_cache_service
 from src.core.services.dependencies.characteristic_service_dep import get_characteristic_service
@@ -49,6 +49,10 @@ async def check_in(
     )
 
     CRITICAL_SCHEMAS = {
+        "SocialProfileSchema",
+        "CognitiveProfileSchema",
+        "EmotionalProfileSchema",
+        "BehavioralProfileSchema",
         'HumorProfileSchema',  # юмор — главный крючок
         'DarkTriadsSchema',  # нарциссизм, макиавеллизм — даём подыгрывание и лесть
         'UserHexacoSchema',  # экстраверсия / эмоциональность — задаём тон и энергию
@@ -80,7 +84,8 @@ async def check_in(
 
     check_in_response: CheckInResponse = await characteristic_service.check_in(
         request.message,
-        user_characteristics=critical_characteristics
+        user_characteristics=critical_characteristics,
+        talk_mode=user.talk_mode
     )
 
     # TODO: special_classifications

@@ -1,7 +1,7 @@
 from typing import List, Optional
 from uuid import uuid4, UUID
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, computed_field
 
 from src.core.enums.socionics import (
     RelationshipType
@@ -11,12 +11,44 @@ from src.core.enums.socionics import (
 class UserSocionicsSchema(BaseModel):
     """Схема соционического профиля пользователя"""
     id: Optional[UUID] = Field(default_factory=uuid4)
+    GROUP: str = "personality"
 
-    # Основное поле - задаётся при создании
-    socionics_type: str = Field(
-        ...,
-        description="Соционический тип (4-буквенный код)"
-    )
+    ENTP: Optional[float] = Field(None, ge=0.0, le=1.0, description="ENTP / ILE (Дон Кихот)")
+    ISFJ: Optional[float] = Field(None, ge=0.0, le=1.0, description="ISFJ / SEI (Дюма)")
+    ESFJ: Optional[float] = Field(None, ge=0.0, le=1.0, description="ESFJ / ESE (Гюго)")
+    INTP: Optional[float] = Field(None, ge=0.0, le=1.0, description="INTP / LII (Робеспьер)")
+
+    ENFJ: Optional[float] = Field(None, ge=0.0, le=1.0, description="ENFJ / EIE (Гамлет)")
+    ISTP: Optional[float] = Field(None, ge=0.0, le=1.0, description="ISTP / LSI (Максим Горький)")
+    ESTP: Optional[float] = Field(None, ge=0.0, le=1.0, description="ESTP / SLE (Жуков)")
+    INFJ: Optional[float] = Field(None, ge=0.0, le=1.0, description="INFJ / IEI (Есенин)")
+
+    ESFP: Optional[float] = Field(None, ge=0.0, le=1.0, description="ESFP / SEE (Наполеон)")
+    INTJ: Optional[float] = Field(None, ge=0.0, le=1.0, description="INTJ / ILI (Бальзак)")
+    ENTJ: Optional[float] = Field(None, ge=0.0, le=1.0, description="ENTJ / LIE (Джек Лондон)")
+    ISFP: Optional[float] = Field(None, ge=0.0, le=1.0, description="ISFP / ESI (Драйзер)")
+
+    ENFP: Optional[float] = Field(None, ge=0.0, le=1.0, description="ENFP / IEE (Гексли)")
+    INFP: Optional[float] = Field(None, ge=0.0, le=1.0, description="INFP / EII (Достоевский)")
+    ESTJ: Optional[float] = Field(None, ge=0.0, le=1.0, description="ESTJ / LSE (Штирлиц)")
+    ISTJ: Optional[float] = Field(None, ge=0.0, le=1.0, description="ISTJ / SLI (Габен)")
+
+    records: int = Field(..., description="Количество записей")
+
+    def model_dump(self, **kwargs):
+        """Переопределяем дамп"""
+        include = {
+            "id",
+            "ENTP", "ISFJ", "ESFJ", "INTP",
+            "ENFJ", "ISTP", "ESTP", "INFJ",
+            "ESFP", "INTJ", "ENTJ", "ISFP",
+            "ENFP", "INFP", "ESTJ", "ISTJ",
+        }
+        kwargs["include"] = include
+        kwargs.setdefault("exclude_none", True)
+        return super().model_dump(**kwargs)
+
+    primary_type: Optional[str] = Field(None, description="Основной тип (например 'ENTP', 'INFJ')")
 
     # Вычисляемые поля - заполняются автоматически после инициализации
     quadra: Optional[str] = Field(None, description="Квадра типа")
@@ -41,6 +73,11 @@ class UserSocionicsSchema(BaseModel):
     questioning: Optional[str] = Field(None, description="Вопрошание/Утверждение")
     merging: Optional[str] = Field(None, description="Объединяющий/Разделяющий")
 
+    # [ КВАДРАЛЬНЫЕ (одинаковы у всей КВАДРЫ) ]
+    aristocratic: Optional[str] = Field(None, description="Аристократия / Демократия")
+    merry: Optional[str] = Field(None, description="Весёлость / Серьёзность")
+    yielding: Optional[str] = Field(None, description="Уступчивость / Упрямство")
+
     # Межтипные отношения (14 типов)
     dual: Optional[str] = Field(None, description="Дуал (идеальный партнёр)")
     conflict: Optional[str] = Field(None, description="Конфликтор (наихудшая совместимость)")
@@ -55,47 +92,111 @@ class UserSocionicsSchema(BaseModel):
     quasi_identical: Optional[str] = Field(None, description="Квазитождественный (похожий, но разный подход)")
     super_ego: Optional[str] = Field(None, description="Суперэго (моральные требования)")
 
-    # Карта базовых дихотомий
+    # Карта базовых дихотомий (ключи заменены на MBTI)
     _BASE_DICHOTOMIES = {
-        "ILE": (1, 1, 1, -1),  # ИЛЭ - Дон Кихот
-        "SEI": (-1, -1, -1, -1),  # СЭИ - Дюма
-        "ESE": (1, -1, -1, 1),  # ЭСЭ - Гюго
-        "LII": (-1, 1, 1, 1),  # ЛИИ - Робеспьер
-        "SLE": (1, -1, 1, -1),  # СЛЭ - Жуков
-        "IEI": (-1, 1, -1, -1),  # ИЭИ - Есенин
-        "EIE": (1, -1, -1, -1),  # ЭИЭ - Гамлет
-        "LSI": (-1, -1, 1, 1),  # ЛСИ - Максим Горький
-        "SEE": (1, -1, -1, -1),  # СЭЭ - Цезарь
-        "ILI": (-1, 1, 1, -1),  # ИЛИ - Бальзак
-        "ESI": (-1, -1, -1, 1),  # ЭСИ - Драйзер
-        "LIE": (1, 1, 1, 1),  # ЛИЭ - Джек Лондон
-        "IEE": (1, 1, -1, -1),  # ИЭЭ - Гексли
-        "SLI": (-1, -1, 1, -1),  # СЛИ - Габен
-        "EII": (-1, 1, -1, 1),  # ЭИИ - Достоевский
-        "LSE": (-1, -1, 1, 1),  # ЛСЭ - Штирлиц
+        "ENTP": (1, 1, 1, -1),  # ИЛЭ - Дон Кихот
+        "ISFJ": (-1, -1, -1, -1),  # СЭИ - Дюма
+        "ESFJ": (1, -1, -1, 1),  # ЭСЭ - Гюго
+        "INTP": (-1, 1, 1, 1),  # ЛИИ - Робеспьер
+        "ESTP": (1, -1, 1, -1),  # СЛЭ - Жуков
+        "INFJ": (-1, 1, -1, -1),  # ИЭИ - Есенин
+        "ENFJ": (1, -1, -1, -1),  # ЭИЭ - Гамлет
+        "ISTP": (-1, -1, 1, 1),  # ЛСИ - Максим Горький
+        "ESFP": (1, -1, -1, -1),  # СЭЭ - Цезарь
+        "INTJ": (-1, 1, 1, -1),  # ИЛИ - Бальзак
+        "ISFP": (-1, -1, -1, 1),  # ЭСИ - Драйзер
+        "ENTJ": (1, 1, 1, 1),  # ЛИЭ - Джек Лондон
+        "ENFP": (1, 1, -1, -1),  # ИЭЭ - Гексли
+        "ISTJ": (-1, -1, 1, -1),  # СЛИ - Габен
+        "INFP": (-1, 1, -1, 1),  # ЭИИ - Достоевский
+        "ESTJ": (-1, -1, 1, 1),  # ЛСЭ - Штирлиц
     }
 
     class Config:
+        from_attributes = True
         arbitrary_types_allowed = True
 
-    @field_validator('socionics_type')
-    def validate_socionics_type(cls, v):
-        """Валидация типа"""
-        v = v.upper()
-        if v not in cls._BASE_DICHOTOMIES:
-            valid_types = ", ".join(sorted(cls._BASE_DICHOTOMIES.keys()))
-            raise ValueError(f"Неизвестный тип: {v}. Допустимые: {valid_types}")
-        return v
+    @computed_field
+    @property
+    def accuracy_percent(self) -> float:
+        """Процент точности"""
+        records_count: int | None = self.records
+        if records_count is None or records_count <= 0:
+            return 0.0
+        elif records_count == 1:
+            return 0.04
+        elif records_count == 2:
+            return 0.09
+        else:
+            # при 7 записях: 42%
+            # при 17 записях: 63%
+            # при 27 записях: 71%
+            # при 50 записях: 78%
+            margin = 1.5081 / (records_count ** 0.5)
+            return 1 - margin
 
     def __init__(self, **data):
         """Инициализация с автоматическим вычислением всех полей"""
         super().__init__(**data)
+        self.set_primary_type()
         self._calculate_all_fields()
+
+    def get_top_3_types(self) -> list:
+        """отдает 3 самых вероятных типа"""
+        type_probs = {
+            "ENTP": self.ENTP, "ISFJ": self.ISFJ, "ESFJ": self.ESFJ, "INTP": self.INTP,
+            "ENFJ": self.ENFJ, "ISTP": self.ISTP, "ESTP": self.ESTP, "INFJ": self.INFJ,
+            "ESFP": self.ESFP, "INTJ": self.INTJ, "ENTJ": self.ENTJ, "ISFP": self.ISFP,
+            "ENFP": self.ENFP, "INFP": self.INFP, "ESTJ": self.ESTJ, "ISTJ": self.ISTJ,
+        }
+
+        sorted_types = sorted(
+            [[k, v] for k, v in type_probs.items() if v is not None],
+            key=lambda x: x[1],
+            reverse=True
+        )
+
+        return sorted_types[:3]
+
+    def set_primary_type(self):
+        """
+        1. Определяем primary_type по максимальной вероятности, если не задан
+        2. Нормализуем вероятности (опционально, но рекомендуется)
+        3. Запускаем вычисления всех зависимых полей
+        """
+        type_probs = {
+            "ENTP": self.ENTP, "ISFJ": self.ISFJ, "ESFJ": self.ESFJ, "INTP": self.INTP,
+            "ENFJ": self.ENFJ, "ISTP": self.ISTP, "ESTP": self.ESTP, "INFJ": self.INFJ,
+            "ESFP": self.ESFP, "INTJ": self.INTJ, "ENTJ": self.ENTJ, "ISFP": self.ISFP,
+            "ENFP": self.ENFP, "INFP": self.INFP, "ESTJ": self.ESTJ, "ISTJ": self.ISTJ,
+        }
+
+        # Нормализация (если сумма ≠ 0 и не ≈ 1)
+        total = sum(v for v in type_probs.values() if v is not None)
+        if total > 0 and abs(total - 1.0) > 1e-6:
+            for typ in type_probs:
+                if type_probs[typ] is not None:
+                    setattr(self, typ, type_probs[typ] / total)
+
+        if not self.primary_type:
+            max_prob = -1.0
+            max_type = None
+            for typ, prob in type_probs.items():
+                if prob is not None and prob > max_prob:
+                    max_prob = prob
+                    max_type = typ
+            if max_type:
+                self.primary_type = max_type
+
+        if not self.primary_type:
+            raise ValueError("Не удалось определить primary_type — все вероятности равны None")
+
+        return self
 
     def _calculate_all_fields(self):
         """Вычисляет и заполняет все поля на основе типа"""
         # Получаем базовые дихотомии
-        E_I, N_S, T_F, J_P = self._BASE_DICHOTOMIES[self.socionics_type]
+        E_I, N_S, T_F, J_P = self._BASE_DICHOTOMIES[self.primary_type]
 
         # Вычисляем производные дихотомии
         S_D = E_I * N_S  # Статика/Динамика
@@ -109,6 +210,10 @@ class UserSocionicsSchema(BaseModel):
         Tact_Strat = P_N * J_P  # Тактика/Стратегия
         Quest_Assert = S_D * Care_Dar  # Вопрошание/Утверждение
         Merg_Div = Decl_Dem * J_P  # Объединяющий/Разделяющий
+
+        Arist_Dem = N_S * T_F * J_P  # Аристократия / Демократия
+        Merry_Ser = E_I * N_S * T_F  # Весёлость / Серьёзность (Merry/Serious)
+        Yield_Obst = E_I * T_F * J_P  # Уступчивость / Упрямство (Yielding/Obstinate)
 
         # ============ БАЗОВЫЕ ДИХОТОМИИ ============
         self.extraversion = "Экстраверт" if E_I == 1 else "Интроверт"
@@ -129,190 +234,194 @@ class UserSocionicsSchema(BaseModel):
         self.questioning = "Вопрошающий" if Quest_Assert == 1 else "Утверждающий"
         self.merging = "Объединяющий" if Merg_Div == 1 else "Разделяющий"
 
-        # ============ КВАДРА И КЛУБ ============
-        # Карта квадр
-        quadra_map = {
-            "ILE": "Альфа", "SEI": "Альфа", "ESE": "Альфа", "LII": "Альфа",
-            "SLE": "Бета", "IEI": "Бета", "EIE": "Бета", "LSI": "Бета",
-            "SEE": "Гамма", "ILI": "Гамма", "LIE": "Гамма", "ESI": "Гамма",
-            "LSE": "Дельта", "EII": "Дельта", "IEE": "Дельта", "SLI": "Дельта",
-        }
-        self.quadra = quadra_map.get(self.socionics_type, "Неизвестно")
+        self.aristocratic = "Аристократ" if Arist_Dem == 1 else "Демократ"
+        self.merry = "Весёлый" if Merry_Ser == 1 else "Серьёзный"
+        self.yielding = "Уступчивый" if Yield_Obst == 1 else "Упрямый"
 
-        # Карта клубов
-        club_map = {
-            "ILE": "Исследователи", "LII": "Исследователи",
-            "ILI": "Исследователи", "LIE": "Исследователи",
-            "IEE": "Социальные", "EII": "Социальные",
-            "IEI": "Социальные", "EIE": "Социальные",
-            "SLE": "Практики", "LSI": "Практики",
-            "LSE": "Практики", "SLI": "Практики",
-            "SEI": "Гуманитарии", "ESE": "Гуманитарии",
-            "SEE": "Гуманитарии", "ESI": "Гуманитарии",
+        # ============ КВАДРА И КЛУБ ============
+        # Карта квадр (ключи заменены на MBTI)
+        quadra_map = {
+            "ENTP": "Альфа", "ISFJ": "Альфа", "ESFJ": "Альфа", "INTP": "Альфа",
+            "ESTP": "Бета", "INFJ": "Бета", "ENFJ": "Бета", "ISTP": "Бета",
+            "ESFP": "Гамма", "INTJ": "Гамма", "ENTJ": "Гамма", "ISFP": "Гамма",
+            "ESTJ": "Дельта", "INFP": "Дельта", "ENFP": "Дельта", "ISTJ": "Дельта",
         }
-        self.club = club_map.get(self.socionics_type, "Неизвестно")
+        self.quadra = quadra_map.get(self.primary_type, "Неизвестно")
+
+        # Карта клубов (ключи заменены на MBTI)
+        club_map = {
+            "ENTP": "Исследователи", "INTP": "Исследователи",
+            "INTJ": "Исследователи", "ENTJ": "Исследователи",
+            "ENFP": "Социальные", "INFP": "Социальные",
+            "INFJ": "Социальные", "ENFJ": "Социальные",
+            "ESTP": "Практики", "ISTP": "Практики",
+            "ESTJ": "Практики", "ISTJ": "Практики",
+            "ISFJ": "Гуманитарии", "ESFJ": "Гуманитарии",
+            "ESFP": "Гуманитарии", "ISFP": "Гуманитарии",
+        }
+        self.club = club_map.get(self.primary_type, "Неизвестно")
 
         # ============ МЕЖТИПНЫЕ ОТНОШЕНИЯ ============
-        # Карта дуалов
+        # Карта дуалов (ключи и значения заменены на MBTI)
         dual_map = {
-            "ILE": "SEI", "SEI": "ILE",
-            "ESE": "LII", "LII": "ESE",
-            "SLE": "IEI", "IEI": "SLE",
-            "EIE": "LSI", "LSI": "EIE",
-            "SEE": "ILI", "ILI": "SEE",
-            "LIE": "ESI", "ESI": "LIE",
-            "LSE": "EII", "EII": "LSE",
-            "IEE": "SLI", "SLI": "IEE",
+            "ENTP": "ISFJ", "ISFJ": "ENTP",
+            "ESFJ": "INTP", "INTP": "ESFJ",
+            "ESTP": "INFJ", "INFJ": "ESTP",
+            "ENFJ": "ISTP", "ISTP": "ENFJ",
+            "ESFP": "INTJ", "INTJ": "ESFP",
+            "ENTJ": "ISFP", "ISFP": "ENTJ",
+            "ESTJ": "INFP", "INFP": "ESTJ",
+            "ENFP": "ISTJ", "ISTJ": "ENFP",
         }
-        self.dual = dual_map.get(self.socionics_type, "Неизвестно")
+        self.dual = dual_map.get(self.primary_type, "Неизвестно")
 
         # Карта конфликторов
         conflict_map = {
-            "ILE": "ESI", "SEI": "LIE",
-            "ESE": "ILI", "LII": "SEE",
-            "SLE": "EII", "IEI": "LSE",
-            "EIE": "SLI", "LSI": "IEE",
-            "SEE": "LII", "ILI": "ESE",
-            "LIE": "SEI", "ESI": "ILE",
-            "LSE": "IEI", "EII": "SLE",
-            "IEE": "LSI", "SLI": "EIE",
+            "ENTP": "ISFP", "ISFJ": "ENTJ",
+            "ESFJ": "INTJ", "INTP": "ESFP",
+            "ESTP": "INFP", "INFJ": "ESTJ",
+            "ENFJ": "ISTJ", "ISTP": "ENFP",
+            "ESFP": "INTP", "INTJ": "ESFJ",
+            "ENTJ": "ISFJ", "ISFP": "ENTP",
+            "ESTJ": "INFJ", "INFP": "ESTP",
+            "ENFP": "ISTP", "ISTJ": "ENFJ",
         }
-        self.conflictor = conflict_map.get(self.socionics_type, "Неизвестно")
+        self.conflict = conflict_map.get(self.primary_type, "Неизвестно")
 
         # Карта активаторов
         activation_map = {
-            "ILE": "ESE", "ESE": "ILE",
-            "SEI": "LII", "LII": "SEI",
-            "SLE": "EIE", "EIE": "SLE",
-            "IEI": "LSI", "LSI": "IEI",
-            "SEE": "LIE", "LIE": "SEE",
-            "ILI": "ESI", "ESI": "ILI",
-            "LSE": "IEE", "IEE": "LSE",
-            "EII": "SLI", "SLI": "EII",
+            "ENTP": "ESFJ", "ESFJ": "ENTP",
+            "ISFJ": "INTP", "INTP": "ISFJ",
+            "ESTP": "ENFJ", "ENFJ": "ESTP",
+            "INFJ": "ISTP", "ISTP": "INFJ",
+            "ESFP": "ENTJ", "ENTJ": "ESFP",
+            "INTJ": "ISFP", "ISFP": "INTJ",
+            "ESTJ": "ENFP", "ENFP": "ESTJ",
+            "INFP": "ISTJ", "ISTJ": "INFP",
         }
-        self.activation = activation_map.get(self.socionics_type, "Неизвестно")
+        self.activation = activation_map.get(self.primary_type, "Неизвестно")
 
         # Карта зеркальных типов
         mirror_map = {
-            "ILE": "LII", "LII": "ILE",
-            "SEI": "ESE", "ESE": "SEI",
-            "SLE": "LSI", "LSI": "SLE",
-            "IEI": "EIE", "EIE": "IEI",
-            "SEE": "ESI", "ESI": "SEE",
-            "ILI": "LIE", "LIE": "ILI",
-            "LSE": "SLI", "SLI": "LSE",
-            "EII": "IEE", "IEE": "EII",
+            "ENTP": "INTP", "INTP": "ENTP",
+            "ISFJ": "ESFJ", "ESFJ": "ISFJ",
+            "ESTP": "ISTP", "ISTP": "ESTP",
+            "INFJ": "ENFJ", "ENFJ": "INFJ",
+            "ESFP": "ISFP", "ISFP": "ESFP",
+            "INTJ": "ENTJ", "ENTJ": "INTJ",
+            "ESTJ": "ISTJ", "ISTJ": "ESTJ",
+            "INFP": "ENFP", "ENFP": "INFP",
         }
-        self.mirror = mirror_map.get(self.socionics_type, "Неизвестно")
+        self.mirror = mirror_map.get(self.primary_type, "Неизвестно")
 
         # Родственные
         kindred_map = {
-            "ILE": "LIE", "LIE": "ILE",
-            "SEI": "SLI", "SLI": "SEI",
-            "ESE": "SEE", "SEE": "ESE",
-            "LII": "ILI", "ILI": "LII",
-            "SLE": "LSE", "LSE": "SLE",
-            "IEI": "IEE", "IEE": "IEI",
-            "EIE": "LSI", "LSI": "EIE",
-            "EII": "ESI", "ESI": "EII",
+            "ENTP": "ENTJ", "ENTJ": "ENTP",
+            "ISFJ": "ISTJ", "ISTJ": "ISFJ",
+            "ESFJ": "ESFP", "ESFP": "ESFJ",
+            "INTP": "INTJ", "INTJ": "INTP",
+            "ESTP": "ESTJ", "ESTJ": "ESTP",
+            "INFJ": "ENFP", "ENFP": "INFJ",
+            "ENFJ": "ISTP", "ISTP": "ENFJ",
+            "INFP": "ISFP", "ISFP": "INFP",
         }
-        self.kindred = kindred_map.get(self.socionics_type)
+        self.kindred = kindred_map.get(self.primary_type)
 
         # Деловые
         business_map = {
-            "ILE": "ESE", "ESE": "ILE",
-            "SEI": "LII", "LII": "SEI",
-            "SLE": "EIE", "EIE": "SLE",
-            "IEI": "LSI", "LSI": "IEI",
-            "SEE": "LIE", "LIE": "SEE",
-            "ILI": "ESI", "ESI": "ILI",
-            "LSE": "IEE", "IEE": "LSE",
-            "EII": "SLI", "SLI": "EII",
+            "ENTP": "ESFJ", "ESFJ": "ENTP",
+            "ISFJ": "INTP", "INTP": "ISFJ",
+            "ESTP": "ENFJ", "ENFJ": "ESTP",
+            "INFJ": "ISTP", "ISTP": "INFJ",
+            "ESFP": "ENTJ", "ENTJ": "ESFP",
+            "INTJ": "ISFP", "ISFP": "INTJ",
+            "ESTJ": "ENFP", "ENFP": "ESTJ",
+            "INFP": "ISTJ", "ISTJ": "INFP",
         }
-        self.business = business_map.get(self.socionics_type)
+        self.business = business_map.get(self.primary_type)
 
         # Подопечный (кого контролирует)
         supervisee_map = {
-            "ILE": "LSI", "ESE": "IEI",
-            "SEI": "EIE", "LII": "SLE",
-            "SLE": "SEE", "IEI": "ILI",
-            "EIE": "LIE", "LSI": "ESI",
-            "SEE": "SLE", "ILI": "IEI",
-            "LIE": "EIE", "ESI": "LSI",
-            "LSE": "SEI", "EII": "ILE",
-            "IEE": "LII", "SLI": "ESE",
+            "ENTP": "ISTP", "ESFJ": "INFJ",
+            "ISFJ": "ENFJ", "INTP": "ESTP",
+            "ESTP": "ESFP", "INFJ": "INTJ",
+            "ENFJ": "ENTJ", "ISTP": "ISFP",
+            "ESFP": "ESTP", "INTJ": "INFJ",
+            "ENTJ": "ENFJ", "ISFP": "ISTP",
+            "ESTJ": "ISFJ", "INFP": "ENTP",
+            "ENFP": "INTP", "ISTJ": "ESFJ",
         }
-        self.supervisee = supervisee_map.get(self.socionics_type)
+        self.supervisee = supervisee_map.get(self.primary_type)
 
         # Ревизор (кто контролирует)
         supervisor_map = {
-            "ILE": "EII", "ESE": "SLI",
-            "SEI": "LSE", "LII": "IEE",
-            "SLE": "LII", "IEI": "ESE",
-            "EIE": "SEI", "LSI": "ILE",
-            "SEE": "LSI", "ILI": "EIE",
-            "LIE": "IEI", "ESI": "SLE",
-            "LSE": "SEE", "EII": "ILI",
-            "IEE": "LIE", "SLI": "EII",
+            "ENTP": "INFP", "ESFJ": "ISTJ",
+            "ISFJ": "ESTJ", "INTP": "ENFP",
+            "ESTP": "INTP", "INFJ": "ESFJ",
+            "ENFJ": "ISFJ", "ISTP": "ENTP",
+            "ESFP": "ISTP", "INTJ": "ENFJ",
+            "ENTJ": "INFJ", "ISFP": "ESTP",
+            "ESTJ": "ESFP", "INFP": "INTJ",
+            "ENFP": "ENTJ", "ISTJ": "INFP",
         }
-        self.supervisor = supervisor_map.get(self.socionics_type)
+        self.supervisor = supervisor_map.get(self.primary_type)
 
         # Миражные
         illusory_map = {
-            "ILE": "IEE", "SEI": "SLI",
-            "ESE": "EII", "LII": "LSE",
-            "SLE": "SEE", "IEI": "ESI",
-            "EIE": "LSI", "LSI": "EIE",
-            "SEE": "SLE", "ILI": "LII",
-            "LIE": "ILE", "ESI": "IEI",
-            "LSE": "LII", "EII": "ESE",
-            "IEE": "ILE", "SLI": "SEI",
+            "ENTP": "ENFP", "ISFJ": "ISTJ",
+            "ESFJ": "INFP", "INTP": "ESTJ",
+            "ESTP": "ESFP", "INFJ": "ISFP",
+            "ENFJ": "ISTP", "ISTP": "ENFJ",
+            "ESFP": "ESTP", "INTJ": "INTP",
+            "ENTJ": "ENTP", "ISFP": "INFJ",
+            "ESTJ": "INTP", "INFP": "ESFJ",
+            "ENFP": "ENTP", "ISTJ": "ISFJ",
         }
-        self.illusory = illusory_map.get(self.socionics_type)
+        self.illusory = illusory_map.get(self.primary_type)
 
         # Полудуальные
         semi_dual_map = {
-            "ILE": "EII", "SEI": "LSE",
-            "ESE": "SLI", "LII": "IEE",
-            "SLE": "ILI", "IEI": "SEE",
-            "EIE": "LSI", "LSI": "EIE",
-            "SEE": "IEI", "ILI": "SLE",
-            "LIE": "ESI", "ESI": "LIE",
-            "LSE": "SEI", "EII": "ILE",
-            "IEE": "LII", "SLI": "ESE",
+            "ENTP": "INFP", "ISFJ": "ESTJ",
+            "ESFJ": "ISTJ", "INTP": "ENFP",
+            "ESTP": "INTJ", "INFJ": "ESFP",
+            "ENFJ": "ISTP", "ISTP": "ENFJ",
+            "ESFP": "INFJ", "INTJ": "ESTP",
+            "ENTJ": "ISFP", "ISFP": "ENTJ",
+            "ESTJ": "ISFJ", "INFP": "ENTP",
+            "ENFP": "INTP", "ISTJ": "ESFJ",
         }
-        self.semi_dual = semi_dual_map.get(self.socionics_type)
+        self.semi_dual = semi_dual_map.get(self.primary_type)
 
         # Квазитождественные
         quasi_identical_map = {
-            "ILE": "ILI", "SEI": "SEE",
-            "ESE": "ESI", "LII": "LIE",
-            "SLE": "SLI", "IEI": "IEE",
-            "EIE": "EII", "LSI": "LSE",
-            "SEE": "SEI", "ILI": "ILE",
-            "LIE": "LII", "ESI": "ESE",
-            "LSE": "LSI", "EII": "EIE",
-            "IEE": "IEI", "SLI": "SLE",
+            "ENTP": "INTJ", "ISFJ": "ESFP",
+            "ESFJ": "ISFP", "INTP": "ENTJ",
+            "ESTP": "ISTJ", "INFJ": "ENFP",
+            "ENFJ": "INFP", "ISTP": "ESTJ",
+            "ESFP": "ISFJ", "INTJ": "ENTP",
+            "ENTJ": "INTP", "ISFP": "ESFJ",
+            "ESTJ": "ISTP", "INFP": "ENFJ",
+            "ENFP": "INFJ", "ISTJ": "ESTP",
         }
-        self.quasi_identical = quasi_identical_map.get(self.socionics_type)
+        self.quasi_identical = quasi_identical_map.get(self.primary_type)
 
         # Суперэго
         super_ego_map = {
-            "ILE": "ESI", "SEI": "LIE",
-            "ESE": "ILI", "LII": "SEE",
-            "SLE": "EII", "IEI": "LSE",
-            "EIE": "SLI", "LSI": "IEE",
-            "SEE": "LII", "ILI": "ESE",
-            "LIE": "SEI", "ESI": "ILE",
-            "LSE": "IEI", "EII": "SLE",
-            "IEE": "LSI", "SLI": "EIE",
+            "ENTP": "ISFP", "ISFJ": "ENTJ",
+            "ESFJ": "INTJ", "INTP": "ESFP",
+            "ESTP": "INFP", "INFJ": "ESTJ",
+            "ENFJ": "ISTJ", "ISTP": "ENFP",
+            "ESFP": "INTP", "INTJ": "ESFJ",
+            "ENTJ": "ISFJ", "ISFP": "ENTP",
+            "ESTJ": "INFJ", "INFP": "ESTP",
+            "ENFP": "ISTP", "ISTJ": "ENFJ",
         }
-        self.super_ego = super_ego_map.get(self.socionics_type)
+        self.super_ego = super_ego_map.get(self.primary_type)
 
     # ============ МЕТОДЫ ДЛЯ СРАВНЕНИЯ ============
     def get_relationship_with(self, other_type: str) -> RelationshipType:
         """Возвращает тип отношения с другим типом"""
-        if self.socionics_type == other_type:
+        if self.primary_type == other_type:
             return RelationshipType.IDENTICAL
 
         # Карта соответствия полей схемы типам отношений
@@ -362,8 +471,8 @@ class SocionicsComparisonSchema(BaseModel):
     def validate_socionics_type(cls, v):
         """Валидация типа"""
         v = v.upper()
-        valid_types = ["ILE", "SEI", "ESE", "LII", "SLE", "IEI", "EIE", "LSI",
-                       "SEE", "ILI", "ESI", "LIE", "IEE", "SLI", "EII", "LSE"]
+        valid_types = ["ENTP", "ISFJ", "ESFJ", "INTP", "ESTP", "INFJ", "ENFJ", "ISTP",
+                       "ESFP", "INTJ", "ENTJ", "ISFP", "ENFP", "INFP", "ESTJ", "ISTJ"]
         if v not in valid_types:
             raise ValueError(f"Неизвестный тип: {v}")
         return v

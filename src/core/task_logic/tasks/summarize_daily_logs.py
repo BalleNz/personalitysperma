@@ -25,11 +25,13 @@ async def summarize_daily_logs(ctx):
     max_chars = consts.MAX_CHARS
 
     records: list[tuple[uuid.UUID, str, str]] = []
+    telegram_ids: list[str] = []
 
     async with get_service_container() as container:
         user_repo: UserRepository = await container.get_user_repo()
         assistant_service: AssistantService = await container.assistant_service
         redis_service = await container.redis_service
+        telegram_service = await container.telegram_service
 
         user_logs: dict[uuid.UUID, list[tuple[str, str]]] = await user_repo.get_active_user_logs(
             date_filter=today,
@@ -41,7 +43,6 @@ async def summarize_daily_logs(ctx):
             logs_text = ' '.join([f"{time_text}: {log_text}" for log_text, time_text in logs_list])
 
             summary_text: SummaryResponseSchema = await assistant_service.summarize_user_daily_logs(
-                date_string=today.strftime("%Y-%m-%d"),
                 user_logs=logs_text
             )
 
@@ -49,8 +50,18 @@ async def summarize_daily_logs(ctx):
                 (user_id, summary_text.summary_text, summary_text.context_text)
             )
 
+            user = await user_repo.get_user(user_id)
+            telegram_ids.append(user.telegram_id)
+
         await user_repo.bulk_create_diary_records(
             records
         )
+
+        # [ рассылка о новой записи ]
+        for tg_id in telegram_ids:
+            await telegram_service.send_message(
+                user_telegram_id=tg_id,
+                message="у вас появилась новая запись в дневнике! ^^"
+            )
 
         await redis_service.invalidate_all_diaries()

@@ -1,5 +1,6 @@
-MIN_CHARS_LENGTH_TO_GENERATE = 200  # минимальное количество символов для генерации
-MIN_CHARS_LENGTH_TO_GENERATE_CLINICAL = 7000  # минимальное количество символов для генерации КЛИНИЧЕСКИХ ЗАБОЛЕВАНИЙ
+MIN_CHARS_LENGTH_TO_GENERATE = 700  # минимальное количество символов для генерации
+MIN_CHARS_LENGTH_TO_GENERATE_PERSONALITY = 800  # минимальное количество символов для генерации ТИПОВ ЛИЧНОСТИ
+MIN_CHARS_LENGTH_TO_GENERATE_CLINICAL = 1000  # минимальное количество символов для генерации КЛИНИЧЕСКИХ ЗАБОЛЕВАНИЙ
 
 # [ CHARGES ]
 FREE_VOICE_MESSAGES_COUNT = 3

@@ -3,11 +3,11 @@ from typing import Callable, Any
 from aiogram import Router, F
 from aiogram.types import Message, InlineKeyboardMarkup, CallbackQuery
 
-from src.bot.callbacks.callbacks import GetCharacteristicCallback, BackToListingCallback
-from src.bot.keyboards.inline import get_characteristic_listing_keyboard, back_from_listing_keyboard
+from src.bot.callbacks.callbacks import GetCharacteristicCallback, BackToListingCharacteristicCallback
+from src.bot.keyboards.inline.characteristics import get_characteristic_listing_keyboard, back_to_characteristic_listing_keyboard
 from src.bot.lexicon.button_text import ButtonText
 from src.bot.lexicon.message_text import MessageText
-from src.bot.utils.message_formatters import PersonalityMessageFormatter
+from message_formatters.characteristic_formatters import CharacteristicMessageFormatter
 from src.core.schemas.user_schemas import UserSchema
 from src.core.services.cache_services.cache_service import CacheService
 from src.infrastructure.database.models.base import S
@@ -36,7 +36,7 @@ async def show_listing(
         )
 
 
-@router.callback_query(BackToListingCallback.filter())
+@router.callback_query(BackToListingCharacteristicCallback.filter())
 async def back(
         callback_query: CallbackQuery,
         cache_service: CacheService,
@@ -57,7 +57,7 @@ async def back(
     )
 
 
-@router.message(F.text == ButtonText.MY_PERSONALITY)
+@router.message(F.text == ButtonText.MY_CHARACTERISTIC)
 async def characteristic_listing_menu(
         message: Message,
         cache_service: CacheService,
@@ -101,14 +101,16 @@ async def show_characteristic(
     )
 
     characteristic_formatter: Callable[[S], str] = (
-        PersonalityMessageFormatter.characteristic_formatter.get_characteristic_text_by_schema(
+        CharacteristicMessageFormatter.characteristic_formatter.get_characteristic_text_by_schema(
             formatter_name=characteristic_group or characteristic_type.__name__
         )
     )
 
-    text = characteristic_formatter(characteristic, user.full_access)  # сделать чище
+    # full_access = user.full_access
 
-    keyboard = back_from_listing_keyboard
+    text = characteristic_formatter(characteristic, 1)  # сделать чище
+
+    keyboard = back_to_characteristic_listing_keyboard
 
     await callback.message.edit_text(
         text=text,

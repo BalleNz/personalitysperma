@@ -3,12 +3,14 @@ import uuid
 from typing import Type, Sequence, Any
 
 from src.api.response_schemas.generation import CheckInResponse
-from src.core.consts import MIN_CHARS_LENGTH_TO_GENERATE
+from src.core.consts import (MIN_CHARS_LENGTH_TO_GENERATE, MIN_CHARS_LENGTH_TO_GENERATE_PERSONALITY,
+                             MIN_CHARS_LENGTH_TO_GENERATE_CLINICAL)
+from src.core.enums.user import TALKING_MODES
 from src.core.schemas.log_schemas import CharacteristicBatchLogSchema
 from src.core.services.assistant_service import AssistantService
 from src.infrastructure.database.models.base import S, M
 from src.infrastructure.database.repository.characteristic_repo import CharacteristicRepository, \
-    CHARACTERISTIC_SCHEMAS_TO_MODELS
+    CHARACTERISTIC_SCHEMAS_TO_MODELS, CLINICAL_SCHEMAS, PERSONALITY_SCHEMAS
 
 logger = logging.getLogger(__name__)
 
@@ -21,11 +23,14 @@ class CharacteristicService:
     ):
         self.repo = repo
         self.min_chars = MIN_CHARS_LENGTH_TO_GENERATE
+        self.min_chars_personality = MIN_CHARS_LENGTH_TO_GENERATE_PERSONALITY
+        self.min_chars_clinical = MIN_CHARS_LENGTH_TO_GENERATE_CLINICAL
         self.assistant_service = assistant_service
 
     async def check_in(
             self,
             message_text: str,
+            talk_mode: TALKING_MODES,
             user_characteristics: dict[str, dict[str, Any]] | None = None,
     ) -> CheckInResponse:
         """check in
@@ -35,6 +40,7 @@ class CharacteristicService:
         assistant_response: CheckInResponse = await self.assistant_service.get_check_in_response(
             user_message=message_text,
             user_characteristics=user_characteristics or {},  # передаём профиль
+            talk_mode=talk_mode
         )
         return assistant_response
 
@@ -59,17 +65,32 @@ class CharacteristicService:
         if not model_type:
             raise ValueError(f"Неизвестный тип схемы: {schema_type}")
 
-        # Получаем существующие логи батчей
+        # [ создаем батч для этого профиля харки ]
+        await self.repo.create_log_in_batch(
+            user_id=user_id,
+            characteristic_type=model_type,
+            message=message_text
+        )
+
+        # [ получаем все батчи этого профиля]
         batch_logs: Sequence[CharacteristicBatchLogSchema] = await self.repo.get_batch_logs(
             user_id=user_id,
             characteristic_type=model_type
         )
 
-        old_logs = [log.message for log in batch_logs]
-        old_logs_length = sum(len(log) for log in old_logs)
-        new_log_length = len(message_text)
+        logs = [log.message for log in batch_logs]
+        logs_length = sum(len(log) for log in logs)
 
-        if (old_logs_length + new_log_length) >= self.min_chars:
+        min_chars: int
+        match schema_type:
+            case x if x in PERSONALITY_SCHEMAS:
+                min_chars = self.min_chars_personality
+            case x if x in CLINICAL_SCHEMAS:
+                min_chars = self.min_chars_clinical
+            case _:
+                min_chars = self.min_chars
+
+        if logs_length >= min_chars:
             # генерируем новую характеристику
             await self.generate_characteristic(
                 user_id=user_id,
@@ -86,13 +107,6 @@ class CharacteristicService:
             )
 
             return True
-
-        # иначе запись в таблицу батчей
-        await self.repo.create_log_in_batch(
-            user_id=user_id,
-            characteristic_type=model_type,
-            message=message_text
-        )
 
         return False
 

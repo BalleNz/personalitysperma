@@ -7,8 +7,9 @@ from openai import AsyncOpenAI, NOT_GIVEN, NotGiven, APIError
 from pydantic import ValidationError
 
 from src.api.response_schemas.generation import CheckInResponse
+from src.core.enums.user import TALKING_MODES
 from src.core.prompts import GET_PROMPT_BY_SCHEMA_TYPE
-from src.core.prompts.check_in_instructions import CHECK_IN
+from src.core.prompts.check_in_instructions import CHECK_IN, CHECK_IN_PSYCHO
 from src.core.prompts.diary import GET_SUMMARY_LOG_FROM_DAILY_LOGS
 from src.core.schemas.assistant_response import SummaryResponseSchema
 from src.infrastructure.config.config import config
@@ -97,6 +98,7 @@ class AssistantService:
     async def get_check_in_response(
             self,
             user_message: str,
+            talk_mode: TALKING_MODES,
             user_characteristics: dict[str, dict[str, Any]] | None = None,
     ) -> CheckInResponse:
         """получить check in"""
@@ -105,7 +107,10 @@ class AssistantService:
             profile_text = "\n\nТекущий профиль пользователя:\n" + \
                            json.dumps(user_characteristics, ensure_ascii=False, indent=2)
 
-        full_prompt: str = CHECK_IN + profile_text
+        logger.info(profile_text)
+
+        prompt = CHECK_IN if talk_mode == TALKING_MODES.RESEARCH.value else CHECK_IN_PSYCHO
+        full_prompt: str = prompt + profile_text
 
         return await self.get_response(
             input_query=user_message,
@@ -127,7 +132,7 @@ class AssistantService:
             pydantic_model=pydantic_model
         )
 
-    async def summarize_user_daily_logs(self, date_string: str, user_logs: str) -> SummaryResponseSchema:
+    async def summarize_user_daily_logs(self, user_logs: str) -> SummaryResponseSchema:
         """создает один рассказ из всех логов"""
 
         prompt: str = GET_SUMMARY_LOG_FROM_DAILY_LOGS

@@ -6,7 +6,7 @@ from aiogram.types import Message
 from src.api.request_schemas.generation import CheckInRequest
 from src.api.response_schemas.generation import CheckInResponse
 from src.bot.bot_instance import bot
-from src.bot.keyboards.inline import get_full_access_keyboard
+from src.bot.keyboards.inline.start import get_full_access_keyboard
 from src.bot.lexicon.message_text import MessageText
 from src.core.consts import FREE_VOICE_MESSAGES_COUNT
 from src.core.schemas.user_schemas import UserSchema

@@ -1,8 +1,8 @@
-from enums.user import GENDER
-from schemas.diary_schema import DiarySchema
 from src.api.request_schemas.generation import CheckInRequest
 from src.api.response_schemas.characteristic import GetAllCharacteristicResponse
 from src.api.response_schemas.generation import CheckInResponse
+from src.core.enums.user import GENDER, TALKING_MODES
+from src.core.schemas.diary_schema import DiarySchema
 from src.core.schemas.user_schemas import UserSchema, UserTelegramDataSchema
 from src.core.services.api_client.base_http_client import BaseHttpClient, HTTPMethod
 
@@ -67,12 +67,15 @@ class PersonalityGPT_APIClient(BaseHttpClient):
         return response
 
     # [ SETTINGS ]
-    async def change_talk_mode(self, access_token: str) -> None:
+    async def change_talk_mode(self, access_token: str, talk_mode: TALKING_MODES) -> None:
         """меняет режим общения"""
         await self._request(
             HTTPMethod.PUT,
             endpoint="/v1/user/change_talking_mode",
-            access_token=access_token
+            access_token=access_token,
+            request_body={
+                "talk_mode": talk_mode
+            }
         )
 
     async def change_gender(self, gender: GENDER, access_token: str) -> None:

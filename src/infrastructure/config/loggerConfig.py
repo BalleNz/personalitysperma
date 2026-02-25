@@ -12,7 +12,7 @@ def configure_logging():
                 "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
             },
         },
-        "routers": {
+        "handlers": {
             "console": {
                 "class": "logging.StreamHandler",
                 "formatter": "default",
@@ -21,11 +21,11 @@ def configure_logging():
         },
         "root": {
             "level": "INFO",
-            "routers": ["console"],
+            "handlers": ["console"],
         },
         "loggers": {
             "src": {
-                "level": "INFO",
+                "level": "DEBUG",
                 "propagate": True
             },
             "bot": {

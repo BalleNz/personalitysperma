@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException, status
 from fastapi.params import Depends
 
 from enums.user import TALKING_MODES
-from request_schemas.user import ChangeGenderRequest
+from request_schemas.user import ChangeGenderRequest, ChangeTalkModeRequest
 from src.api.utils.auth import get_auth_user
 from src.core import consts
 from src.core.schemas.user_schemas import UserSchema
@@ -71,19 +71,14 @@ async def change_gender(
 @router.put(path="/change_talking_mode")
 async def change_talking_mode(
         user: Annotated[UserSchema, Depends(get_auth_user)],
+        request: ChangeTalkModeRequest,
         user_service: Annotated[UserService, Depends(get_user_service)],
         redis_service: Annotated[RedisService, Depends(get_redis_service)],
 ):
     """Инверсивно Меняет режим общения пользователя"""
-    new_mode: TALKING_MODES | None = None
-    if user.talk_mode == TALKING_MODES.RESEARCH:
-        new_mode = TALKING_MODES.INDIVIDUAL_PSYCHO
-    elif user.talk_mode == TALKING_MODES.INDIVIDUAL_PSYCHO:
-        new_mode = TALKING_MODES.RESEARCH
-
     await user_service.repo.change_talking_mode(
         user.id,
-        new_mode
+        request.talk_mode
     )
 
     await redis_service._invalidate_user_profile(

@@ -49,12 +49,9 @@ class UserHollandCodes(IDMixin, TimestampsMixin):
         comment="Индекс согласованности типов (чем выше, тем более согласован профиль)"
     )
 
-    notes: Mapped[str | None] = mapped_column(
-        Text,
-        default=None,
-        comment="Описание типа Холланда"
-    )
-
     @property
     def schema_class(self) -> Type[BaseModel]:
         return UserHollandCodesSchema
+
+# TODO:
+#   — для каждого типа HOLLAND, HEXACO, SOCIONICS сделать отдельное описание в lexicon с функцией

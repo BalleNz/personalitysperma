@@ -50,7 +50,7 @@ GET_SOCIAL_PROFILE: str = f"""
     "conformity": <...>,
     "social_confidence": <...>,
     "competitiveness": <...>,
-    "records": "5"
+    "records": "..."
 }}
 
 """
@@ -100,7 +100,7 @@ GET_COGNITIVE_PROFILE: str = f"""
     "thinking_style": <...>,
     "tolerance_for_ambiguity": <...>,
     "mental_flexibility": <...>,
-    "records": "5"
+    "records": "..."
 }}
 
 """
@@ -150,7 +150,7 @@ GET_EMOTIONAL_PROFILE: str = f"""
     "emotional_sensitivity": <...>,
     "emotional_expressiveness": <...>,
     "anxiety_level": <...>,
-    "records": "5"
+    "records": "..."
 }}
 
 """
@@ -203,7 +203,7 @@ GET_BEHAVIORAL_PROFILE: str = f"""
     "need_for_order": <...>,
     "perfectionism": <...>,
     "impulse_control": <...>,
-    "records": "5"
+    "records": "..."
 }}
 
 """

@@ -1,19 +1,13 @@
 import datetime
 import logging
 import math
-from typing import Optional
 
 from pydantic import BaseModel, Field
 
 from src.bot.lexicon.button_text import ButtonText
 from src.bot.lexicon.message_text import MessageText
 from src.core.enums.dark_triads import DarkTriadsTypes
-from src.core.schemas.clinical_disorders.anxiety_disorders import AnxietyDisordersSchema
-from src.core.schemas.clinical_disorders.mood_disorders import MoodDisordersSchema
-from src.core.schemas.clinical_disorders.neuro_disorders import NeuroDisordersSchema
-from src.core.schemas.clinical_disorders.personality_disorders import PersonalityDisordersSchema
 from src.core.schemas.personality_types.hexaco import UserHexacoSchema
-from src.core.schemas.personality_types.holland_codes import UserHollandCodesSchema
 from src.core.schemas.personality_types.socionics_type import UserSocionicsSchema
 from src.core.schemas.traits.traits_basic import (
     SocialProfileSchema,
@@ -23,78 +17,11 @@ from src.core.schemas.traits.traits_basic import (
 )
 from src.core.schemas.traits.traits_dark import DarkTriadsSchema
 from src.core.schemas.traits.traits_humor import HumorProfileSchema, HUMOR_FIELDS
+from src.core.utils.mbti_formatter import get_mbti_briefly_description
+from src.core.utils.text_formatters import get_characteristic_name, get_date_word_from_iso
 from src.infrastructure.database.models.base import S
 
 logger = logging.getLogger(__name__)
-
-
-def get_last_update(date: Optional[datetime.datetime]) -> str:
-    """Последнее обновление в строчном виде (вчера, неделю назад, ...)"""
-    if date is None:
-        return "N/A"
-
-    now = datetime.datetime.now(datetime.timezone.utc)
-    delta = now - date
-
-    if delta.days == 0:
-        return "сегодня"
-    if delta.days == 1:
-        return "вчера"
-    if 2 <= delta.days <= 6:
-        return f"{delta.days} дня назад"
-    if 7 <= delta.days <= 13:
-        return "неделю назад"
-    if 14 <= delta.days <= 29:
-        return "больше недели назад"
-    if delta.days >= 30:
-        return "больше месяца назад"
-    return "N/A"
-
-
-def get_characteristic_name(schema_name: type[S]):
-    """
-    Возвращает человеко-ориентированное название характеристики/профиля
-    """
-    names = {
-        SocialProfileSchema: "Социальность",
-        CognitiveProfileSchema: "Мышление",
-        EmotionalProfileSchema: "Эмоциональность",
-        BehavioralProfileSchema: "Поведение",
-        DarkTriadsSchema: "Тёмная триада",
-        HumorProfileSchema: "Чувство юмора",
-        MoodDisordersSchema: "Настроение",
-        AnxietyDisordersSchema: "Тревожность",
-        NeuroDisordersSchema: "Нейрокогнитивные нарушения",
-        PersonalityDisordersSchema: "Личностные расстройства",
-        UserHexacoSchema: "HEXACO",
-        UserHollandCodesSchema: "Коды Холланда",
-        UserSocionicsSchema: "Соционика",
-    }
-    return names[schema_name]
-
-    # RelationshipPreferenceSchema
-    # LoveLanguageSchema
-    # SexualPreferenceSchema
-
-
-def get_date_word_from_iso(date: datetime.datetime | datetime.date | str | None) -> str:
-    """
-    Возвращает дату на русском языке
-    Примеры:
-        datetime(..) → "4 марта"
-    """
-    if isinstance(date, datetime.datetime):
-        date = date.date()
-
-    day = date.day
-    month_names = [
-        "января", "февраля", "марта", "апреля", "мая", "июня",
-        "июля", "августа", "сентября", "октября", "ноября", "декабря"
-    ]
-
-    month = month_names[date.month - 1]
-
-    return f"{day} {month}"
 
 
 class CharacteristicInfo(BaseModel):
@@ -103,7 +30,7 @@ class CharacteristicInfo(BaseModel):
     last_update: datetime.datetime = Field(...)
 
 
-class PersonalityMessageFormatter:
+class CharacteristicMessageFormatter:
     """Форматирование сообщений о психологических профилях"""
 
     @staticmethod
@@ -118,13 +45,13 @@ class PersonalityMessageFormatter:
         for schema in schemas:
             match schema.__class__.__name__:
                 case SocialProfileSchema.__name__:
-                    characteristic_info = PersonalityMessageFormatter.format_social_profile(schema, full_access)
+                    characteristic_info = CharacteristicMessageFormatter.format_social_profile(schema, full_access)
                 case BehavioralProfileSchema.__name__:
-                    characteristic_info = PersonalityMessageFormatter.format_behavioral_profile(schema, full_access)
+                    characteristic_info = CharacteristicMessageFormatter.format_behavioral_profile(schema, full_access)
                 case EmotionalProfileSchema.__name__:
-                    characteristic_info = PersonalityMessageFormatter.format_emotional_profile(schema, full_access)
+                    characteristic_info = CharacteristicMessageFormatter.format_emotional_profile(schema, full_access)
                 case CognitiveProfileSchema.__name__:
-                    characteristic_info = PersonalityMessageFormatter.format_cognitive_profile(schema, full_access)
+                    characteristic_info = CharacteristicMessageFormatter.format_cognitive_profile(schema, full_access)
                 case _:
                     raise
 
@@ -351,6 +278,36 @@ class PersonalityMessageFormatter:
             last_update=last_update
         )
 
+    # [ MBTI / SOCIONICS ]
+
+    @staticmethod
+    def format_socionics(
+            mbti: UserSocionicsSchema,
+    ):
+        top_3_types = mbti.get_top_3_types()
+        accuracy: int = int(mbti.accuracy_percent * 100)
+
+        text = (
+            f"1.  <b>{top_3_types[0][0]}: {int(top_3_types[0][1]*1000)/10}%  &lt;— самый вероятный</b>\n"
+            f"2.  {top_3_types[1][0]}: {int(top_3_types[1][1]*1000)/10}%\n"
+            f"3.  {top_3_types[2][0]}: {int(top_3_types[2][1]*1000)/10}%\n\n"
+
+            f"<b>{mbti.primary_type[0]} —</b> <u>{mbti.extraversion}.</u>\n"
+            f"<b>{mbti.primary_type[1]} —</b> <u>{mbti.intuition}.</u>\n"
+            f"<b>{mbti.primary_type[2]} —</b> <u>{mbti.logic}.</u>\n"
+            f"<b>{mbti.primary_type[3]} —</b> <u>{mbti.rationality}.</u>\n\n"
+            
+            f"<b>Клуб:</b>\n— <u>{mbti.club}.</u>\n\n"
+        )
+
+        briefly_description = get_mbti_briefly_description(mbti.primary_type)
+
+        return MessageText.SOCIONICS.format(
+            text=text,
+            briefly_description=briefly_description,
+            accuracy=accuracy
+        )
+
     class characteristic_formatter:
         """Шаблоны с форматированием"""
 
@@ -360,15 +317,15 @@ class PersonalityMessageFormatter:
                 # ... accesses for profiles
         ):
             # [ base ]
-            TRAITS_CORE = PersonalityMessageFormatter.format_traits_core
+            TRAITS_CORE = CharacteristicMessageFormatter.format_traits_core
 
-            DARK_TRIADS = PersonalityMessageFormatter.format_dark_triads
-            HUMOR_PROFILE = PersonalityMessageFormatter.format_humor_profile
+            DARK_TRIADS = CharacteristicMessageFormatter.format_dark_triads
+            HUMOR_PROFILE = CharacteristicMessageFormatter.format_humor_profile
 
             # [ personality ]
-            # SOCIONICS = PersonalityMessageFormatter.format_socionics
+            SOCIONICS = CharacteristicMessageFormatter.format_socionics
             # HOLLAND_CODES = PersonalityMessageFormatter.format_holland_codes
-            HEXACO = PersonalityMessageFormatter.format_hexaco
+            HEXACO = CharacteristicMessageFormatter.format_hexaco
 
             # [ clinical ]
             # MOOD_DISORDERS = PersonalityMessageFormatter.format_mood_disorders
@@ -377,7 +334,12 @@ class PersonalityMessageFormatter:
             match formatter_name:
                 case "basic":
                     return TRAITS_CORE
+
                 case DarkTriadsSchema.__name__:
                     return DARK_TRIADS
+
                 case HumorProfileSchema.__name__:
                     return HUMOR_PROFILE
+
+                case UserSocionicsSchema.__name__:
+                    return SOCIONICS

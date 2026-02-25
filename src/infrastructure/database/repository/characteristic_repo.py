@@ -81,6 +81,26 @@ CHARACTERISTIC_SCHEMAS_TO_MODELS = {
     # "SexualPreferenceSchema": SexualPreference
 }
 
+PERSONALITY_SCHEMAS = (
+    UserHexacoSchema,
+    UserHollandCodesSchema,
+    UserSocionicsSchema
+)
+
+CLINICAL_SCHEMAS = (
+    ClinicalProfileSchema,
+    MoodDisordersSchema,
+    AnxietyDisordersSchema,
+    NeuroDisordersSchema,
+    PersonalityDisordersSchema
+)
+
+# LOVE_SCHEMAS = (
+#     RelationshipPreferenceSchema,
+#     LoveLanguageSchema,
+#     SexualPreferenceSchema
+# )
+
 
 def get_schema_type_from_name(schema_name: str) -> type[S] | None:
     for schema in CHARACTERISTIC_SCHEMAS_TO_MODELS.keys():

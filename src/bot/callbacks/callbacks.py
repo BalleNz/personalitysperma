@@ -14,7 +14,15 @@ class GetCharacteristicCallback(CallbackData, prefix="get_char"):
     characteristic_group: str | None = None
 
 
-class BackToListingCallback(CallbackData, prefix="back"):
+class GetPersonalityCallback(CallbackData, prefix="get_persn"):
+    characteristic_name: str | None = None
+
+
+class BackToListingPersonalityCallback(CallbackData, prefix="pers_back"):
+    pass
+
+
+class BackToListingCharacteristicCallback(CallbackData, prefix="charact_back"):
     pass
 
 
@@ -22,7 +30,16 @@ class GetFullAccessCallback(CallbackData, prefix="full_access"):
     pass
 
 
-# [ diary ]
+# [ SOCIONICS ]
+class SocionicsReininCallback(CallbackData, prefix="socionics_reinin"):
+    pass
+
+
+class SocionicsRelationshipsCallback(CallbackData, prefix="socionics_relationships"):
+    mbti_2: str  # с кем ищем совместимость
+
+
+# [ DIARY ]
 class DiaryPaginationCallback(CallbackData, prefix="pagination"):
     page: int
     arrow: str | None = None  # left / right

@@ -23,19 +23,27 @@ async def select_mode_from_reply(
     1. Изучение себя
     2. Общение
     """
+
+    talk_mode: TALKING_MODES = TALKING_MODES.RESEARCH
+    if message.text == ButtonText.PSYCHO_MODE:
+        talk_mode = TALKING_MODES.INDIVIDUAL_PSYCHO
+    elif message.text == ButtonText.RESEARCH_MODE:
+        talk_mode = TALKING_MODES.RESEARCH
+
     user: UserSchema = await cache_service.get_user_profile(
         access_token,
         str(message.from_user.id)
     )
-    text: str = MessageText.choose_talking_mode(user.talk_mode)
+    text: str = MessageText.choose_talking_mode(talk_mode)
 
     await api_client.change_talk_mode(
-        access_token
+        access_token,
+        talk_mode=talk_mode
     )
 
-    reply_keyboard: ReplyKeyboardMarkup = MAIN_KEYBOARD_PSYCHO if user.talk_mode == TALKING_MODES.RESEARCH else MAIN_KEYBOARD_RESEARCH
+    reply_keyboard: ReplyKeyboardMarkup = MAIN_KEYBOARD_PSYCHO if talk_mode == TALKING_MODES.RESEARCH else MAIN_KEYBOARD_RESEARCH
 
     await message.reply(
             text,
-        reply_markup=reply_keyboard
+            reply_markup=reply_keyboard
     )

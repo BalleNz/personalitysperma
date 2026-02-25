@@ -30,7 +30,7 @@ class UserDiary(IDMixin):
         nullable=False
     )
 
-    created_at: Mapped[datetime.date] = mapped_column(Date, nullable=False, index=True, unique=True)
+    created_at: Mapped[datetime.date] = mapped_column(Date, nullable=False, index=True)
 
     __table_args__ = (
         UniqueConstraint("user_id", "created_at", name="uq_user_diary_one_per_day"),

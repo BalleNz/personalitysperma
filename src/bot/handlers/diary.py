@@ -3,11 +3,11 @@ import logging
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery
 
-from schemas.user_schemas import UserSchema
 from src.bot.callbacks.callbacks import DiaryPaginationCallback, DiaryGetCallback
-from src.bot.keyboards.inline import get_diary_listing_keyboard, get_diary_entry_keyboard
+from src.bot.keyboards.inline.diary import get_diary_listing_keyboard, get_diary_entry_keyboard
 from src.bot.lexicon.button_text import ButtonText
 from src.bot.lexicon.message_text import MessageText
+from src.core.schemas.user_schemas import UserSchema
 from src.core.services.cache_services.cache_service import CacheService
 from src.core.utils.text_formatters import format_russian_date
 
@@ -117,7 +117,7 @@ async def show_diaries(
     else:
         user_id = str(message.message.from_user.id)
 
-    user: UserSchema = await cache_service.get_user_profile(user_id, access_token)
+    user: UserSchema = await cache_service.get_user_profile(telegram_id=user_id, access_token=access_token)
 
     diaries = await cache_service.get_diary(
         access_token,
@@ -125,10 +125,14 @@ async def show_diaries(
     )
     text: str = MessageText.get_diary_listing_text(user.gender)
 
-    keyboard = get_diary_listing_keyboard(
-        diaries=diaries,
-        page=page
-    )
+    if diaries:
+        keyboard = get_diary_listing_keyboard(
+            diaries=diaries,
+            page=page
+        )
+    else:
+        text += "\n\n<u>сейчас твой дневник пуст</u>"
+        keyboard = None
 
     if type(message) == CallbackQuery:
         await message.message.edit_text(

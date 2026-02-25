@@ -1,10 +1,10 @@
 class ButtonText:
     # [ reply ]
     PSYCHO_MODE = "🧚 (beta) Индивидуальный психолог"
-    RESEARCH_MODE = "🔍 Изучение себя"
+    RESEARCH_MODE = "🔍 Познать себя"
     DIARY = "📙 Личный дневник"
-    MY_PERSONALITY = "🌀 Моя характеристика"
-    MY_TYPES = "🌀 Типирование"
+    MY_CHARACTERISTIC = "🌀 Моя характеристика"
+    MY_PERSONALITY = "🌀 Типы личности"
 
     # TODO:  (или в моя характеристика)
     MUSIC_PREFERENCES = "Музыкальные предпочтения"
@@ -21,3 +21,12 @@ class ButtonText:
     DARK_TRIADS = "Тёмная триада"
     HUMOR_CHARACTERISTIC = "Стиль юмора"
     CLINICAL_CHARACTERISTIC = "Клинические характеристики"
+
+    SOCIONICS = "👾 MBTI"
+    HEXACO = "HEXACO"
+    HOLLAND_CODES = "Коды Холланда"
+
+    # [ socionics keyboard ]
+    SOCIONICS_REININ = "Глубокий анализ"
+    SOCIONICS_RELATIONSHIPS = "Совместимость"
+
