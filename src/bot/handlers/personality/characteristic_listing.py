@@ -4,10 +4,11 @@ from aiogram import Router, F
 from aiogram.types import Message, InlineKeyboardMarkup, CallbackQuery
 
 from src.bot.callbacks.callbacks import GetCharacteristicCallback, BackToListingCharacteristicCallback
-from src.bot.keyboards.inline.characteristics import get_characteristic_listing_keyboard, back_to_characteristic_listing_keyboard
+from src.bot.keyboards.inline.characteristics import get_characteristic_listing_keyboard, \
+    back_to_characteristic_listing_keyboard
 from src.bot.lexicon.button_text import ButtonText
 from src.bot.lexicon.message_text import MessageText
-from message_formatters.characteristic_formatters import CharacteristicMessageFormatter
+from src.bot.message_formatters.characteristic_formatters import CharacteristicMessageFormatter
 from src.core.schemas.user_schemas import UserSchema
 from src.core.services.cache_services.cache_service import CacheService
 from src.infrastructure.database.models.base import S
@@ -106,9 +107,9 @@ async def show_characteristic(
         )
     )
 
-    # full_access = user.full_access
+    full_access = user.full_access
 
-    text = characteristic_formatter(characteristic, 1)  # сделать чище
+    text = characteristic_formatter(characteristic, full_access)  # сделать чище
 
     keyboard = back_to_characteristic_listing_keyboard
 

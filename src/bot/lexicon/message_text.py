@@ -148,9 +148,9 @@ class MessageText:
     # [ SOCIONICS ]
     SOCIONICS = (
         "👾 <b>MBTI</b>\n\n"
-        "Твои вероятные типы:\n"
+        "<b>Вероятные типы</b>:\n"
         "{text}"
-        "<blockquote>{briefly_description}</blockquote>\n\n"
+        "{briefly_description}\n\n"
         "<u>точность:</u> {accuracy}%\n\n"
     )
 
@@ -159,7 +159,12 @@ class MessageText:
         "{text}\n\n"
     )
 
-    SOCIONICS_RELATIONSHIPS = (
+    SOCIONICS_RELATIONSHIPS_BRIEFLY = (
         "<b>🫂 <u>Совместимость {mbti_type} с другими типами</u></b>\n\n"
+        "{text}"
+    )
+
+    SOCIONICS_RELATIONSHIPS = (
+        "<b>🫂 <u>Совместимость {mbti_type_1} с {mbti_type_2}</u></b>\n\n"
         "{text}\n\n"
     )

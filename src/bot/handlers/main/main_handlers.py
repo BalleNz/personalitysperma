@@ -3,6 +3,7 @@ import io
 from aiogram import Router, F
 from aiogram.types import Message
 
+from src.bot.handlers.main.main import main
 from src.api.request_schemas.generation import CheckInRequest
 from src.api.response_schemas.generation import CheckInResponse
 from src.bot.bot_instance import bot
@@ -60,21 +61,15 @@ async def main_voice(
 
 
 @router.message()
-async def main(
+async def main_handler(
         message: Message,
         api_client: PersonalityGPT_APIClient,
         access_token: str
 ):
-    """Главное действие пользователя:
-    — check_in:
-    —— generation (with notification) / add to batches"""
+    """Главное действие пользователя"""
 
-    message_reply = await message.reply("Ожидание ответа..")
-
-    api_request: CheckInRequest = CheckInRequest(
-        message=message.text
+    await main(
+        message,
+        api_client,
+        access_token
     )
-
-    check_in_response: CheckInResponse = await api_client.check_in(access_token, api_request)
-    await message.reply(check_in_response.precise_question)
-    await message_reply.delete()

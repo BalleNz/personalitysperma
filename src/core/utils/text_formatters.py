@@ -96,7 +96,7 @@ def get_date_word_from_iso(date: datetime.datetime | datetime.date | str | None)
     Примеры:
         datetime(..) → "4 марта"
     """
-    if isinstance(date, datetime.datetime):
+    if isinstance(date, datetime):
         date = date.date()
 
     day = date.day

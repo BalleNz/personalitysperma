@@ -61,7 +61,7 @@ class UserRepository(BaseRepository):
         """возвращает записи с дневника пользователя"""
         stmt = (
             select(UserDiary).where(
-                UserDiary.id == user_id
+                UserDiary.user_id == user_id
             )
             .order_by(desc(UserDiary.created_at))
         )

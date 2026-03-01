@@ -35,8 +35,8 @@ class SocionicsReininCallback(CallbackData, prefix="socionics_reinin"):
     pass
 
 
-class SocionicsRelationshipsCallback(CallbackData, prefix="socionics_relationships"):
-    mbti_2: str  # с кем ищем совместимость
+class SocionicsRelationshipsWaitingCallback(CallbackData, prefix="socionics_relationships"):
+    mbti_type: str  # тип для сравнения с другими
 
 
 # [ DIARY ]

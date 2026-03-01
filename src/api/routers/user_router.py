@@ -3,8 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, HTTPException, status
 from fastapi.params import Depends
 
-from enums.user import TALKING_MODES
-from request_schemas.user import ChangeGenderRequest, ChangeTalkModeRequest
+from src.api.request_schemas.user import ChangeGenderRequest, ChangeTalkModeRequest
 from src.api.utils.auth import get_auth_user
 from src.core import consts
 from src.core.schemas.user_schemas import UserSchema

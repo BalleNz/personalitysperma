@@ -1,7 +1,6 @@
 from enum import Enum
 
 
-# ============ МЕЖТИПНЫЕ ОТНОШЕНИЯ ============
 class RelationshipType(str, Enum):
     """14 типов интертипных отношений в соционике"""
     DUAL = "Дуальные"

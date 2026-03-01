@@ -1,6 +1,9 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-from src.bot.callbacks.callbacks import BackToListingPersonalityCallback, GetPersonalityCallback, SocionicsReininCallback
+from src.bot.callbacks.callbacks import (
+    SocionicsRelationshipsWaitingCallback, BackToListingPersonalityCallback, GetPersonalityCallback,
+    SocionicsReininCallback
+)
 from src.bot.lexicon.button_text import ButtonText
 
 back_to_personality_listing_keyboard = InlineKeyboardMarkup(
@@ -58,7 +61,7 @@ def get_personality_types_keyboard(
 
 
 def get_socionics_keyboard(
-
+        mbti_type: str
 ) -> InlineKeyboardMarkup:
     """клавиатуры для Соционики"""
     buttons: list = list()
@@ -70,12 +73,14 @@ def get_socionics_keyboard(
         )]
     )
 
-    # buttons.append(
-    #     [InlineKeyboardButton(
-    #         text=ButtonText.SOCIONICS_RELATIONSHIPS,
-    #         callback_data=SocionicsRelationshipsCallback().pack()
-    #     )]
-    # )
+    buttons.append(
+        [InlineKeyboardButton(
+            text=ButtonText.SOCIONICS_RELATIONSHIPS,
+            callback_data=SocionicsRelationshipsWaitingCallback(
+                mbti_type=mbti_type
+            ).pack()
+        )]
+    )
 
     buttons.append(
         [InlineKeyboardButton(

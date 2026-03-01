@@ -1,6 +1,6 @@
 from src.bot.lexicon.message_text import MessageText
 from src.core.schemas.personality_types.socionics_type import UserSocionicsSchema
-from src.core.utils.mbti_formatter import get_reinin_descriptions, get_relationships_description
+from src.core.utils.mbti_formatter import get_reinin_descriptions, get_relationships_description, get_relationships_briefly
 
 
 class Formatter:
@@ -22,6 +22,19 @@ class Formatter:
         )
 
     @staticmethod
+    def format_relationships_socionics_briefly(
+            mbti: str
+    ) -> str:
+        """Сообщение о Взаимоотношениях mbti типа с другими"""
+
+        text: str = get_relationships_briefly(mbti)
+
+        return MessageText.SOCIONICS_RELATIONSHIPS_BRIEFLY.format(
+            mbti_type=mbti,
+            text=text
+        )
+
+    @staticmethod
     def format_relationships_socionics(
             mbti_1: str,
             mbti_2: str
@@ -31,6 +44,7 @@ class Formatter:
         text: str = get_relationships_description(mbti_1, mbti_2)
 
         return MessageText.SOCIONICS_RELATIONSHIPS.format(
-            mbti_type=mbti_1,
+            mbti_type_1=mbti_1,
+            mbti_type_2=mbti_2,
             text=text
         )

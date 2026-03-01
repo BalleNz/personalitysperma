@@ -281,23 +281,24 @@ class CharacteristicMessageFormatter:
     # [ MBTI / SOCIONICS ]
 
     @staticmethod
-    def format_socionics(
+    def format_socionics(  # TODO: перенести в personality formatters
             mbti: UserSocionicsSchema,
     ):
         top_3_types = mbti.get_top_3_types()
         accuracy: int = int(mbti.accuracy_percent * 100)
 
         text = (
-            f"1.  <b>{top_3_types[0][0]}: {int(top_3_types[0][1]*1000)/10}%  &lt;— самый вероятный</b>\n"
+            f"1.  <b><u>{top_3_types[0][0]}</u>: {int(top_3_types[0][1]*1000)/10}%  &lt;— самый вероятный</b>\n"
             f"2.  {top_3_types[1][0]}: {int(top_3_types[1][1]*1000)/10}%\n"
             f"3.  {top_3_types[2][0]}: {int(top_3_types[2][1]*1000)/10}%\n\n"
 
-            f"<b>{mbti.primary_type[0]} —</b> <u>{mbti.extraversion}.</u>\n"
-            f"<b>{mbti.primary_type[1]} —</b> <u>{mbti.intuition}.</u>\n"
-            f"<b>{mbti.primary_type[2]} —</b> <u>{mbti.logic}.</u>\n"
-            f"<b>{mbti.primary_type[3]} —</b> <u>{mbti.rationality}.</u>\n\n"
+            "📝 <b>Расшифровка:</b>\n"
+            f"<b>{mbti.primary_type[0]} —</b> {mbti.extraversion}.\n"
+            f"<b>{mbti.primary_type[1]} —</b> {mbti.intuition}.\n"
+            f"<b>{mbti.primary_type[2]} —</b> {mbti.logic}.\n"
+            f"<b>{mbti.primary_type[3]} —</b> {mbti.rationality}.\n\n"
             
-            f"<b>Клуб:</b>\n— <u>{mbti.club}.</u>\n\n"
+            f"<b>👤 Клуб:</b>\n— <u>{mbti.club}</u>.\n\n"
         )
 
         briefly_description = get_mbti_briefly_description(mbti.primary_type)

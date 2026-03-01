@@ -10,6 +10,7 @@ from src.bot.keyboards.inline.start import gender_select_keyboard
 from src.bot.keyboards.reply import MAIN_KEYBOARD_PSYCHO
 from src.bot.lexicon.message_text import MessageText
 from src.core.enums.user import GENDER
+from src.core.materials.get_file import get_file_by_name
 from src.core.services.api_client.personalityGPT_api import PersonalityGPT_APIClient
 
 router = Router(name=__name__)
@@ -50,5 +51,9 @@ async def start_dialog(
 
     user_id = str(message.from_user.id)
 
-    await message.answer(text=MessageText.HELLO_GENDER_SELECT, reply_markup=gender_select_keyboard)
+    await message.answer_photo(
+        text=MessageText.HELLO_GENDER_SELECT,
+        reply_markup=gender_select_keyboard,
+        photo=get_file_by_name("start_picture.png")
+    )
     logger.info(f"User {user_id} has started dialog.")
