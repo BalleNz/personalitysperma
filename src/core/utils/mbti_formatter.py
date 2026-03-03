@@ -1,4 +1,4 @@
-from src.core.lexicon import SOCIONICS_RELATIONSHIPS
+from src.core.lexicon import mbti_relationships_briefly, SOCIONICS_RELATIONSHIPS
 from src.core.schemas.personality_types.socionics_type import UserSocionicsSchema
 
 
@@ -257,25 +257,28 @@ def get_relationships_description(
 ) -> str:
     """Возвращает описание взаимоотношений MBTI между двумя людьми"""
 
-    short_description, long_description, short_term_score, long_term_score, human_values, human_business = SOCIONICS_RELATIONSHIPS.get(
+    short_description, long_description, short_term_score, long_term_score, human_values, human_business, how_to_love = SOCIONICS_RELATIONSHIPS.get(
         mbti_type_1
     ).get(
         mbti_type_2
     )
 
     text: str = (
-        f"В краткосрочных отношениях: {short_term_score} / 100\n"
-        f"— {short_description}"
+        f"<b>⏳ В краткосрочных отношениях:</b> {short_term_score} / 100\n"
+        f"<blockquote>— {short_description}</blockquote>\n\n"
         
         
-        f"В долгосрочных отношениях: {long_term_score} / 100\n"
-        f"— {long_description}"
+        f"<b>⌛ В долгосрочных отношениях:</b> {long_term_score} / 100\n"
+        f"<blockquote>— {long_description}</blockquote>\n\n"
         
-        "Жизненные ценности:\n"   # TODO добавить в словарь 
-        f"— {human_values}\n\n"
+        "<b>👀 Жизненные ценности:</b>\n"
+        f"<blockquote>— {human_values}</blockquote>\n\n"
         
-        "Подход к решению какой-либо проблемы:\n"
-        f"— {human_business}\n\n"
+        "<b>🧠 Мышление:</b>\n"
+        f"<blockquote>— {human_business}.</blockquote>\n\n"
+        
+        f"<b>Как вызвать доверие у {mbti_type_2}?</b>\n"
+        f"— {how_to_love}"
     )
 
     return text
@@ -286,33 +289,47 @@ def get_relationships_briefly(
 ) -> str:
     """Взаимоотношения с другими типами со схемы"""
 
-    mbti = UserSocionicsSchema(primary_type=mbti, records=1)
+    best_relationships: list[tuple[str, str]] = mbti_relationships_briefly.get(mbti).get('best_relationships')
+    conflicts_types: list[tuple[str, str]] = mbti_relationships_briefly.get(mbti).get('conflict')
 
-    best_relationships: dict[str, str]  # keys: description, type_name
-    conflicts_types: dict[str, str]  # keys: description, type_name
-    briefly_description: str
-
-    # TODO: также сделать огромный словарь в lexicon:
-    #    — tuple: (
-    #       list[tuple[str, str]: best relationships: (description, type_name)],
-    #       list[str: самые высокие конфликты с ...],
-    #       list[str: насколько этот тип в принципе ладит с людьми]
-    #    )
+    briefly_description: str = mbti_relationships_briefly.get(mbti).get('about_relationships')
+    enjoy_things: str = mbti_relationships_briefly.get(mbti).get('enjoy_things')
+    terrible_things: str = mbti_relationships_briefly.get(mbti).get('terrible_thing')
 
     best_pairs_text: str = ""
-    for description, mbti_type in best_relationships.values():
-        best_pairs_text += f"— {mbti_type}: {description}\n"
+    for i, data in enumerate(
+            sorted(best_relationships, key=lambda x: -x[2]),
+            start=1
+    ):
+        verdict, mbti_type, score, description = data
+        best_pairs_text += f"<b>{i}. {mbti_type}:</b> {verdict}; {description}"
+        if i != len(best_relationships):
+            best_pairs_text += "\n\n"
 
     worst_pairs_text: str = ""
-    for description, mbti_type in conflicts_types.values():
-        worst_pairs_text += f"— {mbti_type}: {description}\n"
+    for i, data in enumerate(
+            sorted(conflicts_types, key=lambda x: x[2]),
+            start=1
+    ):
+        mbti_type, verdict, score, description = data
+        worst_pairs_text += f"<b>{i}. {mbti_type}:</b> {verdict}; {description}"
+        if i != len(conflicts_types):
+            worst_pairs_text += "\n\n"
 
     text: str = (
-        f"Лучшие пары для {mbti}:\n"
-        f"{best_pairs_text}\n\n"
+        f"<b>❤️‍🔥 Лучшие пары <i>(в порядке убывания)</i>:</b>\n"
+        f"<blockquote>"
+        f"{best_pairs_text}"
+        f"</blockquote>\n\n"
         
-        f"Кого тебе лучше обходить стороной:\n"
-        f"{worst_pairs_text}\n\n"
+        f"{enjoy_things}\n\n"
+        
+        f"<b>💩️ Конфликторы:</b>\n"
+        f"<blockquote>"
+        f"{worst_pairs_text}"
+        f"</blockquote>\n\n"
+        
+        f"{terrible_things}\n\n"
         
         f"{briefly_description}"
     )

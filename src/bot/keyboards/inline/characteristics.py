@@ -2,8 +2,8 @@ from typing import Any
 
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-from callbacks.callbacks import BackToListingCharacteristicCallback, GetCharacteristicCallback
-from lexicon.button_text import ButtonText
+from src.bot.callbacks.callbacks import BackToListingCharacteristicCallback, GetCharacteristicCallback
+from src.bot.lexicon.button_text import ButtonText
 
 back_to_characteristic_listing_keyboard = InlineKeyboardMarkup(
     inline_keyboard=[

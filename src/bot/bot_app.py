@@ -9,7 +9,7 @@ from aiogram.fsm.storage.redis import RedisStorage
 from src.bot.bot_instance import bot
 from handlers.main.main_handlers import router as main_router
 from handlers.start.start import router as start_router
-from handlers.personality.socionics import router as socionics_router
+from handlers.personality.mbti import router as socionics_router
 from handlers.personality.personality_list import router as personality_router
 from handlers.personality.characteristic_listing import router as characteristic_listing_router
 from handlers.start.choose_talking_mode import router as choose_mode_router

@@ -89,7 +89,7 @@ async def show_relationships(
         access_token=access_token
     )
 
-    mbti_2 = message.text
+    mbti_2 = message.text.upper()
 
     # [ если сообщение не содержит mbti тип ]
     if mbti_2 not in VALID_MBTI_TYPES:

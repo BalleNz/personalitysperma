@@ -1,7 +1,6 @@
 import random
 
-from enums.user import GENDER
-from src.core.enums.user import TALKING_MODES
+from src.core.enums.user import GENDER, TALKING_MODES
 
 
 class MessageText:
@@ -161,7 +160,9 @@ class MessageText:
 
     SOCIONICS_RELATIONSHIPS_BRIEFLY = (
         "<b>🫂 <u>Совместимость {mbti_type} с другими типами</u></b>\n\n"
-        "{text}"
+        "{text}\n\n"
+        "<b>Хочешь узнать совместимость с конкретным человеком?</b>\n"
+        "— Напиши его MBTI тип в сообщении 4мя буквами!"
     )
 
     SOCIONICS_RELATIONSHIPS = (

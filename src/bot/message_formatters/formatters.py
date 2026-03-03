@@ -4,12 +4,13 @@ from src.core.utils.mbti_formatter import get_reinin_descriptions, get_relations
 
 
 class Formatter:
+
+    # [ MBTI ]
     @staticmethod
     def format_reinin_socionics(
             mbti: UserSocionicsSchema
     ) -> str:
-        text: str = str()
-
+        """Глубокий анализ MBTI"""
         reinin_text: str = get_reinin_descriptions(mbti)
 
         text = (
@@ -25,7 +26,7 @@ class Formatter:
     def format_relationships_socionics_briefly(
             mbti: str
     ) -> str:
-        """Сообщение о Взаимоотношениях mbti типа с другими"""
+        """Сообщение о Взаимоотношениях MBTI типа с другими"""
 
         text: str = get_relationships_briefly(mbti)
 
@@ -39,7 +40,7 @@ class Formatter:
             mbti_1: str,
             mbti_2: str
     ) -> str:
-        """Сообщение о Взаимоотношениях между двумя mbti типами """
+        """Сообщение о Взаимоотношениях между двумя MBTI типами """
 
         text: str = get_relationships_description(mbti_1, mbti_2)
 

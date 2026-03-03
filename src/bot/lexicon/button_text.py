@@ -16,7 +16,7 @@ class ButtonText:
     GET_FULL_ACCESS = "Полный доступ"
 
     # [ listing ]
-    TRAITS_BASIC = "Базовая характеристика"
+    TRAITS_BASIC = "Твой характер"
 
     DARK_TRIADS = "Тёмная триада"
     HUMOR_CHARACTERISTIC = "Стиль юмора"

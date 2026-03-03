@@ -52,8 +52,8 @@ async def start_dialog(
     user_id = str(message.from_user.id)
 
     await message.answer_photo(
-        text=MessageText.HELLO_GENDER_SELECT,
+        caption=MessageText.HELLO_GENDER_SELECT,
         reply_markup=gender_select_keyboard,
-        photo=get_file_by_name("start_picture.png")
+        photo=get_file_by_name("start_picture.jpg")
     )
     logger.info(f"User {user_id} has started dialog.")
