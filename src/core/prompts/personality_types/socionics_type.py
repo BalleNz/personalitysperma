@@ -1,4 +1,4 @@
-from src.core.prompts.check_in_instructions import RECORDS_INSTRUCTION_FOR_PERSONALITY
+from src.core.prompts.check_in.instruction import RECORDS_INSTRUCTION_FOR_PERSONALITY
 
 GET_SOCIONIC_TYPE: str = f"""
 По тексту пользователя ты должен определить его самый вероятный соционический тип строго в формате json.

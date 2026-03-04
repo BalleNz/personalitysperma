@@ -52,6 +52,3 @@ class UserHollandCodes(IDMixin, TimestampsMixin):
     @property
     def schema_class(self) -> Type[BaseModel]:
         return UserHollandCodesSchema
-
-# TODO:
-#   — для каждого типа HOLLAND, HEXACO, SOCIONICS сделать отдельное описание в lexicon с функцией

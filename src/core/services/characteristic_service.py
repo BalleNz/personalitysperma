@@ -2,7 +2,6 @@ import logging
 import uuid
 from typing import Type, Sequence, Any
 
-from src.api.response_schemas.generation import CheckInResponse
 from src.core.consts import (MIN_CHARS_LENGTH_TO_GENERATE, MIN_CHARS_LENGTH_TO_GENERATE_PERSONALITY,
                              MIN_CHARS_LENGTH_TO_GENERATE_CLINICAL)
 from src.core.enums.user import TALKING_MODES
@@ -27,22 +26,16 @@ class CharacteristicService:
         self.min_chars_clinical = MIN_CHARS_LENGTH_TO_GENERATE_CLINICAL
         self.assistant_service = assistant_service
 
-    async def check_in(
+    async def to_learn_finish(
             self,
             message_text: str,
-            talk_mode: TALKING_MODES,
-            user_characteristics: dict[str, dict[str, Any]] | None = None,
-    ) -> CheckInResponse:
-        """check in
+            new_characteristics: ...  # ToLearnFinishResponse
+    ):
+        """улучшает / меняет характеристику после ответа на вопрос юзера
 
-        ответы с учетом текущих профилей пользователя (5 самых важных)
+        прибавляет сразу 2 records
         """
-        assistant_response: CheckInResponse = await self.assistant_service.get_check_in_response(
-            user_message=message_text,
-            user_characteristics=user_characteristics or {},  # передаём профиль
-            talk_mode=talk_mode
-        )
-        return assistant_response
+        ...
 
     async def should_generate_characteristic(
             self,

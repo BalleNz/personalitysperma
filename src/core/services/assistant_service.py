@@ -9,7 +9,8 @@ from pydantic import ValidationError
 from src.api.response_schemas.generation import CheckInResponse
 from src.core.enums.user import TALKING_MODES
 from src.core.prompts import GET_PROMPT_BY_SCHEMA_TYPE
-from src.core.prompts.check_in_instructions import CHECK_IN, CHECK_IN_PSYCHO
+from src.core.prompts.check_in.psycho import CHECK_IN_PSYCHO
+from src.core.prompts.check_in.learn import TO_LEARN
 from src.core.prompts.diary import GET_SUMMARY_LOG_FROM_DAILY_LOGS
 from src.core.schemas.assistant_response import SummaryResponseSchema
 from src.infrastructure.config.config import config
@@ -95,10 +96,12 @@ class AssistantService:
             logger.error(f"Error in get_response: {ex}")
             raise
 
+    # [ CHECK IN ]
+
     async def get_check_in_response(
             self,
             user_message: str,
-            talk_mode: TALKING_MODES,
+            prompt: str,
             user_characteristics: dict[str, dict[str, Any]] | None = None,
     ) -> CheckInResponse:
         """получить check in"""
@@ -106,31 +109,39 @@ class AssistantService:
         if user_characteristics:
             profile_text = "\n\nТекущий профиль пользователя:\n" + \
                            json.dumps(user_characteristics, ensure_ascii=False, indent=2)
+            logger.info(profile_text)
 
-        logger.info(profile_text)
-
-        prompt = CHECK_IN if talk_mode == TALKING_MODES.RESEARCH.value else CHECK_IN_PSYCHO
         full_prompt: str = prompt + profile_text
 
         return await self.get_response(
             input_query=user_message,
             prompt=full_prompt,
             pydantic_model=CheckInResponse,
-            temperature=0.4,  # чуть выше, чтобы был живой стиль
+            temperature=0.6,  # чуть выше, чтобы был живой стиль
             max_tokens=600,
         )
 
-    async def generate_characteristic(self, characteristic_type: type[S], messages_text: str):
-        """генерация характеристики"""
+    async def get_to_learn_survey_response(
+            self,
+            user_message: str
+    ):  # TODO: попробовать в дипсик передавать тип личности, чтобы сравнить ответы
+        """SURVEY:
 
-        prompt = GET_PROMPT_BY_SCHEMA_TYPE.get(characteristic_type)
-        pydantic_model: type[S] = characteristic_type
+         получить пак с ответами"""
+        prompt: str = TO_LEARN_SURVEY
+        ...
 
-        return await self.get_response(
-            messages_text,
-            prompt=prompt,
-            pydantic_model=pydantic_model
-        )
+    async def get_to_learn_survey_finish_response(
+            self,
+
+    ):
+        """SURVEY:
+
+        Финальная обработка
+        """
+        ...
+
+    # [ SUMMARIZE ]
 
     async def summarize_user_daily_logs(self, user_logs: str) -> SummaryResponseSchema:
         """создает один рассказ из всех логов"""

@@ -66,13 +66,15 @@ class MessageText:
         "🌀 <b>{characteristic_name}</b>\n\n"
         "{characteristic}"
         "<b>Точность оценки:</b> {accuracy_percent}%\n"
-        "<b>Последнее обновление:</b> {last_update}"
+        "<b>Последнее обновление:</b> {last_update}\n\n"
+        "<i>{verdict}</i>"
     )
     CHARACTERISTIC_LISTING_GROUP = (
         "🌀 <b>{group_name}</b>\n\n"
         "{all_text}"
         "<b>Точность оценки:</b> {accuracy_percent}%\n"
-        "<b>Последнее обновление:</b> {last_update}"
+        "<b>Последнее обновление:</b> {last_update}\n\n"
+        "<i>{verdict}</i>"
     )
 
     # [ Diary ]
@@ -151,6 +153,7 @@ class MessageText:
         "{text}"
         "{briefly_description}\n\n"
         "<u>точность:</u> {accuracy}%\n\n"
+        "<i>{verdict}</i>"
     )
 
     REININ_SOCIONICS = (

@@ -64,16 +64,22 @@ class CharacteristicMessageFormatter:
 
         # [ точность ]
         accuracy_percent: float = math.fsum(accuracy_percents) / 4
+        accuracy_percent = math.ceil(accuracy_percent * 100)
 
         # [ дата ]
         last_update = min(last_update_list)
         last_update_text = get_date_word_from_iso(last_update)
 
+        verdict = ""
+        if accuracy_percent < 0.24:
+            verdict = "Эта характеристика не окончательная! Продолжайте рассказывать о себе!\n\n"
+
         return MessageText.CHARACTERISTIC_LISTING.format(
             characteristic_name=ButtonText.TRAITS_BASIC,
             characteristic=all_text,
-            accuracy_percent=math.ceil(accuracy_percent * 100),
-            last_update=last_update_text
+            accuracy_percent=accuracy_percent,
+            last_update=last_update_text,
+            verdict=verdict
         )
 
     @staticmethod
@@ -229,7 +235,7 @@ class CharacteristicMessageFormatter:
             characteristic_name=characteristic_name,
             characteristic=characteristic,
             accuracy_percent=math.ceil(schema.accuracy_percent * 100),
-            last_update=last_update
+            last_update=last_update,
         )
 
     @staticmethod
@@ -240,6 +246,7 @@ class CharacteristicMessageFormatter:
             if getattr(schema, field) is not None
         )
 
+        # TODO
         extra = (
             f"Доминирующий юмор: {', '.join(schema.dominant_humor) if schema.dominant_humor else '—'}"
         )
@@ -303,10 +310,15 @@ class CharacteristicMessageFormatter:
 
         briefly_description = get_mbti_briefly_description(mbti.primary_type)
 
+        verdict = ""
+        if accuracy < 24:
+            verdict = "Тип личности определён не до конца! Продолжайте рассказывать о себе!\n\n"
+
         return MessageText.SOCIONICS.format(
             text=text,
             briefly_description=briefly_description,
-            accuracy=accuracy
+            accuracy=accuracy,
+            verdict=verdict
         )
 
     class characteristic_formatter:
