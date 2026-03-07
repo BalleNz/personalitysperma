@@ -1,6 +1,9 @@
 from typing import Type
 
+from pydantic import ConfigDict
 from sqlalchemy import Float, ForeignKey, UUID, Integer
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.core.schemas.traits.traits_basic import BehavioralProfileSchema, EmotionalProfileSchema, CognitiveProfileSchema, \
@@ -12,6 +15,7 @@ class SocialProfile(IDMixin, TimestampsMixin):
     """Социальный профиль"""
 
     __tablename__ = "social_profiles"
+    model_config = ConfigDict(from_attributes=True)
 
     user_id = mapped_column(UUID, ForeignKey('users.id', ondelete="CASCADE"), nullable=False)
     user = relationship("User", back_populates="social_profile")
@@ -77,6 +81,9 @@ class SocialProfile(IDMixin, TimestampsMixin):
         comment="процент точности"
     )
 
+    @hybrid_property
+    # TODO сделать получение records везде
+
     @property
     def schema_class(self) -> Type[S]:
         return SocialProfileSchema
@@ -86,6 +93,7 @@ class CognitiveProfile(IDMixin, TimestampsMixin):
     """Когнитивный профиль"""
 
     __tablename__ = "cognitive_profiles"
+    model_config = ConfigDict(from_attributes=True)
 
     user_id = mapped_column(UUID, ForeignKey('users.id', ondelete="CASCADE"), nullable=False)
     user = relationship("User", back_populates="cognitive_profile")
@@ -146,6 +154,7 @@ class EmotionalProfile(IDMixin, TimestampsMixin):
     """Эмоциональный профиль"""
 
     __tablename__ = "emotional_profiles"
+    model_config = ConfigDict(from_attributes=True)
 
     user_id = mapped_column(UUID, ForeignKey('users.id', ondelete="CASCADE"), nullable=False)
     user = relationship("User", back_populates="emotional_profile")
@@ -205,6 +214,7 @@ class BehavioralProfile(IDMixin, TimestampsMixin):
     """ПОВЕДЕНИЕ"""
 
     __tablename__ = "user_behavioral_profiles"
+    model_config = ConfigDict(from_attributes=True)
 
     user_id = mapped_column(UUID, ForeignKey('users.id', ondelete="CASCADE"), nullable=False)
     user = relationship("User", back_populates="behavioral_profile")

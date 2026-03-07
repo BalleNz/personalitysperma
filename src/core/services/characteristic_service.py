@@ -1,14 +1,16 @@
 import logging
 import uuid
-from typing import Type, Sequence, Any
+from typing import Type, Sequence
 
-from src.core.consts import (MIN_CHARS_LENGTH_TO_GENERATE, MIN_CHARS_LENGTH_TO_GENERATE_PERSONALITY,
-                             MIN_CHARS_LENGTH_TO_GENERATE_CLINICAL)
-from src.core.enums.user import TALKING_MODES
+from src.api.response_schemas.research import Characteristic
+from src.core.consts import (
+    MIN_CHARS_LENGTH_TO_GENERATE, MIN_CHARS_LENGTH_TO_GENERATE_PERSONALITY,
+    MIN_CHARS_LENGTH_TO_GENERATE_CLINICAL
+)
 from src.core.schemas.log_schemas import CharacteristicBatchLogSchema
 from src.core.services.assistant_service import AssistantService
 from src.infrastructure.database.models.base import S, M
-from src.infrastructure.database.repository.characteristic_repo import CharacteristicRepository, \
+from src.infrastructure.database.repository.characteristic_repo import CharacteristicFormat, CharacteristicRepository, \
     CHARACTERISTIC_SCHEMAS_TO_MODELS, CLINICAL_SCHEMAS, PERSONALITY_SCHEMAS
 
 logger = logging.getLogger(__name__)
@@ -26,16 +28,26 @@ class CharacteristicService:
         self.min_chars_clinical = MIN_CHARS_LENGTH_TO_GENERATE_CLINICAL
         self.assistant_service = assistant_service
 
-    async def to_learn_finish(
+    async def research_survey_finish(
             self,
-            message_text: str,
-            new_characteristics: ...  # ToLearnFinishResponse
+            user_id: uuid.UUID,
+            telegram_id: str,
+            new_characteristics: list[Characteristic]
     ):
-        """улучшает / меняет характеристику после ответа на вопрос юзера
+        """улучшает / меняет характеристику после ответа на вопрос юзера"""
+        for characteristic in new_characteristics:
+            schema_cls: type[S] = CharacteristicFormat.get_cls_from_schema_name(
+                characteristic.characteristic_name
+            )
 
-        прибавляет сразу 2 records
-        """
-        ...
+            characteristic.characteristic["user_id"] = user_id
+            data = schema_cls.model_validate(characteristic.characteristic)
+
+            await self.repo.append_characteristic(
+                user_id,
+                data,
+                telegram_id=telegram_id
+            )
 
     async def should_generate_characteristic(
             self,

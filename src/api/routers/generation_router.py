@@ -1,21 +1,20 @@
 import logging
-import random
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, Header, BackgroundTasks
 
-import prompts.check_in.learn
-import src.core.prompts
-from src.core.enums.user import TALKING_MODES
-from src.core.services.assistant_service import AssistantService
-from src.api.request_schemas.generation import CheckInRequest
-from src.api.response_schemas.generation import CheckInResponse
+from src.api.request_schemas.psycho import PsychoRequest
+from src.api.request_schemas.research import ResearchSurveyFinishRequest, ResearchSurveyRequest, ResearchDefaultRequest
+from src.api.response_schemas.psycho import PsychoResponse
+from src.api.response_schemas.research import ResearchSurveyFinishResponse, ResearchSurveyResponse, \
+    ResearchDefaultResponse
 from src.api.utils.auth import get_auth_user
 from src.core.schemas.user_schemas import UserSchema
+from src.core.services.assistant_service import AssistantService
 from src.core.services.cache_services.cache_service import CacheService
 from src.core.services.characteristic_service import CharacteristicService
-from src.core.services.dependencies.cache_service_dep import get_cache_service
 from src.core.services.dependencies.assistant_service_dep import get_assistant_service
+from src.core.services.dependencies.cache_service_dep import get_cache_service
 from src.core.services.dependencies.characteristic_service_dep import get_characteristic_service
 from src.core.services.dependencies.telegram_service_dep import get_telegram_service
 from src.core.services.dependencies.user_service_dep import get_user_service
@@ -27,11 +26,119 @@ router = APIRouter(prefix="/generation")
 logger = logging.getLogger(__name__)
 
 
-@router.post(path="/check_in", response_model=CheckInResponse)
-async def check_in(
+@router.post(path="/research/default/check_in", response_model=ResearchDefaultResponse)
+async def research_default_check_in(
         user: Annotated[UserSchema, Depends(get_auth_user)],
         characteristic_service: Annotated[CharacteristicService, Depends(get_characteristic_service)],
-        request: CheckInRequest,
+        request: ResearchDefaultRequest,
+        assistant_service: Annotated[AssistantService, Depends(get_assistant_service)],
+        cache_service: Annotated[CacheService, Depends(get_cache_service)],
+        user_service: Annotated[UserService, Depends(get_user_service)],
+        background_tasks: BackgroundTasks,
+        telegram_service: Annotated[TelegramService, Depends(get_telegram_service)],
+        authorization: Annotated[str | None, Header()] = None
+):
+    """РЕЖИМ ПОЗНАНИЕ: DEFAULT"""
+    await user_service.repo.create_log(
+        user_id=user.id,
+        log_text=request.user_message
+    )
+
+    # [ assistant ]
+    critical_characteristics = await get_characteristics(
+        characteristic_service,
+        user
+    )
+    response: ResearchDefaultResponse = await assistant_service.get_research_default_response(
+        user_message=request.user_message,
+        user_characteristics=critical_characteristics or {}
+    )
+
+    # [ background ]
+    access_token = authorization.split(" ")[1]
+    background_tasks.add_task(
+        process_check_in_background,
+        user=user,
+        message=request.user_message,
+        classifications=response.classifications,
+        characteristic_service=characteristic_service,
+        cache_service=cache_service,
+        telegram_service=telegram_service,
+        access_token=access_token
+    )
+
+    return response
+
+
+@router.post(path="/research/survey/check_in", response_model=ResearchSurveyResponse)
+async def research_survey_check_in(
+        request: ResearchSurveyRequest,
+        user: Annotated[UserSchema, Depends(get_auth_user)],
+        assistant_service: Annotated[AssistantService, Depends(get_assistant_service)],
+        cache_service: Annotated[CacheService, Depends(get_cache_service)],
+        user_service: Annotated[UserService, Depends(get_user_service)],
+        background_tasks: BackgroundTasks,
+        telegram_service: Annotated[TelegramService, Depends(get_telegram_service)],
+        characteristic_service: Annotated[CharacteristicService, Depends(get_characteristic_service)],
+        authorization: Annotated[str | None, Header()] = None,  # get access token
+):
+    """РЕЖИМ ПОЗНАНИЕ: SURVEY"""
+    await user_service.repo.create_log(
+        user_id=user.id,
+        log_text=request.user_message
+    )
+
+    response: ResearchSurveyResponse = await assistant_service.get_research_survey_response(
+        user_message=request.user_message
+    )
+
+    # [ background ]
+    access_token = authorization.split(" ")[1]
+    background_tasks.add_task(
+        process_check_in_with_getting_psycho_response,
+        user=user,
+        user_message=request.user_message,
+        characteristic_service=characteristic_service,
+        cache_service=cache_service,
+        telegram_service=telegram_service,
+        access_token=access_token,
+        assistant_service=assistant_service,
+        background_tasks=background_tasks
+    )
+
+    return response
+
+
+@router.post(path="/research/survey/finish", response_model=ResearchSurveyFinishResponse)
+async def research_survey_finish(
+        request: ResearchSurveyFinishRequest,
+        user: Annotated[UserSchema, Depends(get_auth_user)],
+        assistant_service: Annotated[AssistantService, Depends(get_assistant_service)],
+        characteristic_service: Annotated[CharacteristicService, Depends(get_characteristic_service)],
+        telegram_service: Annotated[TelegramService, Depends(get_telegram_service)],
+):
+    """SURVEY: завершить и обновить характеристики"""
+    survey_finish_response: ResearchSurveyFinishResponse = await assistant_service.get_to_learn_survey_finish_response(
+        request=request
+    )
+
+    await characteristic_service.research_survey_finish(
+        user_id=user.id,
+        telegram_id=user.telegram_id,
+        new_characteristics=survey_finish_response.new_characteristics
+    )
+
+    #  Уведомляем пользователя, что именно поменялось (сделать словарь key: characteristic_name; value: читабельное название)
+    # await telegram_service.
+
+    return survey_finish_response
+
+
+@router.post(path="/individual_psycho", response_model=PsychoResponse)
+async def psycho(
+        user: Annotated[UserSchema, Depends(get_auth_user)],
+        characteristic_service: Annotated[CharacteristicService, Depends(get_characteristic_service)],
+        request: PsychoRequest,
         telegram_service: Annotated[TelegramService, Depends(get_telegram_service)],
         cache_service: Annotated[CacheService, Depends(get_cache_service)],
         user_service: Annotated[UserService, Depends(get_user_service)],
@@ -39,10 +146,7 @@ async def check_in(
         background_tasks: BackgroundTasks,
         authorization: Annotated[str | None, Header()] = None,  # get access token
 ):
-    """смотрит
-    — какие характеристики можно извлечь из сообщения юзера
-    — последовательно генерирует их / добавляет в батч-очереди.
-    """
+    """ИНДИВИДУАЛЬНЫЙ ПСИХОЛОГ"""
 
     # [ создание лога ]
     await user_service.repo.create_log(
@@ -50,58 +154,30 @@ async def check_in(
         log_text=request.message
     )
 
-    critical_characteristics: dict[str, dict[str, Any]] = {}
+    access_token = authorization.split(" ")[1]
 
-    if user.talk_mode == TALKING_MODES.RESEARCH:
-        """ПОЗНАНИЕ"""
-        i: int = random.randint(0, 1)
-        match i:
-            case 0:
-                """RESEARCH"""
-                critical_characteristics = await get_characteristics(
-                    characteristic_service,
-                    user
-                )
-                prompt: str = prompts.check_in.learn.TO_LEARN
-                check_in_response: CheckInResponse = await assistant_service.get_check_in_response(
-                    user_message=request.message,
-                    user_characteristics=critical_characteristics or {},  # передаём профиль
-                    prompt=prompt
-                )
+    critical_characteristics = await get_characteristics(
+        characteristic_service,
+        user
+    )
 
-            case 1:
-                """SURVEY"""
+    response: PsychoResponse = await assistant_service.get_psycho_response(
+        user_message=request.message,
+        user_characteristics=critical_characteristics or {},  # передаём профиль
+    )
 
-                # TODO:
-                #   1. TO_LEARN prompt (assistant service) (создать новую схему pydantic ToLearnResponse)
-                #   2. bot frontend: юзер отвечает -> деграем ручку to_learn_finish:  (pydantic: ToLearnFinishRequest / Response)
-                #       — Меняем характеристику
-                #       — Уведомляем пользователя, что именно поменялось (сделать словарь key: characteristic_name; value: читабельное название)
+    background_tasks.add_task(
+        process_check_in_background,
+        user=user,
+        message=request.message,
+        classifications=response.classifications,
+        characteristic_service=characteristic_service,
+        cache_service=cache_service,
+        telegram_service=telegram_service,
+        access_token=access_token
+    )
 
-    elif user.talk_mode == TALKING_MODES.INDIVIDUAL_PSYCHO:
-        """Индивидуальный психолог"""
-
-        access_token = authorization.split(" ")[1]
-
-        critical_characteristics = await get_characteristics(
-            characteristic_service,
-            user
-        )
-        check_in_response: CheckInResponse = await characteristic_service.c
-
-        background_tasks.add_task(
-            process_check_in_background,
-            user=user,
-            message=request.message,
-            classifications=check_in_response.classifications,
-            characteristic_service=characteristic_service,
-            cache_service=cache_service,
-            telegram_service=telegram_service,
-            access_token=access_token
-        )
-
-    return check_in_response
-    # TODO: special_classifications
+    return response
 
 
 async def get_characteristics(
@@ -120,7 +196,7 @@ async def get_characteristics(
         "BehavioralProfileSchema",
         'HumorProfileSchema',  # юмор — главный крючок
         'DarkTriadsSchema',  # нарциссизм, макиавеллизм — даём подыгрывание и лесть
-        #  'UserHexacoSchema',  # экстраверсия / эмоциональность — задаём тон и энергию
+        #  'UserHexacoSchema', # экстраверсия / эмоциональность — задаём тон и энергию
         'UserSocionicsSchema',  # соционический тип — стиль общения, логика/этика и т.д.
     }
 
@@ -148,6 +224,33 @@ async def get_characteristics(
     return critical_characteristics
 
 
+async def process_check_in_with_getting_psycho_response(
+        user: UserSchema,
+        user_message: str,
+        characteristic_service: CharacteristicService,
+        cache_service: CacheService,
+        telegram_service: TelegramService,
+        assistant_service: AssistantService,
+        access_token: str | None,
+        background_tasks: BackgroundTasks,
+) -> None:
+    response_for_back: PsychoResponse = await assistant_service.get_psycho_response(
+        user_message=user_message,
+        user_characteristics={},  # передаём профиль
+    )
+
+    background_tasks.add_task(
+        process_check_in_background,
+        user=user,
+        message=user_message,
+        classifications=response_for_back.classifications,
+        characteristic_service=characteristic_service,
+        cache_service=cache_service,
+        telegram_service=telegram_service,
+        access_token=access_token
+    )
+
+
 async def process_check_in_background(
         user: UserSchema,
         message: str,
@@ -157,6 +260,12 @@ async def process_check_in_background(
         telegram_service: TelegramService,
         access_token: str | None,
 ):
+    """
+    смотрит
+    — какие характеристики можно извлечь из сообщения юзера
+    — последовательно генерирует их / добавляет в батч-очереди.
+    """
+
     for characteristic_name in classifications:
         try:
             schema_type = get_schema_type_from_name(characteristic_name)
@@ -172,6 +281,8 @@ async def process_check_in_background(
             if generated:
                 await cache_service.redis_service._invalidate_characteristics(user.telegram_id)
 
+                # TODO: сделать более красивое сообщение (возможно, структурное.)
+                #   — Ваша "Любознательность" увеличивась на 30%
                 await telegram_service.send_message(
                     message=f"У вас появилась новая характеристика: {characteristic_name}!",
                     user_telegram_id=user.telegram_id

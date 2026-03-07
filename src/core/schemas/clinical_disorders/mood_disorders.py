@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime
 from typing import Optional
 from uuid import uuid4, UUID
@@ -8,7 +9,7 @@ from pydantic import BaseModel, Field
 class MoodDisordersSchema(BaseModel):
 
     id: Optional[UUID] = Field(default_factory=uuid4)
-    user_id: str = Field(description="Идентификатор пользователя")
+    user_id: uuid.UUID = Field(description="Идентификатор пользователя")
 
     # [ Депрессия ]
     depression: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Уровень депрессии (0-1)")

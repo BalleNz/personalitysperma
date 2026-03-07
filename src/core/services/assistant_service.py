@@ -6,11 +6,13 @@ import aiohttp
 from openai import AsyncOpenAI, NOT_GIVEN, NotGiven, APIError
 from pydantic import ValidationError
 
-from src.api.response_schemas.generation import CheckInResponse
-from src.core.enums.user import TALKING_MODES
+from src.api.request_schemas.research import ResearchSurveyFinishRequest
+from src.api.response_schemas.psycho import PsychoResponse
+from src.api.response_schemas.research import ResearchSurveyFinishResponse, ResearchSurveyResponse, \
+    ResearchDefaultResponse
 from src.core.prompts import GET_PROMPT_BY_SCHEMA_TYPE
-from src.core.prompts.check_in.psycho import CHECK_IN_PSYCHO
-from src.core.prompts.check_in.learn import TO_LEARN
+from src.core.prompts.check_in.psycho import CHECK_IN_PSYCHO_PROMPT
+from src.core.prompts.check_in.research import TO_LEARN_SURVEY_FINISH, TO_LEARN_SURVEY, RESEARCH_DEFAULT_PROMPT
 from src.core.prompts.diary import GET_SUMMARY_LOG_FROM_DAILY_LOGS
 from src.core.schemas.assistant_response import SummaryResponseSchema
 from src.infrastructure.config.config import config
@@ -96,50 +98,101 @@ class AssistantService:
             logger.error(f"Error in get_response: {ex}")
             raise
 
+    # [ GENERATION ]
+
+    async def generate_characteristic(self, characteristic_type: type[S], messages_text: str):
+        """генерация характеристики"""
+
+        prompt = GET_PROMPT_BY_SCHEMA_TYPE.get(characteristic_type)
+        pydantic_model: type[S] = characteristic_type
+
+        return await self.get_response(
+            messages_text,
+            prompt=prompt,
+            pydantic_model=pydantic_model
+        )
+
     # [ CHECK IN ]
 
-    async def get_check_in_response(
+    async def get_psycho_response(
             self,
             user_message: str,
-            prompt: str,
             user_characteristics: dict[str, dict[str, Any]] | None = None,
-    ) -> CheckInResponse:
-        """получить check in"""
+    ) -> PsychoResponse:
+        """PSYCHO"""
         profile_text = ""
         if user_characteristics:
             profile_text = "\n\nТекущий профиль пользователя:\n" + \
                            json.dumps(user_characteristics, ensure_ascii=False, indent=2)
             logger.info(profile_text)
 
-        full_prompt: str = prompt + profile_text
+        full_prompt: str = CHECK_IN_PSYCHO_PROMPT + profile_text
 
         return await self.get_response(
             input_query=user_message,
             prompt=full_prompt,
-            pydantic_model=CheckInResponse,
+            pydantic_model=PsychoResponse,
             temperature=0.6,  # чуть выше, чтобы был живой стиль
             max_tokens=600,
         )
 
-    async def get_to_learn_survey_response(
+    async def get_research_default_response(
+            self,
+            user_message: str,
+            user_characteristics: dict[str, dict[str, Any]] | None = None,
+    ) -> ResearchDefaultResponse:
+        """research: DEFAULT"""
+        profile_text = ""
+        if user_characteristics:
+            profile_text = "\n\nТекущий профиль пользователя:\n" + \
+                           json.dumps(user_characteristics, ensure_ascii=False, indent=2)
+            logger.info(profile_text)
+
+        full_prompt: str = RESEARCH_DEFAULT_PROMPT + profile_text
+
+        return await self.get_response(
+            input_query=user_message,
+            prompt=full_prompt,
+            pydantic_model=ResearchDefaultResponse,
+            temperature=0.6,  # чуть выше, чтобы был живой стиль
+            max_tokens=600,
+        )
+
+    async def get_research_survey_response(
             self,
             user_message: str
-    ):  # TODO: попробовать в дипсик передавать тип личности, чтобы сравнить ответы
+    ) -> ResearchSurveyResponse:
+        # TODO: попробовать в дипсик передавать тип личности, чтобы сравнить ответы
         """SURVEY:
 
-         получить пак с ответами"""
+        получить пак с ответами
+        """
         prompt: str = TO_LEARN_SURVEY
-        ...
+
+        return await self.get_response(
+            input_query=user_message,
+            prompt=prompt,
+            pydantic_model=ResearchSurveyResponse
+        )
 
     async def get_to_learn_survey_finish_response(
             self,
-
-    ):
+            request: ResearchSurveyFinishRequest
+    ) -> ResearchSurveyFinishResponse:
         """SURVEY:
 
         Финальная обработка
         """
-        ...
+        prompt: str = TO_LEARN_SURVEY_FINISH
+
+        # TODO: разделить для быстрейшего ответа
+        # TODO: records сделать триггер в моделях
+
+        return await self.get_response(
+            input_query=request.model_dump_json(),
+            prompt=prompt,
+            pydantic_model=ResearchSurveyFinishResponse
+        )
 
     # [ SUMMARIZE ]
 

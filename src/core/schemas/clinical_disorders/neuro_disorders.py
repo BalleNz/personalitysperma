@@ -1,3 +1,4 @@
+import uuid
 from typing import Optional
 
 from pydantic import BaseModel, Field
@@ -5,6 +6,10 @@ from pydantic import BaseModel, Field
 
 class NeuroDisordersSchema(BaseModel):
     """Схема нейроразвития и пищевых расстройств"""
+
+    id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4)
+    user_id: uuid.UUID = Field(description="Идентификатор пользователя")
+
     # [ Нейроразвития и неврологические ]
     adhd: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="СДВГ (0-1)")
     adhd_inattention: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Невнимательность (0-1)")

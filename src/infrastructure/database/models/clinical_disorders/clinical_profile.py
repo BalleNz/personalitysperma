@@ -16,13 +16,13 @@ class ClinicalProfile(IDMixin, TimestampsMixin):
 
     # [ Общая информация ]
     overall_severity = mapped_column(String(20), default="NONE", comment="Общая тяжесть состояния")  # TODO: enum
-    diagnosis_status = mapped_column(String(30), default="NOT_DIAGNOSED", comment="Статус диагностики")  # TODO: enum
+    diagnosis_status = mapped_column(String(30), default="NOT_DIAGNOSED", comment="Статус диагностики")  # TODO: enum + СДЕЛАТЬ промпт для клиники + возможность менять статус диагноза с любого режима (скормить enums в промпты)
 
     notes = mapped_column(Text, default=None, comment="Заметки и комментарии исходя из других характеристик")
 
     # [ Суицидальность ]
     suicide_risk = mapped_column(Float, default=None, comment="Уровень суицидального риска (0-1)")
-    suicide_ideation_frequency = mapped_column(String(20), default=None, comment="Частота суицидальных мыслей")  # TODO: enum
+    suicide_ideation_frequency = mapped_column(String(20), default=None, comment="Частота суицидальных мыслей")  # TODO: enum + запихать эту таблицу в RESEARCH и PSYCHO промпты
 
     records: Mapped[int | None] = mapped_column(
         Integer,

@@ -101,6 +101,25 @@ CLINICAL_SCHEMAS = (
 #     SexualPreferenceSchema
 # )
 
+SCHEMA_SHORT_NAMES = {
+    "SocialProfileSchema":      "soc",
+    "CognitiveProfileSchema":   "cog",
+    "EmotionalProfileSchema":   "emo",
+    "BehavioralProfileSchema":  "beh",
+    "DarkTriadsSchema":         "dark",
+    "HumorProfileSchema":       "hum",
+    "ClinicalProfileSchema":    "cli",
+    "MoodDisordersSchema":      "mood",
+    "AnxietyDisordersSchema":   "anx",
+    "NeuroDisordersSchema":     "neuro",
+    "PersonalityDisordersSchema": "pers",
+    "UserHexacoSchema":         "hex",
+    "UserHollandCodesSchema":   "hol",
+    "UserSocionicsSchema":      "socion",
+    # добавляй новые по мере появления
+}
+SHORT_TO_FULL_SCHEMA = {v: k for k, v in SCHEMA_SHORT_NAMES.items()}
+
 
 def get_schema_type_from_name(schema_name: str) -> type[S] | None:
     for schema in CHARACTERISTIC_SCHEMAS_TO_MODELS.keys():
@@ -126,7 +145,7 @@ class CharacteristicRepository:
         characteristics: list[dict[str, dict[str, Any]]] = []
 
         # Список пар (модель, схема)
-        model_schema_pairs = [
+        model_schema_pairs = [  # FUTURE
             (SocialProfile, SocialProfileSchema),
             (CognitiveProfile, CognitiveProfileSchema),
             (EmotionalProfile, EmotionalProfileSchema),
@@ -155,6 +174,7 @@ class CharacteristicRepository:
 
             if instance:
                 schema: S = schema_cls.model_validate(instance)
+                schema.records =
                 characteristics.append(
                     {
                         "type": schema_cls.__name__,

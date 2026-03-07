@@ -2,6 +2,7 @@ from aiogram import Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, InlineKeyboardMarkup, Message
 
+from src.core.schemas.user_schemas import UserSchema
 from src.bot.callbacks.callbacks import SocionicsReininCallback, SocionicsRelationshipsWaitingCallback
 from src.bot.handlers.main.main import main
 from src.bot.keyboards.inline.personality import back_to_personality_listing_keyboard
@@ -95,11 +96,19 @@ async def show_relationships(
     if mbti_2 not in VALID_MBTI_TYPES:
         await state.clear()
 
+        # [ deps ]
+        user: UserSchema = await cache_service.get_user_profile(
+            access_token=access_token,
+            telegram_id=str(message.from_user.id)
+        )
+
         # [ главное действие ]
         await main(
             api_client=api_client,
+            user=user,
             access_token=access_token,
-            message=message
+            message=message,
+            cache_service=cache_service
         )
 
         return

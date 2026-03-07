@@ -4,6 +4,13 @@ from src.core.enums.user import GENDER, TALKING_MODES
 
 
 class MessageText:
+    # [ MAIN ]
+    SURVEY_MESSAGE = (
+        "{user_answer}\n\n"
+        "{question}\n\n"
+        "{answers}"
+    )
+
     # [ START ]
     # TODO больше текста и форматирования
     HELLO_GENDER_SELECT = (
@@ -50,7 +57,21 @@ class MessageText:
         return ""
 
     # [ query messages ]
-    VOICE_PROCESS = "Обработка голосового сообщения ^^"
+    @staticmethod
+    def get_process_message() -> str:
+        MESSAGE_PROCESS = (
+            "думаю над ответом..",
+            "сейчас отвечу тебе..",
+        )
+        return random.choice(MESSAGE_PROCESS)
+
+    @staticmethod
+    def get_process_voice() -> str:
+        VOICE_PROCESS = (
+            "слушаю тебя прямо сейчас..",
+            "слушаю твой милый голос ^^",
+        )
+        return random.choice(VOICE_PROCESS)
 
     # [ LIMITS ]
     VOICE_LIMIT = "У тебя закончились голосовые сообщения!"

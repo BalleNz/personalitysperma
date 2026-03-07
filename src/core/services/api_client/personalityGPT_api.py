@@ -1,6 +1,9 @@
-from src.api.request_schemas.generation import CheckInRequest
+from src.api.request_schemas.psycho import PsychoRequest
+from src.api.request_schemas.research import ResearchDefaultRequest, ResearchSurveyRequest, ResearchSurveyFinishRequest
 from src.api.response_schemas.characteristic import GetAllCharacteristicResponse
-from src.api.response_schemas.generation import CheckInResponse
+from src.api.response_schemas.psycho import PsychoResponse
+from src.api.response_schemas.research import ResearchSurveyResponse, ResearchSurveyFinishResponse, \
+    ResearchDefaultResponse
 from src.core.enums.user import GENDER, TALKING_MODES
 from src.core.schemas.diary_schema import DiarySchema
 from src.core.schemas.user_schemas import UserSchema, UserTelegramDataSchema
@@ -45,15 +48,43 @@ class PersonalityGPT_APIClient(BaseHttpClient):
         )
 
     # [ CHARACTERISTIC ]
-    async def check_in(self, access_token: str, request: CheckInRequest) -> CheckInResponse:
-        """CHECK IN:
-        — Анализ текста юзера
-        — Добавление батча / обновление таблиц"""
+    async def individual_psycho_check_in(self, access_token: str, request: PsychoRequest) -> PsychoResponse:
+        """режим психолога"""
         return await self._request(
             HTTPMethod.POST,
             request_body=request,
-            endpoint="/v1/generation/check_in",
-            response_model=CheckInResponse,
+            endpoint="/v1/generation/individual_psycho",
+            response_model=PsychoResponse,
+            access_token=access_token
+        )
+
+    async def research_default_check_in(self, access_token: str, request: ResearchDefaultRequest) -> ResearchDefaultResponse:
+        """режим исследования: обычный"""
+        return await self._request(
+            HTTPMethod.POST,
+            request_body=request,
+            endpoint="/v1/generation/research/default/check_in",
+            response_model=ResearchDefaultResponse,
+            access_token=access_token
+        )
+
+    async def research_survey_check_in(self, access_token: str, request: ResearchSurveyRequest) -> ResearchSurveyResponse:
+        """режим исследования: survey"""
+        return await self._request(
+            HTTPMethod.POST,
+            request_body=request,
+            endpoint="/v1/generation/research/survey/check_in",
+            response_model=ResearchSurveyResponse,
+            access_token=access_token
+        )
+
+    async def research_survey_finish(self, access_token: str, request: ResearchSurveyFinishRequest) -> ResearchSurveyFinishResponse:
+        """режим исследования: survey — финал"""
+        return await self._request(
+            HTTPMethod.POST,
+            request_body=request,
+            endpoint="/v1/generation/research/survey/finish",
+            response_model=ResearchSurveyFinishResponse,
             access_token=access_token
         )
 

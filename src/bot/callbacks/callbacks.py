@@ -8,6 +8,12 @@ class SelectGenderCallback(CallbackData, prefix="gender_select"):
     gender: GENDER
 
 
+# [ SURVEY ]
+class SurveyAnswerCallback(CallbackData, prefix="surv_ans"):
+    answer_hash: str
+    characteristic_names: str
+
+
 # [ CHARACTERISTICS ]
 class GetCharacteristicCallback(CallbackData, prefix="get_char"):
     characteristic_name: str | None = None

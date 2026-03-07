@@ -1,5 +1,6 @@
 from typing import Type
 
+from pydantic import ConfigDict
 from sqlalchemy import Float, Integer, UUID, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -11,6 +12,7 @@ class DarkTriads(IDMixin, TimestampsMixin):
     """ТЁМНАЯ ТРИАДА"""
 
     __tablename__ = "user_dark_triads"
+    model_config = ConfigDict(from_attributes=True)
 
     user_id: Mapped[UUID] = mapped_column(UUID, ForeignKey('users.id', ondelete="CASCADE"), nullable=False)
     user = relationship("User", back_populates="dark_triads")
