@@ -26,15 +26,14 @@ class ResearchDefaultResponse(BaseModel):
     """ответ от check in:
     — таблицы, которые следует обновить
     """
-
-    classifications: list[str]
+    classifications: list[str] | None
     precise_question: str = Field(..., description="ответ пользователю (для продолжения диалога)")
+
 
 # [ SURVEY ]
 
 
 class ResearchSurveyResponse(BaseModel):
-    user_answer: str = Field(..., description="ответ пользователю (для продолжения диалога)")
     question_pack: QuestionPack
 
 

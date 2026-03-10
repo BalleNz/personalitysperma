@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field
 class UserHollandCodesSchema(BaseModel):
     """Схема для кодов Холланда (RIASEC)"""
     id: Optional[UUID] = Field(default_factory=uuid4)
-    user_id: str = Field(description="Идентификатор пользователя")
+    user_id: UUID = Field(description="Идентификатор пользователя")
 
     # Основные шкалы (0.0 — 1.0)
     realistic: float | None = Field(

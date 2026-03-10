@@ -78,13 +78,13 @@ class PersonalityGPT_APIClient(BaseHttpClient):
             access_token=access_token
         )
 
-    async def research_survey_finish(self, access_token: str, request: ResearchSurveyFinishRequest) -> ResearchSurveyFinishResponse:
+    async def research_survey_finish(self, access_token: str, request: ResearchSurveyFinishRequest) -> PsychoResponse:
         """режим исследования: survey — финал"""
         return await self._request(
             HTTPMethod.POST,
             request_body=request,
             endpoint="/v1/generation/research/survey/finish",
-            response_model=ResearchSurveyFinishResponse,
+            response_model=PsychoResponse,
             access_token=access_token
         )
 

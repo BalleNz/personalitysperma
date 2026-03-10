@@ -30,12 +30,6 @@ class NeuroDisorders(IDMixin, TimestampsMixin):
     bulimia = mapped_column(Float, default=None, comment="Нервная булимия (0-1)")
     binge = mapped_column(Float, default=None, comment="Компульсивное переедание (0-1)")
 
-    records: Mapped[int | None] = mapped_column(
-        Integer,
-        default=None,
-        comment="количество записей"
-    )
-
     accuracy_percent: Mapped[int | None] = mapped_column(
         Float,
         default=None,

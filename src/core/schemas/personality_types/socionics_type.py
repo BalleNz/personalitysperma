@@ -29,7 +29,10 @@ class UserSocionicsSchema(BaseModel):
     ESTJ: Optional[float] = Field(None, ge=0.0, le=1.0, description="ESTJ / LSE (Штирлиц)")
     ISTJ: Optional[float] = Field(None, ge=0.0, le=1.0, description="ISTJ / SLI (Габен)")
 
-    records: int = Field(..., description="Количество записей")
+    records: int | None = Field(
+        default=None,
+        description="Количество записей"
+    )
 
     def model_dump(self, **kwargs):
         """Переопределяем дамп"""

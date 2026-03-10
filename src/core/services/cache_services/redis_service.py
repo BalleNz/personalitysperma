@@ -2,6 +2,7 @@ import json
 import logging
 from enum import Enum
 from typing import Optional, Any
+from uuid import UUID
 
 from redis.asyncio import Redis
 
@@ -37,6 +38,23 @@ class RedisService:
     @staticmethod
     def _get_diary_key(telegram_id: str) -> str:
         return f"user:{telegram_id}:diary"
+
+    # [ ASSISTANT CONTEXT ]
+    async def get_history(self, user_id: UUID, max_messages: int = 15) -> list[dict]:
+        """Возвращает последние N сообщений в формате OpenAI messages"""
+        key = f"chat:history:{user_id}"
+        messages = await self.redis.lrange(key, 0, max_messages - 1)
+        return [json.loads(msg) for msg in messages[::-1]]  # последние → первые
+
+    async def add_message(self, user_id: UUID, role: str, content: str):
+        key = f"chat:history:{user_id}"
+        msg = {"role": role, "content": content}
+        await self.redis.lpush(key, json.dumps(msg))  # добавляем слева
+        await self.redis.ltrim(key, 0, 49)  # храним максимум 50 сообщений
+
+    async def clear_history(self, user_id: UUID):
+        key = f"chat:history:{user_id}"
+        await self.redis.delete(key)
 
     # [ GETTERS ]
     async def get_diary(self, telegram_id: str) -> list[DiarySchema] | None:

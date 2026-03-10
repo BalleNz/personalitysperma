@@ -7,6 +7,7 @@ from src.api.utils.auth import get_auth_user
 from src.core.schemas.user_schemas import UserSchema
 from src.core.services.characteristic_service import CharacteristicService
 from src.core.services.dependencies.characteristic_service_dep import get_characteristic_service
+from src.infrastructure.database.models.base import S
 
 router = APIRouter(prefix="/characteristic")
 
@@ -17,7 +18,7 @@ async def get_all_characteristics(
         characteristic_service: Annotated[CharacteristicService, Depends(get_characteristic_service)]
 ):
     """Получает все схемы характеристик"""
-    characteristics_info = await characteristic_service.repo.get_all_characteristics(user.id)
+    characteristics_info: list[S] = await characteristic_service.repo.get_all_characteristics(user.id)
     return {
         "response": characteristics_info
     }

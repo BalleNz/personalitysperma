@@ -126,7 +126,7 @@ class CharacteristicService:
         """
         Генерирует и сохраняет характеристику с учетом прошлой (если она есть.)
         """
-        old_characteristic: S | None = await self.repo.cache_service.get_characteristic(
+        old_characteristic: S | None = await self.repo.cache_service.get_characteristic_row(
             characteristic_type=characteristic_type.__name__,
             access_token=access_token,
             telegram_id=telegram_id
@@ -143,10 +143,6 @@ class CharacteristicService:
             messages_text=combined_text,
             characteristic_type=characteristic_type
         )
-
-        if old_characteristic:
-            # если старая была, нумерация продолжается
-            new_characteristic.records = old_characteristic.records + 1
 
         await self.repo.append_characteristic(user_id=user_id, characteristic=new_characteristic,
                                               telegram_id=telegram_id)

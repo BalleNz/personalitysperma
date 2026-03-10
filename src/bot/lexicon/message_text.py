@@ -6,7 +6,6 @@ from src.core.enums.user import GENDER, TALKING_MODES
 class MessageText:
     # [ MAIN ]
     SURVEY_MESSAGE = (
-        "{user_answer}\n\n"
         "{question}\n\n"
         "{answers}"
     )

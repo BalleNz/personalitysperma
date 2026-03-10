@@ -1,8 +1,8 @@
 import logging
 from typing import Optional, Any
 
-from src.core.schemas.diary_schema import DiarySchema
 from src.api.response_schemas.characteristic import GetAllCharacteristicResponse
+from src.core.schemas.diary_schema import DiarySchema
 from src.core.schemas.personality_types.socionics_type import UserSocionicsSchema
 from src.core.schemas.traits.traits_basic import EmotionalProfileSchema, BehavioralProfileSchema, \
     CognitiveProfileSchema, \
@@ -103,18 +103,18 @@ class CacheService:
 
         try:
             response_obj: GetAllCharacteristicResponse = await self.api_client.get_characteristics(access_token)
-            all_raw = response_obj["response"]
+            all_raw: list[dict] = response_obj["response"]
         except Exception as e:
             logger.error(f"Ошибка получения всех характеристик для {telegram_id}: {e}")
             return {}
 
         characteristics_dict: dict[str, dict[str, Any]] = {}
 
-        for item in all_raw:
-            type_name = item["type"]
-            characteristic_obj = item["characteristic"]
+        for raw in all_raw:
+            type_name = raw["type"]
+            two_last_characteristics: list[S] | S = raw["characteristics"]  # две последние характеристики
 
-            characteristics_dict[type_name] = characteristic_obj
+            characteristics_dict[type_name] = two_last_characteristics
 
         await self.redis_service.set_all_characteristics(
             telegram_id=telegram_id,
@@ -124,17 +124,16 @@ class CacheService:
 
         return characteristics_dict
 
-    async def get_characteristic(
+    async def get_characteristic_row(
             self,
             access_token: str,
             telegram_id: str,
             characteristic_type: str,
             group: str | None = None,
             expiry: int = 86400 * 7
-    ) -> S | list[S] | None:
+    ) -> list[S] | None:
         """
-        Получить одну конкретную характеристику.
-        Использует get_all_characteristics внутри.
+        Получить две последние характеристики.
         """
         logger.info(f"Получение профиля типа {characteristic_type} для {telegram_id}")
         all_chars = await self.get_all_characteristics(access_token, telegram_id, expiry)
@@ -145,12 +144,16 @@ class CacheService:
                 raise ValueError(f"Unknown group: {group}")
             result = []
             for sch_cls in schemas:
-                raw = all_chars.get(sch_cls.__name__)
+                raw = all_chars.get(sch_cls.__name__)  # две характеристики dict
                 if raw:
-                    result.append(sch_cls.model_validate(raw))
+                    result.append(
+                        [
+                            sch_cls.model_validate(raw) for raw in raw
+                        ]
+                    )  # преобр каждой в pydantic
             return result if result else None
 
-        # [ одна характеристика ]
+        # [ без группы ]
         type_name = (
             characteristic_type.__name__
             if isinstance(characteristic_type, type)
@@ -164,7 +167,7 @@ class CacheService:
         if not cls:
             raise ValueError(f"Unknown schema: {type_name}")
 
-        return cls.model_validate(raw)
+        return [cls.model_validate(raw) for raw in raw]
 
     async def get_diary(
             self,

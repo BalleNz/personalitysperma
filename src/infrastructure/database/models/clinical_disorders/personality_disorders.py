@@ -36,12 +36,6 @@ class PersonalityDisorders(IDMixin, TimestampsMixin):
     szpd = mapped_column(Float, default=None, comment="Шизоидное РЛ (0-1)")
     stpd = mapped_column(Float, default=None, comment="Шизотипическое РЛ (0-1)")
 
-    records: Mapped[int | None] = mapped_column(
-        Integer,
-        default=None,
-        comment="количество записей"
-    )
-
     accuracy_percent: Mapped[int | None] = mapped_column(
         Float,
         default=None,

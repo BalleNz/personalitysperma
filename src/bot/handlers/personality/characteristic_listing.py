@@ -44,6 +44,7 @@ async def back(
         access_token: str
 ):
     """Открывает меню с листингом характеристик"""
+    await callback_query.answer()
 
     user_characteristics: dict[str, dict[str, Any]] = await cache_service.get_all_characteristics(
         access_token,
@@ -79,12 +80,15 @@ async def characteristic_listing_menu(
 
 @router.callback_query(GetCharacteristicCallback.filter())
 async def show_characteristic(
-        callback: CallbackQuery,
+        callback_query: CallbackQuery,
         callback_data: GetCharacteristicCallback,
         access_token: str,
         cache_service: CacheService
 ):
-    telegram_id: str = str(callback.from_user.id)
+    """Показывает характеристику"""
+    await callback_query.answer()
+
+    telegram_id: str = str(callback_query.from_user.id)
 
     characteristic_name: str | None = callback_data.characteristic_name
     characteristic_type: type[S] = CharacteristicFormat.get_cls_from_schema_name(characteristic_name)
@@ -94,7 +98,7 @@ async def show_characteristic(
 
     user: UserSchema = await cache_service.get_user_profile(access_token, telegram_id)
 
-    characteristic: S | list[S] = await cache_service.get_characteristic(
+    characteristic: list[S] = await cache_service.get_characteristic_row(
         access_token=access_token,
         telegram_id=telegram_id,
         characteristic_type=characteristic_type,
@@ -107,13 +111,13 @@ async def show_characteristic(
         )
     )
 
-    full_access = user.full_access
+    full_access: bool = user.full_access
 
-    text = characteristic_formatter(characteristic, full_access)  # сделать чище
+    text: str = characteristic_formatter(characteristic, full_access)  # сделать чище
 
-    keyboard = back_to_characteristic_listing_keyboard
+    keyboard: InlineKeyboardMarkup = back_to_characteristic_listing_keyboard
 
-    await callback.message.edit_text(
+    await callback_query.message.edit_text(
         text=text,
         reply_markup=keyboard
     )

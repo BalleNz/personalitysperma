@@ -33,7 +33,7 @@ class AnxietyDisorders(IDMixin, TimestampsMixin):
 
     # [ Паническое ]
     panic = mapped_column(Float, default=None, comment="Паническое расстройство (0-1)")
-    panic_frequency = mapped_column(String(20), default=None, comment="Частота панических атак")
+    panic_frequency = mapped_column(Float, default=None, comment="Частота панических атак")
     panic_anticipatory = mapped_column(Float, default=None, comment="Тревога ожидания (0-1)")
 
     # [ Социальное ]
@@ -68,12 +68,6 @@ class AnxietyDisorders(IDMixin, TimestampsMixin):
     amnesia = mapped_column(Float, default=None, comment="Амнезия (0-1)")
     did = mapped_column(Float, default=None, comment="Диссоциативное расстройство идентичности (0-1)")
     depersonalization = mapped_column(Float, default=None, comment="Деперсонализация/дереализация (0-1)")
-
-    records: Mapped[int | None] = mapped_column(
-        Integer,
-        default=None,
-        comment="количество записей"
-    )
 
     accuracy_percent: Mapped[int | None] = mapped_column(
         Float,

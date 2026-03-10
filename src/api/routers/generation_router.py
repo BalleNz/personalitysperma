@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, Header, BackgroundTasks
 
 from src.api.request_schemas.psycho import PsychoRequest
 from src.api.request_schemas.research import ResearchSurveyFinishRequest, ResearchSurveyRequest, ResearchDefaultRequest
+from src.api.response_schemas.characteristic import CharacteristicResponseRaw
 from src.api.response_schemas.psycho import PsychoResponse
 from src.api.response_schemas.research import ResearchSurveyFinishResponse, ResearchSurveyResponse, \
     ResearchDefaultResponse
@@ -12,10 +13,12 @@ from src.api.utils.auth import get_auth_user
 from src.core.schemas.user_schemas import UserSchema
 from src.core.services.assistant_service import AssistantService
 from src.core.services.cache_services.cache_service import CacheService
+from src.core.services.cache_services.redis_service import RedisService
 from src.core.services.characteristic_service import CharacteristicService
 from src.core.services.dependencies.assistant_service_dep import get_assistant_service
 from src.core.services.dependencies.cache_service_dep import get_cache_service
 from src.core.services.dependencies.characteristic_service_dep import get_characteristic_service
+from src.core.services.dependencies.redis_service_dep import get_redis_service
 from src.core.services.dependencies.telegram_service_dep import get_telegram_service
 from src.core.services.dependencies.user_service_dep import get_user_service
 from src.core.services.telegram_service import TelegramService
@@ -51,21 +54,24 @@ async def research_default_check_in(
     )
     response: ResearchDefaultResponse = await assistant_service.get_research_default_response(
         user_message=request.user_message,
-        user_characteristics=critical_characteristics or {}
+        user_characteristics=critical_characteristics or {},
+        user_id=user.id,
+        redis_service=cache_service.redis_service
     )
 
-    # [ background ]
-    access_token = authorization.split(" ")[1]
-    background_tasks.add_task(
-        process_check_in_background,
-        user=user,
-        message=request.user_message,
-        classifications=response.classifications,
-        characteristic_service=characteristic_service,
-        cache_service=cache_service,
-        telegram_service=telegram_service,
-        access_token=access_token
-    )
+    if response.classifications:
+        # [ background ]
+        access_token = authorization.split(" ")[1]
+        background_tasks.add_task(
+            process_check_in_background,
+            user=user,
+            message=request.user_message,
+            classifications=response.classifications,
+            characteristic_service=characteristic_service,
+            cache_service=cache_service,
+            telegram_service=telegram_service,
+            access_token=access_token
+        )
 
     return response
 
@@ -88,8 +94,14 @@ async def research_survey_check_in(
         log_text=request.user_message
     )
 
+    characteristics = await get_characteristics(
+        characteristic_service, user
+    )
+
     response: ResearchSurveyResponse = await assistant_service.get_research_survey_response(
-        user_message=request.user_message
+        user_message=request.user_message,
+        redis_service=cache_service.redis_service,
+        user_id=user.id
     )
 
     # [ background ]
@@ -109,29 +121,39 @@ async def research_survey_check_in(
     return response
 
 
-@router.post(path="/research/survey/finish", response_model=ResearchSurveyFinishResponse)
+@router.post(path="/research/survey/finish", response_model=PsychoResponse)
 async def research_survey_finish(
         request: ResearchSurveyFinishRequest,
         user: Annotated[UserSchema, Depends(get_auth_user)],
         assistant_service: Annotated[AssistantService, Depends(get_assistant_service)],
         characteristic_service: Annotated[CharacteristicService, Depends(get_characteristic_service)],
         telegram_service: Annotated[TelegramService, Depends(get_telegram_service)],
+        redis_service: Annotated[RedisService, Depends(get_redis_service)],
+        background_tasks: BackgroundTasks,
 ):
     """SURVEY: завершить и обновить характеристики"""
-    survey_finish_response: ResearchSurveyFinishResponse = await assistant_service.get_to_learn_survey_finish_response(
-        request=request
+    characteristics = await get_characteristics(
+        user=user,
+        characteristic_service=characteristic_service
+    )
+    response: PsychoResponse = await assistant_service.get_psycho_response(
+        user_message=request.answer,
+        user_characteristics=characteristics,
+        redis_service=redis_service,
+        user_id=user.id
     )
 
-    await characteristic_service.research_survey_finish(
-        user_id=user.id,
-        telegram_id=user.telegram_id,
-        new_characteristics=survey_finish_response.new_characteristics
+    background_tasks.add_task(
+        process_survey_finish_in_background,
+        user=user,
+        characteristic_service=characteristic_service,
+        request=request,
+        telegram_service=telegram_service,
+        assistant_service=assistant_service,
+        redis_service=redis_service
     )
 
-    #  Уведомляем пользователя, что именно поменялось (сделать словарь key: characteristic_name; value: читабельное название)
-    # await telegram_service.
-
-    return survey_finish_response
+    return response
 
 
 @router.post(path="/individual_psycho", response_model=PsychoResponse)
@@ -164,6 +186,8 @@ async def psycho(
     response: PsychoResponse = await assistant_service.get_psycho_response(
         user_message=request.message,
         user_characteristics=critical_characteristics or {},  # передаём профиль
+        redis_service=cache_service.redis_service,
+        user_id=user.id
     )
 
     background_tasks.add_task(
@@ -185,7 +209,8 @@ async def get_characteristics(
         user: UserSchema
 ) -> dict[str, dict[str, Any]]:
     # [ самые важные профили для входных данных ]
-    all_characteristics: list[dict] | None = await characteristic_service.repo.get_all_characteristics(
+    all_characteristics: list[
+                             CharacteristicResponseRaw] | None = await characteristic_service.repo.get_all_characteristics(
         user.id
     )
 
@@ -204,8 +229,8 @@ async def get_characteristics(
     if all_characteristics:
         # преобразуем список в удобный словарь по имени типа
         char_dict = {
-            item["type"]: item["characteristic"]
-            for item in all_characteristics
+            schema.type: schema.characteristics[0]
+            for schema in all_characteristics
         }
 
         for schema_name in CRITICAL_SCHEMAS:
@@ -224,6 +249,31 @@ async def get_characteristics(
     return critical_characteristics
 
 
+async def process_survey_finish_in_background(
+        user: UserSchema,
+        request: ResearchSurveyFinishRequest,
+        characteristic_service: CharacteristicService,
+        assistant_service: AssistantService,
+        redis_service: RedisService,
+        telegram_service: TelegramService
+):
+    """SURVEY: FINISH"""
+    survey_finish_response: ResearchSurveyFinishResponse = await assistant_service.get_to_learn_survey_finish_response(
+        request=request,
+        user_id=user.id,
+        redis_service=redis_service
+    )
+
+    await characteristic_service.research_survey_finish(
+        user_id=user.id,
+        telegram_id=user.telegram_id,
+        new_characteristics=survey_finish_response.new_characteristics
+    )
+
+    #  Уведомляем пользователя, что именно поменялось (сделать словарь key: characteristic_name; value: читабельное название)
+    # await telegram_service.
+
+
 async def process_check_in_with_getting_psycho_response(
         user: UserSchema,
         user_message: str,
@@ -237,6 +287,8 @@ async def process_check_in_with_getting_psycho_response(
     response_for_back: PsychoResponse = await assistant_service.get_psycho_response(
         user_message=user_message,
         user_characteristics={},  # передаём профиль
+        user_id=user.id,
+        redis_service=cache_service.redis_service
     )
 
     background_tasks.add_task(

@@ -26,6 +26,7 @@ from src.infrastructure.database.models.base import *  # noqa
 from src.infrastructure.database.models.logs import *  # noqa
 from src.infrastructure.database.models.user import *  # noqa
 from src.infrastructure.database.models.diary import *  # noqa
+from src.infrastructure.database.models.records import *  # noqa
 from src.infrastructure.database.models.users_comparison import *  # noqa
 from src.infrastructure.database.models.basic_profiles.traits_basic import *  # noqa
 from src.infrastructure.database.models.basic_profiles.traits_dark import *  # noqa

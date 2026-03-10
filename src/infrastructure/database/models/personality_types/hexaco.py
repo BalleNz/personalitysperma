@@ -29,12 +29,6 @@ class UserHexaco(IDMixin, TimestampsMixin):
     conscientiousness: Mapped[float | None] = mapped_column(Float, default=None, comment="C: добросовестность, организованность")
     openness: Mapped[float | None] = mapped_column(Float, default=None, comment="O: открытость опыту, креативность")
 
-    records: Mapped[int | None] = mapped_column(
-        Integer,
-        default=None,
-        comment="количество записей"
-    )
-
     accuracy_percent: Mapped[int | None] = mapped_column(
         Float,
         default=None,

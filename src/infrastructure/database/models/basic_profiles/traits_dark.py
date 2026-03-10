@@ -22,12 +22,6 @@ class DarkTriads(IDMixin, TimestampsMixin):
     machiavellianism: Mapped[float | None] = mapped_column(Float, default=None)  # directness → manipulative tendency
     psychoticism: Mapped[float | None] = mapped_column(Float, default=None)  # normality → unusual experiences
 
-    records: Mapped[int | None] = mapped_column(
-        Integer,
-        default=None,
-        comment="количество записей"
-    )
-
     accuracy_percent: Mapped[int | None] = mapped_column(
         Float,
         default=None,

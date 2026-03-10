@@ -1,14 +1,13 @@
 import datetime
 import logging
 import math
+from typing import Optional
 
 from pydantic import BaseModel, Field
 
 from src.bot.lexicon.button_text import ButtonText
 from src.bot.lexicon.message_text import MessageText
 from src.core.enums.dark_triads import DarkTriadsTypes
-from src.core.schemas.personality_types.hexaco import UserHexacoSchema
-from src.core.schemas.personality_types.socionics_type import UserSocionicsSchema
 from src.core.schemas.traits.traits_basic import (
     SocialProfileSchema,
     CognitiveProfileSchema,
@@ -17,7 +16,6 @@ from src.core.schemas.traits.traits_basic import (
 )
 from src.core.schemas.traits.traits_dark import DarkTriadsSchema
 from src.core.schemas.traits.traits_humor import HumorProfileSchema, HUMOR_FIELDS
-from src.core.utils.mbti_formatter import get_mbti_briefly_description
 from src.core.utils.text_formatters import get_characteristic_name, get_date_word_from_iso
 from src.infrastructure.database.models.base import S
 
@@ -30,28 +28,74 @@ class CharacteristicInfo(BaseModel):
     last_update: datetime.datetime = Field(...)
 
 
+def format_value(
+        value: Optional[float],
+        field_name: str,
+        previous: Optional[Any]
+) -> str:
+    """
+    Форматирует значение в процентах и добавляет стрелки в зависимости от изменения.
+
+    Правила стрелок (по абсолютной разнице в исходных значениях 0..1):
+    • |Δ| ≤ 0.05     → без стрелок
+    • 0.05 < |Δ| ≤ 0.15 → одна стрелка
+    • 0.15 < |Δ| ≤ 0.30 → две стрелки
+    • |Δ| > 0.30       → три стрелки
+
+    ↑ — значение выросло (стало лучше)
+    ↓ — значение уменьшилось (стало хуже)
+    """
+    if value is None:
+        return ""
+
+    percent = math.ceil(100 * value)
+    arrows = ""
+
+    if previous is not None:
+        prev_value = getattr(previous, field_name, None)
+        if prev_value is not None:
+            delta = value - prev_value
+            abs_delta = abs(delta)
+
+            if abs_delta <= 0.05:
+                arrows = "—"
+            else:
+                count = 1
+                if abs_delta > 0.15:
+                    count = 2
+                if abs_delta > 0.30:
+                    count = 3
+
+                if delta > 0:
+                    arrows = "↑" * count
+                else:
+                    arrows = "↓" * count
+
+    return f"{percent}% {arrows}"
+
+
 class CharacteristicMessageFormatter:
-    """Форматирование сообщений о психологических профилях"""
+    """форматирование для характеристик"""
 
     @staticmethod
     def format_traits_core(
-            schemas: list[S],
+            schemas: list[list[S]],
             full_access: bool
     ) -> str:
         characteristic_texts: list[str] = []
         accuracy_percents: list[float] = []
         last_update_list: list[datetime] = []
 
-        for schema in schemas:
-            match schema.__class__.__name__:
+        for schema_row in schemas:
+            match schema_row[0].__class__.__name__:
                 case SocialProfileSchema.__name__:
-                    characteristic_info = CharacteristicMessageFormatter.format_social_profile(schema, full_access)
+                    characteristic_info = CharacteristicMessageFormatter.format_social_profile(schema_row, full_access)
                 case BehavioralProfileSchema.__name__:
-                    characteristic_info = CharacteristicMessageFormatter.format_behavioral_profile(schema, full_access)
+                    characteristic_info = CharacteristicMessageFormatter.format_behavioral_profile(schema_row, full_access)
                 case EmotionalProfileSchema.__name__:
-                    characteristic_info = CharacteristicMessageFormatter.format_emotional_profile(schema, full_access)
+                    characteristic_info = CharacteristicMessageFormatter.format_emotional_profile(schema_row, full_access)
                 case CognitiveProfileSchema.__name__:
-                    characteristic_info = CharacteristicMessageFormatter.format_cognitive_profile(schema, full_access)
+                    characteristic_info = CharacteristicMessageFormatter.format_cognitive_profile(schema_row, full_access)
                 case _:
                     raise
 
@@ -83,26 +127,30 @@ class CharacteristicMessageFormatter:
         )
 
     @staticmethod
-    def format_social_profile(schema: SocialProfileSchema, full_access: bool) -> CharacteristicInfo:
+    def format_social_profile(schemas: list[SocialProfileSchema], full_access: bool) -> CharacteristicInfo:
         fields: tuple
+
+        schema: SocialProfileSchema = schemas[0]
+        previous: SocialProfileSchema = schemas[1]
+
         if full_access:
             fields = (
-                f"<b>— Ответственность за свои действия:</b> {math.ceil(100 * schema.locus_control)}%" if schema.locus_control else "",
-                f"<b>— Независимость от чужого мнения:</b> {math.ceil(100 * schema.independence)}%" if schema.independence else "",
-                f"<b>— Эмпатия:</b> {math.ceil(100 * schema.empathy)}%" if schema.empathy is not None else "",
-                f"<b>— Физическая чувствительность:</b> {math.ceil(100 * schema.physical_sensitivity)}%" if schema.physical_sensitivity is not None else "",
-                f"<b>— Экстраверсия:</b> {math.ceil(100 * schema.extraversion)}%" if schema.extraversion is not None else "",
-                f"<b>— Бескорыстность:</b> {math.ceil(100 * schema.altruism)}%" if schema.altruism is not None else "",
-                f"<b>— Конформизм:</b> {math.ceil(100 * schema.conformity)}%" if schema.conformity is not None else "",
-                f"<b>— Социальная уверенность:</b> {math.ceil(100 * schema.social_confidence)}%" if schema.social_confidence is not None else "",
-                f"<b>— Соревновательность:</b> {math.ceil(100 * schema.competitiveness)}%" if schema.competitiveness is not None else "",
+                f"<b>— Ответственность за свои действия:</b> {format_value(schema.locus_control, 'locus_control', previous)}" if schema.locus_control is not None else "",
+                f"<b>— Независимость от чужого мнения:</b> {format_value(schema.independence, 'independence', previous)}" if schema.independence is not None else "",
+                f"<b>— Эмпатия:</b> {format_value(schema.empathy, 'empathy', previous)}" if schema.empathy is not None else "",
+                f"<b>— Физическая чувствительность:</b> {format_value(schema.physical_sensitivity, 'physical_sensitivity', previous)}" if schema.physical_sensitivity is not None else "",
+                f"<b>— Экстраверсия:</b> {format_value(schema.extraversion, 'extraversion', previous)}" if schema.extraversion is not None else "",
+                f"<b>— Бескорыстность:</b> {format_value(schema.altruism, 'altruism', previous)}" if schema.altruism is not None else "",
+                f"<b>— Конформизм:</b> {format_value(schema.conformity, 'conformity', previous)}" if schema.conformity is not None else "",
+                f"<b>— Социальная уверенность:</b> {format_value(schema.social_confidence, 'social_confidence', previous)}" if schema.social_confidence is not None else "",
+                f"<b>— Соревновательность:</b> {format_value(schema.competitiveness, 'competitiveness', previous)}" if schema.competitiveness is not None else ""
             )
         else:
             fields = (
-                f"<b>— Ответственность за свои действия:</b> {math.ceil(100 * schema.locus_control)}%" if schema.locus_control else "",
-                f"<b>— Независимость от чужого мнения:</b> {math.ceil(100 * schema.independence)}%" if schema.independence else "",
+                f"<b>— Ответственность за свои действия:</b> {format_value(schema.locus_control, 'locus_control', previous)}" if schema.locus_control is not None else "",
+                f"<b>— Независимость от чужого мнения:</b> {format_value(schema.independence, 'independence', previous)}" if schema.independence is not None else "",
                 f"<b>— ...</b>",
-                f"<i>для просмотра ещё 7 полей необходим полный доступ</i>"
+                f"<i>для просмотра ещё 7 полей необходим полный доступ</i>",
             )
 
         characteristic: str = "👥 <b>Твоя социальность</b>\n" + "<blockquote>" + '\n'.join(
@@ -116,26 +164,29 @@ class CharacteristicMessageFormatter:
 
     @staticmethod
     def format_cognitive_profile(
-            schema: CognitiveProfileSchema,
+            schemas: list[CognitiveProfileSchema],
             full_access: bool
     ) -> CharacteristicInfo:
         fields: tuple
+        schema = schemas[0]
+        previous = schemas[1]
+
         if full_access:
             fields = (
-                f"<b>— Склонность к фантазиям:</b> {math.ceil(100 * schema.fantasy_prone)}%" if schema.fantasy_prone is not None else "",
-                f"<b>— Рефлексивность:</b> {math.ceil(100 * schema.reflectiveness)}%" if schema.reflectiveness is not None else "",
-                f"<b>— Интуитивность:</b> {math.ceil(100 * schema.intuitiveness)}%" if schema.intuitiveness is not None else "",
-                f"<b>— Креативность:</b> {math.ceil(100 * schema.creativity)}%" if schema.creativity is not None else "",
-                f"<b>— Аналитичность мышления:</b> {math.ceil(100 * schema.thinking_style)}%" if schema.thinking_style is not None else "",
-                f"<b>— Толерантность к неопределённости:</b> {math.ceil(100 * schema.tolerance_for_ambiguity)}%" if schema.tolerance_for_ambiguity is not None else "",
-                f"<b>— Ментальная гибкость:</b> {math.ceil(100 * schema.mental_flexibility)}%" if schema.mental_flexibility is not None else "",
+                f"<b>— Склонность к фантазиям:</b> {format_value(schema.fantasy_prone, 'fantasy_prone', previous)}" if schema.fantasy_prone is not None else "",
+                f"<b>— Рефлексивность:</b> {format_value(schema.reflectiveness, 'reflectiveness', previous)}" if schema.reflectiveness is not None else "",
+                f"<b>— Интуитивность:</b> {format_value(schema.intuitiveness, 'intuitiveness', previous)}" if schema.intuitiveness is not None else "",
+                f"<b>— Креативность:</b> {format_value(schema.creativity, 'creativity', previous)}" if schema.creativity is not None else "",
+                f"<b>— Аналитичность мышления:</b> {format_value(schema.thinking_style, 'thinking_style', previous)}" if schema.thinking_style is not None else "",
+                f"<b>— Толерантность к неопределённости:</b> {format_value(schema.tolerance_for_ambiguity, 'tolerance_for_ambiguity', previous)}" if schema.tolerance_for_ambiguity is not None else "",
+                f"<b>— Ментальная гибкость:</b> {format_value(schema.mental_flexibility, 'mental_flexibility', previous)}" if schema.mental_flexibility is not None else "",
             )
         else:
             fields = (
-                f"<b>— Склонность к фантазиям:</b> {math.ceil(100 * schema.fantasy_prone)}%" if schema.fantasy_prone is not None else "",
-                f"<b>— Рефлексивность:</b> {math.ceil(100 * schema.reflectiveness)}%" if schema.reflectiveness is not None else "",
+                f"<b>— Склонность к фантазиям:</b> {format_value(schema.fantasy_prone, 'fantasy_prone', previous)}" if schema.fantasy_prone is not None else "",
+                f"<b>— Рефлексивность:</b> {format_value(schema.reflectiveness, 'reflectiveness', previous)}" if schema.reflectiveness is not None else "",
                 f"<b>— ...</b>",
-                f"<i>для просмотра ещё 5 полей необходим полный доступ</i>"
+                f"<i>для просмотра ещё 5 полей необходим полный доступ</i>",
             )
 
         characteristic: str = "🧠 <b>Мышление</b>\n" + "<blockquote>" + '\n'.join(
@@ -150,26 +201,30 @@ class CharacteristicMessageFormatter:
 
     @staticmethod
     def format_emotional_profile(
-            schema: EmotionalProfileSchema,
+            schemas: list[EmotionalProfileSchema],
             full_access: bool
     ) -> CharacteristicInfo:
         fields = tuple()
+
+        schema: EmotionalProfileSchema = schemas[0]
+        previous: EmotionalProfileSchema = schemas[1]
+
         if full_access:
             fields = (
-                f"<b>— Тревожность:</b> {math.ceil(100 * schema.anxiety_level)}%" if schema.anxiety_level is not None else "",
-                f"<b>— Оптимистичность:</b> {math.ceil(100 * schema.optimism)}%" if schema.optimism is not None else "",
-                f"<b>— Самооценка:</b> {math.ceil(100 * schema.self_esteem)}%" if schema.self_esteem is not None else "",
-                f"<b>— Способность к близости:</b> {math.ceil(100 * schema.intimacy_capacity)}%" if schema.intimacy_capacity is not None else "",
-                f"<b>— Эмоциональная чувствительность:</b> {math.ceil(100 * schema.emotional_sensitivity)}%" if schema.emotional_sensitivity is not None else "",
-                f"<b>— Открытость эмоций:</b> {math.ceil(100 * schema.emotional_expressiveness)}%" if schema.emotional_expressiveness is not None else "",
-                f"<b>— Самоирония:</b> {math.ceil(100 * schema.self_irony)}%" if schema.self_irony is not None else "",
+                f"<b>— Тревожность:</b> {format_value(schema.anxiety_level, 'anxiety_level', previous)}" if schema.anxiety_level is not None else "",
+                f"<b>— Оптимистичность:</b> {format_value(schema.optimism, 'optimism', previous)}" if schema.optimism is not None else "",
+                f"<b>— Самооценка:</b> {format_value(schema.self_esteem, 'self_esteem', previous)}" if schema.self_esteem is not None else "",
+                f"<b>— Способность к близости:</b> {format_value(schema.intimacy_capacity, 'intimacy_capacity', previous)}" if schema.intimacy_capacity is not None else "",
+                f"<b>— Эмоциональная чувствительность:</b> {format_value(schema.emotional_sensitivity, 'emotional_sensitivity', previous)}" if schema.emotional_sensitivity is not None else "",
+                f"<b>— Открытость эмоций:</b> {format_value(schema.emotional_expressiveness, 'emotional_expressiveness', previous)}" if schema.emotional_expressiveness is not None else "",
+                f"<b>— Самоирония:</b> {format_value(schema.self_irony, 'self_irony', previous)}" if schema.self_irony is not None else "",
             )
         else:
             fields = (
-                f"<b>— Тревожность:</b> {math.ceil(100 * schema.anxiety_level)}%" if schema.anxiety_level is not None else "",
-                f"<b>— Оптимистичность:</b> {math.ceil(100 * schema.optimism)}%" if schema.optimism is not None else "",
+                f"<b>— Тревожность:</b> {format_value(schema.anxiety_level, 'anxiety_level', previous)}" if schema.anxiety_level is not None else "",
+                f"<b>— Оптимистичность:</b> {format_value(schema.optimism, 'optimism', previous)}" if schema.optimism is not None else "",
                 f"<b>— ...</b>",
-                f"<i>для просмотра ещё 5 полей необходим полный доступ</i>"
+                f"<i>для просмотра ещё 5 полей необходим полный доступ</i>",
             )
 
         characteristic: str = "🎭 <b>Твоя эмоциональность</b>\n" + "<blockquote>" + '\n'.join(
@@ -182,24 +237,28 @@ class CharacteristicMessageFormatter:
         )
 
     @staticmethod
-    def format_behavioral_profile(schema: BehavioralProfileSchema, full_access: bool) -> CharacteristicInfo:
+    def format_behavioral_profile(schemas: list[BehavioralProfileSchema], full_access: bool) -> CharacteristicInfo:
         fields: tuple
+
+        schema: BehavioralProfileSchema = schemas[0]
+        previous: BehavioralProfileSchema = schemas[1]
+
         if full_access:
             fields = (
-                f"<b>— Решительность:</b> {math.ceil(100 * schema.decisiveness)}%" if schema.decisiveness is not None else "",
-                f"<b>— Стрессоустойчивость:</b> {math.ceil(100 * schema.stress_tolerance)}%" if schema.stress_tolerance is not None else "",
-                f"<b>— Терпение:</b> {math.ceil(100 * schema.patience)}%" if schema.patience is not None else "",
-                f"<b>— Амбициозность:</b> {math.ceil(100 * schema.ambition)}%" if schema.ambition is not None else "",
-                f"<b>— Склонность к риску:</b> {math.ceil(100 * schema.risk_taking)}%" if schema.risk_taking is not None else "",
-                f"<b>— Перфекционизм:</b> {math.ceil(100 * schema.perfectionism)}%" if schema.perfectionism is not None else "",
-                f"<b>— Сдержанность:</b> {math.ceil(100 * schema.impulse_control)}%" if schema.impulse_control is not None else "",
+                f"<b>— Решительность:</b> {format_value(schema.decisiveness, 'decisiveness', previous)}" if schema.decisiveness is not None else "",
+                f"<b>— Стрессоустойчивость:</b> {format_value(schema.stress_tolerance, 'stress_tolerance', previous)}" if schema.stress_tolerance is not None else "",
+                f"<b>— Терпение:</b> {format_value(schema.patience, 'patience', previous)}" if schema.patience is not None else "",
+                f"<b>— Амбициозность:</b> {format_value(schema.ambition, 'ambition', previous)}" if schema.ambition is not None else "",
+                f"<b>— Склонность к риску:</b> {format_value(schema.risk_taking, 'risk_taking', previous)}" if schema.risk_taking is not None else "",
+                f"<b>— Перфекционизм:</b> {format_value(schema.perfectionism, 'perfectionism', previous)}" if schema.perfectionism is not None else "",
+                f"<b>— Сдержанность:</b> {format_value(schema.impulse_control, 'impulse_control', previous)}" if schema.impulse_control is not None else "",
             )
         else:
             fields = (
-                f"<b>— Решительность:</b> {math.ceil(100 * schema.decisiveness)}%" if schema.decisiveness is not None else "",
-                f"<b>— Стрессоустойчивость:</b> {math.ceil(100 * schema.stress_tolerance)}%" if schema.stress_tolerance is not None else "",
+                f"<b>— Решительность:</b> {format_value(schema.decisiveness, 'decisiveness', previous)}" if schema.decisiveness is not None else "",
+                f"<b>— Стрессоустойчивость:</b> {format_value(schema.stress_tolerance, 'stress_tolerance', previous)}" if schema.stress_tolerance is not None else "",
                 f"<b>— ...</b>",
-                f"<i>для просмотра ещё 5 полей необходим полный доступ</i>"
+                f"<i>для просмотра ещё 5 полей необходим полный доступ</i>",
             )
 
         characteristic: str = "🗣 <b>Оценка твоего поведения</b>\n" + "<blockquote>" + '\n'.join(
@@ -212,12 +271,15 @@ class CharacteristicMessageFormatter:
         )
 
     @staticmethod
-    def format_dark_triads(schema: DarkTriadsSchema) -> str:
+    def format_dark_triads(schemas: list[DarkTriadsSchema]) -> str:
+        schema: DarkTriadsSchema = schemas[0]
+        previous: DarkTriadsSchema = schemas[1]
+
         fields = (
-            f"Цинизм: {math.ceil(100 * schema.cynicism)}% (доверчивость ←→ цинизм)" if schema.cynicism is not None else "",
-            f"Нарциссизм: {math.ceil(100 * schema.narcissism)}% (скромность ←→ нарциссизм)" if schema.narcissism is not None else "",
-            f"Макиавеллизм: {math.ceil(100 * schema.machiavellianism)}% (прямота ←→ манипулятивность)" if schema.machiavellianism is not None else "",
-            f"Психотизм: {math.ceil(100 * schema.psychoticism)}% (норма ←→ психотизм)" if schema.psychoticism is not None else "",
+            f"Цинизм: {format_value(schema.cynicism, 'cynicism', previous)}% (доверчивость ←→ цинизм)" if schema.cynicism is not None else "",
+            f"Нарциссизм: {format_value(schema.narcissism, 'narcissism', previous)}% (скромность ←→ нарциссизм)" if schema.narcissism is not None else "",
+            f"Макиавеллизм: {format_value(schema.machiavellianism, 'machiavellianism', previous)}% (прямота ←→ манипулятивность)" if schema.machiavellianism is not None else "",
+            f"Психотизм: {format_value(schema.psychoticism, 'psychoticism', previous)}% (норма ←→ психотизм)" if schema.psychoticism is not None else "",
         )
 
         extra: str = (
@@ -239,7 +301,8 @@ class CharacteristicMessageFormatter:
         )
 
     @staticmethod
-    def format_humor_profile(schema: HumorProfileSchema) -> str:
+    def format_humor_profile(schemas: list[HumorProfileSchema]) -> str:
+        schema = schemas[0]
         fields = tuple(
             f"{field.replace('_', ' ').capitalize()}: {math.ceil(100 * getattr(schema, field))}%"
             for field in HUMOR_FIELDS
@@ -263,64 +326,6 @@ class CharacteristicMessageFormatter:
             last_update=last_update
         )
 
-    @staticmethod
-    def format_hexaco(schema: UserHexacoSchema) -> str:
-        fields = (
-            f"Честность-Скромность (H): {math.ceil(100 * schema.honesty_humility)}%" if schema.honesty_humility is not None else "",
-            f"Эмоциональность (E): {math.ceil(100 * schema.emotionality)}%" if schema.emotionality is not None else "",
-            f"Экстраверсия (X): {math.ceil(100 * schema.extraversion)}%" if schema.extraversion is not None else "",
-            f"Сговорчивость (A): {math.ceil(100 * schema.agreeableness)}%" if schema.agreeableness is not None else "",
-            f"Добросовестность (C): {math.ceil(100 * schema.conscientiousness)}%" if schema.conscientiousness is not None else "",
-            f"Открытость опыту (O): {math.ceil(100 * schema.openness)}%" if schema.openness is not None else "",
-        )
-
-        characteristic_name = get_characteristic_name(type(schema))
-        characteristic_text = '\n'.join([field for field in fields if field])
-        last_update: str = get_date_word_from_iso(schema.updated_at)
-
-        return MessageText.CHARACTERISTIC_LISTING.format(
-            characteristic_name=characteristic_name,
-            characteristic=characteristic_text,
-            accuracy_percent=math.ceil(schema.accuracy_percent * 100),
-            last_update=last_update
-        )
-
-    # [ MBTI / SOCIONICS ]
-
-    @staticmethod
-    def format_socionics(  # TODO: перенести в personality formatters
-            mbti: UserSocionicsSchema,
-    ):
-        top_3_types = mbti.get_top_3_types()
-        accuracy: int = int(mbti.accuracy_percent * 100)
-
-        text = (
-            f"1.  <b><u>{top_3_types[0][0]}</u>: {int(top_3_types[0][1]*1000)/10}%  &lt;— самый вероятный</b>\n"
-            f"2.  {top_3_types[1][0]}: {int(top_3_types[1][1]*1000)/10}%\n"
-            f"3.  {top_3_types[2][0]}: {int(top_3_types[2][1]*1000)/10}%\n\n"
-
-            "📝 <b>Расшифровка:</b>\n"
-            f"<b>{mbti.primary_type[0]} —</b> {mbti.extraversion}.\n"
-            f"<b>{mbti.primary_type[1]} —</b> {mbti.intuition}.\n"
-            f"<b>{mbti.primary_type[2]} —</b> {mbti.logic}.\n"
-            f"<b>{mbti.primary_type[3]} —</b> {mbti.rationality}.\n\n"
-            
-            f"<b>👤 Клуб:</b>\n— <u>{mbti.club}</u>.\n\n"
-        )
-
-        briefly_description = get_mbti_briefly_description(mbti.primary_type)
-
-        verdict = ""
-        if accuracy < 24:
-            verdict = "Тип личности определён не до конца! Продолжайте рассказывать о себе!\n\n"
-
-        return MessageText.SOCIONICS.format(
-            text=text,
-            briefly_description=briefly_description,
-            accuracy=accuracy,
-            verdict=verdict
-        )
-
     class characteristic_formatter:
         """Шаблоны с форматированием"""
 
@@ -335,11 +340,6 @@ class CharacteristicMessageFormatter:
             DARK_TRIADS = CharacteristicMessageFormatter.format_dark_triads
             HUMOR_PROFILE = CharacteristicMessageFormatter.format_humor_profile
 
-            # [ personality ]
-            SOCIONICS = CharacteristicMessageFormatter.format_socionics
-            # HOLLAND_CODES = PersonalityMessageFormatter.format_holland_codes
-            HEXACO = CharacteristicMessageFormatter.format_hexaco
-
             # [ clinical ]
             # MOOD_DISORDERS = PersonalityMessageFormatter.format_mood_disorders
             # ...
@@ -353,6 +353,3 @@ class CharacteristicMessageFormatter:
 
                 case HumorProfileSchema.__name__:
                     return HUMOR_PROFILE
-
-                case UserSocionicsSchema.__name__:
-                    return SOCIONICS

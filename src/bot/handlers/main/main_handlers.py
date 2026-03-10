@@ -6,7 +6,8 @@ from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery
 
 from src.api.request_schemas.research import ResearchSurveyFinishRequest
-from src.api.response_schemas.research import ResearchSurveyFinishResponse, Characteristic
+from src.api.response_schemas.psycho import PsychoResponse
+from src.api.response_schemas.research import Characteristic
 from src.bot.bot_instance import bot
 from src.bot.callbacks.callbacks import SurveyAnswerCallback
 from src.bot.handlers.main.main import main
@@ -18,6 +19,7 @@ from src.core.services.api_client.personalityGPT_api import PersonalityGPT_APICl
 from src.core.services.cache_services.cache_service import CacheService
 from src.core.services.dependencies.speech_service_dep import get_speech_service
 from src.core.services.speech_to_text_service import SpeechService
+from src.infrastructure.database.models.base import S
 from src.infrastructure.database.repository.characteristic_repo import SHORT_TO_FULL_SCHEMA, get_schema_type_from_name
 
 router = Router()
@@ -96,6 +98,11 @@ async def survey_final(
     """после тапа на ответ в SURVEY"""
     await callback_query.answer()
 
+    await callback_query.message.edit_text(
+        text=MessageText.get_process_message(),
+        reply_markup=None
+    )
+
     # [ deps ]
     user: UserSchema = await cache_service.get_user_profile(
         access_token=access_token,
@@ -116,7 +123,7 @@ async def survey_final(
 
     # Получаем все характеристики параллельно
     characteristics_tasks = {
-        name: cache_service.get_characteristic(
+        name: cache_service.get_characteristic_row(
             access_token=access_token,
             telegram_id=str(callback_query.from_user.id),
             characteristic_type=name
@@ -132,8 +139,9 @@ async def survey_final(
             logger.error(f"Ошибка получения {name}: {result}")
             continue
 
+        schema_obj: S = result if type(result) != list else result[0]
+
         # Если None — создаём пустую схему
-        schema_obj = result
         if schema_obj is None:
             schema_cls = get_schema_type_from_name(name)
             schema_obj = schema_cls(
@@ -157,7 +165,7 @@ async def survey_final(
         characteristics=characteristics
     )
 
-    response: ResearchSurveyFinishResponse = await api_client.research_survey_finish(
+    response: PsychoResponse = await api_client.research_survey_finish(
         access_token=access_token,
         request=request
     )

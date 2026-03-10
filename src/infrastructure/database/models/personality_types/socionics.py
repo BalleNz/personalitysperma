@@ -60,8 +60,6 @@ class UserSocionics(IDMixin, TimestampsMixin):
     ISTJ: Mapped[float | None] = mapped_column(Float, default=None,
                                                comment="ISTJ / SLI – Sensory Logical Introvert (Gabin)")
 
-    records: Mapped[int] = mapped_column(Integer, comment="количество записей")
-
     @property
     def schema_class(self) -> Type[S]:
         return UserSocionicsSchema

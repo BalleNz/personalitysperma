@@ -1,5 +1,3 @@
-from typing import Callable
-
 from aiogram import Router, F
 from aiogram.types import Message, InlineKeyboardMarkup, CallbackQuery
 
@@ -9,7 +7,7 @@ from src.bot.keyboards.inline.personality import get_personality_types_keyboard,
     get_socionics_keyboard
 from src.bot.lexicon.button_text import ButtonText
 from src.bot.lexicon.message_text import MessageText
-from src.bot.message_formatters.characteristic_formatters import CharacteristicMessageFormatter
+from src.bot.message_formatters.personality_formatters import PersonalityMessageFormatter
 from src.core.services.cache_services.cache_service import CacheService
 from src.infrastructure.database.models.base import S
 from src.infrastructure.database.repository.characteristic_repo import CharacteristicFormat
@@ -39,7 +37,6 @@ async def back(
         callback_query: CallbackQuery
 ):
     """Открывает меню с листингом характеристик"""
-
     await callback_query.answer()
 
     await show_listing(
@@ -52,7 +49,6 @@ async def personality_listing_menu(
         message: Message
 ):
     """Открывает меню с листингом типов личности"""
-
     await show_listing(
         message
     )
@@ -65,30 +61,29 @@ async def show_personality(
         access_token: str,
         cache_service: CacheService
 ):
+    await callback.answer()
+
     telegram_id: str = str(callback.from_user.id)
 
     characteristic_name: str | None = callback_data.characteristic_name
     characteristic_type: type[S] = CharacteristicFormat.get_cls_from_schema_name(characteristic_name)
 
-    characteristic: S | list[S] = await cache_service.get_characteristic(
+    personality: S | list[S] = await cache_service.get_characteristic_row(
         access_token=access_token,
         telegram_id=telegram_id,
         characteristic_type=characteristic_type,
     )
 
-    characteristic_formatter: Callable[[S], str] = (
-        CharacteristicMessageFormatter.characteristic_formatter.get_characteristic_text_by_schema(
-            formatter_name=characteristic_type.__name__
-        )
+    text: str = PersonalityMessageFormatter.get_characteristic_text_by_schema(
+        schema_name=personality.__name__,
+        schema=personality
     )
-
-    text = characteristic_formatter(characteristic)  # сделать чище
 
     keyboard: InlineKeyboardMarkup
     match characteristic_name:
-        case "UserSocionicsSchema":  # TODO возможно перенести в другой модуль
+        case "UserSocionicsSchema":
             keyboard = get_socionics_keyboard(
-                characteristic.primary_type
+                personality.primary_type
             )
         case _:
             keyboard = back_to_personality_listing_keyboard

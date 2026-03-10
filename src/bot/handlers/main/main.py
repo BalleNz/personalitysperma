@@ -41,24 +41,24 @@ async def main(
     # [ выбор режима ]
     if user.talk_mode == TALKING_MODES.INDIVIDUAL_PSYCHO:
         await individual_psycho(
-            message=message,
+            user_message_text=message.text,
+            message_reply=message_reply,
             api_client=api_client,
             access_token=access_token
         )
     elif user.talk_mode == TALKING_MODES.RESEARCH:
         await research_check_in(
-            message=message,
+            user_message_text=message.text,
+            message_reply=message_reply,
             api_client=api_client,
             access_token=access_token,
             cache_service=cache_service
         )
 
-    # [ удаляем сообщение об обработке ]  # TODO возможно удалять в функциях
-    await message_reply.delete()
-
 
 async def research_check_in(
-        message: Message,
+        user_message_text: str,
+        message_reply: Message,
         api_client: PersonalityGPT_APIClient,
         access_token: str,
         cache_service: CacheService
@@ -68,13 +68,13 @@ async def research_check_in(
     — SURVEY: 40% - паки вопросов с клавиатурой
     — LONG: ..% - структурный ответ с просьбой прислать длинное голосовое сообщение
     """
-    modes = ("default", "survey")
     numbers = [x for x in range(0, 10)]
     match random.choice(numbers):
         case x if x in range(0, 6):
             # [ RESEARCH: обычный режим ]
             await research_default(
-                message=message,
+                user_message_text=user_message_text,
+                message_reply=message_reply,
                 api_client=api_client,
                 access_token=access_token
             )
@@ -82,7 +82,8 @@ async def research_check_in(
         case x if x in range(6, 10):
             # [ RESEARCH: режим опроса ]
             await research_survey(
-                message=message,
+                user_message_text=user_message_text,
+                message_reply=message_reply,
                 api_client=api_client,
                 access_token=access_token,
                 cache_service=cache_service
@@ -93,13 +94,14 @@ async def research_check_in(
 
 
 async def research_default(
-        message: Message,
+        user_message_text: str,
+        message_reply: Message,
         api_client: PersonalityGPT_APIClient,
-        access_token: str
+        access_token: str,
 ) -> None:
     """РЕЖИМ ПОЗНАНИЕ: DEFAULT"""
     request = ResearchDefaultRequest(
-        user_message=message.text
+        user_message=user_message_text
     )
 
     response: ResearchDefaultResponse = await api_client.research_default_check_in(
@@ -107,20 +109,21 @@ async def research_default(
         request=request
     )
 
-    await message.reply(
+    await message_reply.edit_text(
         response.precise_question,
     )
 
 
 async def research_survey(
-        message: Message,
+        user_message_text: str,
+        message_reply: Message,
         api_client: PersonalityGPT_APIClient,
         access_token: str,
         cache_service: CacheService
 ) -> None:
     """РЕЖИМ ПОЗНАНИЕ: SURVEY"""
     request = ResearchSurveyRequest(
-        user_message=message.text
+        user_message=user_message_text
     )
 
     response: ResearchSurveyResponse = await api_client.research_survey_check_in(
@@ -138,29 +141,29 @@ async def research_survey(
         answers += f"{i}. {answer.answer}\n"
 
     text: str = MessageText.SURVEY_MESSAGE.format(
-        user_answer=response.user_answer,
         question=response.question_pack.question,
         answers=answers
     )
 
-    await message.reply(
+    await message_reply.edit_text(
         text=text,
         reply_markup=keyboard
     )
 
 
 async def individual_psycho(
-        message: Message,
+        user_message_text: str,
+        message_reply: Message,
         api_client: PersonalityGPT_APIClient,
         access_token: str
 ) -> None:
     """режим психолога"""
     api_request: PsychoRequest = PsychoRequest(
-        message=message.text
+        message=user_message_text
     )
 
     response: PsychoResponse = await api_client.individual_psycho_check_in(
         access_token,
         api_request
     )
-    await message.reply(response.user_answer)
+    await message_reply.edit_text(response.user_answer)

@@ -24,14 +24,16 @@ VALID_MBTI_TYPES = [
 
 @router.callback_query(SocionicsReininCallback.filter())
 async def show_reinin(
-        callback: CallbackQuery,
+        callback_query: CallbackQuery,
         access_token: str,
         cache_service: CacheService
 ):
     """признаки рейнина в зависимости от mbti букв"""
-    mbti: UserSocionicsSchema = await cache_service.get_characteristic(
+    await callback_query.answer()
+
+    mbti: UserSocionicsSchema = await cache_service.get_characteristic_row(
         characteristic_type="UserSocionicsSchema",
-        telegram_id=str(callback.from_user.id),
+        telegram_id=str(callback_query.from_user.id),
         access_token=access_token
     )
 
@@ -41,7 +43,7 @@ async def show_reinin(
 
     keyboard: InlineKeyboardMarkup = back_to_personality_listing_keyboard
 
-    await callback.message.edit_text(
+    await callback_query.message.edit_text(
         text=text,
         reply_markup=keyboard
     )
@@ -84,7 +86,7 @@ async def show_relationships(
         state: FSMContext
 ):
     """взаимоотношения между двумя"""
-    mbti_1: UserSocionicsSchema = await cache_service.get_characteristic(
+    mbti_1: UserSocionicsSchema = await cache_service.get_characteristic_row(
         characteristic_type="UserSocionicsSchema",
         telegram_id=str(message.from_user.id),
         access_token=access_token

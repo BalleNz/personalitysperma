@@ -36,12 +36,6 @@ class MoodDisorders(IDMixin, TimestampsMixin):
     # [ Циклотимия ]
     cyclothymia = mapped_column(Float, default=None, comment="Циклотимия (0-1)")
 
-    records: Mapped[int | None] = mapped_column(
-        Integer,
-        default=None,
-        comment="количество записей"
-    )
-
     accuracy_percent: Mapped[int | None] = mapped_column(
         Float,
         default=None,

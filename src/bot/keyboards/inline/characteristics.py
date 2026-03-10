@@ -18,7 +18,7 @@ back_to_characteristic_listing_keyboard = InlineKeyboardMarkup(
 
 
 def get_characteristic_listing_keyboard(
-        user_characteristics: dict[str, dict[str, Any]]  # schema_name: schema_json
+        user_characteristics: dict[str, dict[str, Any]]  # schema_name: list[schema_json, schema_json]
 ) -> InlineKeyboardMarkup:
     # [ проверка на существование характеристик ]
 

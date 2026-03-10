@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: cdf0161e7777
+Revision ID: 8d194a76f516
 Revises: 
-Create Date: 2026-02-20 02:23:17.345965
+Create Date: 2026-03-09 15:44:21.314137
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = 'cdf0161e7777'
+revision = '8d194a76f516'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -49,7 +49,7 @@ def upgrade():
     sa.Column('gad_muscle', sa.Float(), nullable=True, comment='Мышечное напряжение (0-1)'),
     sa.Column('gad_sleep', sa.Float(), nullable=True, comment='Нарушения сна (0-1)'),
     sa.Column('panic', sa.Float(), nullable=True, comment='Паническое расстройство (0-1)'),
-    sa.Column('panic_frequency', sa.String(length=20), nullable=True, comment='Частота панических атак'),
+    sa.Column('panic_frequency', sa.Float(), nullable=True, comment='Частота панических атак'),
     sa.Column('panic_anticipatory', sa.Float(), nullable=True, comment='Тревога ожидания (0-1)'),
     sa.Column('social_anxiety', sa.Float(), nullable=True, comment='Социальная тревога (0-1)'),
     sa.Column('social_avoidance', sa.Float(), nullable=True, comment='Избегание социальных ситуаций (0-1)'),
@@ -73,7 +73,6 @@ def upgrade():
     sa.Column('amnesia', sa.Float(), nullable=True, comment='Амнезия (0-1)'),
     sa.Column('did', sa.Float(), nullable=True, comment='Диссоциативное расстройство идентичности (0-1)'),
     sa.Column('depersonalization', sa.Float(), nullable=True, comment='Деперсонализация/дереализация (0-1)'),
-    sa.Column('records', sa.Integer(), nullable=True, comment='количество записей'),
     sa.Column('accuracy_percent', sa.Float(), nullable=True, comment='процент точности'),
     sa.Column('id', sa.UUID(), server_default=sa.text('gen_random_uuid()'), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
@@ -102,7 +101,6 @@ def upgrade():
     sa.Column('notes', sa.Text(), nullable=True, comment='Заметки и комментарии исходя из других характеристик'),
     sa.Column('suicide_risk', sa.Float(), nullable=True, comment='Уровень суицидального риска (0-1)'),
     sa.Column('suicide_ideation_frequency', sa.String(length=20), nullable=True, comment='Частота суицидальных мыслей'),
-    sa.Column('records', sa.Integer(), nullable=True, comment='количество записей'),
     sa.Column('accuracy_percent', sa.Float(), nullable=True, comment='процент точности'),
     sa.Column('id', sa.UUID(), server_default=sa.text('gen_random_uuid()'), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
@@ -119,7 +117,6 @@ def upgrade():
     sa.Column('thinking_style', sa.Float(), nullable=True, comment='Деревья важнее леса? 0=простой тип мышления, 1=аналитический/многомерный/сложный тип мышления'),
     sa.Column('tolerance_for_ambiguity', sa.Float(), nullable=True, comment='0=любит ясность и правила, 1=комфортно с неопределенностью'),
     sa.Column('mental_flexibility', sa.Float(), nullable=True, comment='Адаптивность. 0=ригидный, 1=гибкий'),
-    sa.Column('records', sa.Integer(), nullable=True, comment='количество записей'),
     sa.Column('accuracy_percent', sa.Float(), nullable=True, comment='процент точности'),
     sa.Column('id', sa.UUID(), server_default=sa.text('gen_random_uuid()'), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
@@ -136,7 +133,6 @@ def upgrade():
     sa.Column('emotional_sensitivity', sa.Float(), nullable=True, comment='Внутренняя эмоциональная чувствительность.'),
     sa.Column('emotional_expressiveness', sa.Float(), nullable=True, comment='Внешняя эмоциональность. 0=сдержанный в эмоциях, 1=эмоционально открытый.'),
     sa.Column('anxiety_level', sa.Float(), nullable=True, comment='Тревожность.'),
-    sa.Column('records', sa.Integer(), nullable=True, comment='количество записей'),
     sa.Column('accuracy_percent', sa.Float(), nullable=True, comment='процент точности'),
     sa.Column('id', sa.UUID(), server_default=sa.text('gen_random_uuid()'), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
@@ -162,7 +158,6 @@ def upgrade():
     sa.Column('bipolar_rapid', sa.Float(), nullable=True, comment='Быстрая смена фаз (0-1)'),
     sa.Column('bipolar_psychotic', sa.Float(), nullable=True, comment='Психотические черты (0-1)'),
     sa.Column('cyclothymia', sa.Float(), nullable=True, comment='Циклотимия (0-1)'),
-    sa.Column('records', sa.Integer(), nullable=True, comment='количество записей'),
     sa.Column('accuracy_percent', sa.Float(), nullable=True, comment='процент точности'),
     sa.Column('id', sa.UUID(), server_default=sa.text('gen_random_uuid()'), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
@@ -183,7 +178,6 @@ def upgrade():
     sa.Column('anorexia', sa.Float(), nullable=True, comment='Нервная анорексия (0-1)'),
     sa.Column('bulimia', sa.Float(), nullable=True, comment='Нервная булимия (0-1)'),
     sa.Column('binge', sa.Float(), nullable=True, comment='Компульсивное переедание (0-1)'),
-    sa.Column('records', sa.Integer(), nullable=True, comment='количество записей'),
     sa.Column('accuracy_percent', sa.Float(), nullable=True, comment='процент точности'),
     sa.Column('id', sa.UUID(), server_default=sa.text('gen_random_uuid()'), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
@@ -211,7 +205,6 @@ def upgrade():
     sa.Column('ppd', sa.Float(), nullable=True, comment='Параноидное РЛ (0-1)'),
     sa.Column('szpd', sa.Float(), nullable=True, comment='Шизоидное РЛ (0-1)'),
     sa.Column('stpd', sa.Float(), nullable=True, comment='Шизотипическое РЛ (0-1)'),
-    sa.Column('records', sa.Integer(), nullable=True, comment='количество записей'),
     sa.Column('accuracy_percent', sa.Float(), nullable=True, comment='процент точности'),
     sa.Column('id', sa.UUID(), server_default=sa.text('gen_random_uuid()'), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
@@ -230,7 +223,6 @@ def upgrade():
     sa.Column('conformity', sa.Float(), nullable=True, comment='Конформизм'),
     sa.Column('social_confidence', sa.Float(), nullable=True, comment='0=застенчивый, 1=уверенный в общении'),
     sa.Column('competitiveness', sa.Float(), nullable=True, comment='0=кооперативный, 1=соревновательный'),
-    sa.Column('records', sa.Integer(), nullable=True, comment='количество записей'),
     sa.Column('accuracy_percent', sa.Float(), nullable=True, comment='процент точности'),
     sa.Column('id', sa.UUID(), server_default=sa.text('gen_random_uuid()'), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
@@ -247,7 +239,6 @@ def upgrade():
     sa.Column('risk_taking', sa.Float(), nullable=True, comment='Рискованность. 0=осторожный, 1=рискующий'),
     sa.Column('perfectionism', sa.Float(), nullable=True, comment='Требования к порядку. 0=непритязательный, 1=перфекционист'),
     sa.Column('impulse_control', sa.Float(), nullable=True, comment='Самоконтроль. 0=импульсивный, 1=сдержанный'),
-    sa.Column('records', sa.Integer(), nullable=True, comment='количество записей'),
     sa.Column('accuracy_percent', sa.Float(), nullable=True, comment='процент точности'),
     sa.Column('id', sa.UUID(), server_default=sa.text('gen_random_uuid()'), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
@@ -261,7 +252,6 @@ def upgrade():
     sa.Column('narcissism', sa.Float(), nullable=True),
     sa.Column('machiavellianism', sa.Float(), nullable=True),
     sa.Column('psychoticism', sa.Float(), nullable=True),
-    sa.Column('records', sa.Integer(), nullable=True, comment='количество записей'),
     sa.Column('accuracy_percent', sa.Float(), nullable=True, comment='процент точности'),
     sa.Column('id', sa.UUID(), server_default=sa.text('gen_random_uuid()'), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
@@ -279,7 +269,7 @@ def upgrade():
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('user_id', 'created_at', name='uq_user_diary_one_per_day')
     )
-    op.create_index(op.f('ix_user_diary_created_at'), 'user_diary', ['created_at'], unique=True)
+    op.create_index(op.f('ix_user_diary_created_at'), 'user_diary', ['created_at'], unique=False)
     op.create_index(op.f('ix_user_diary_user_id'), 'user_diary', ['user_id'], unique=False)
     op.create_table('user_hexaco',
     sa.Column('user_id', sa.UUID(), nullable=False),
@@ -289,7 +279,6 @@ def upgrade():
     sa.Column('agreeableness', sa.Float(), nullable=True, comment='A: согласность, терпимость, мягкость'),
     sa.Column('conscientiousness', sa.Float(), nullable=True, comment='C: добросовестность, организованность'),
     sa.Column('openness', sa.Float(), nullable=True, comment='O: открытость опыту, креативность'),
-    sa.Column('records', sa.Integer(), nullable=True, comment='количество записей'),
     sa.Column('accuracy_percent', sa.Float(), nullable=True, comment='процент точности'),
     sa.Column('id', sa.UUID(), server_default=sa.text('gen_random_uuid()'), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
@@ -309,7 +298,6 @@ def upgrade():
     sa.Column('confidence_level', sa.Float(), nullable=True, comment='Уверенность в точности определения типа (0.0 — совсем не уверен, 1.0 — абсолютно уверен)'),
     sa.Column('differentiation_index', sa.Float(), nullable=True, comment='Индекс дифференциации профиля (чем выше, тем более выражены различия между типами)'),
     sa.Column('consistency_index', sa.Float(), nullable=True, comment='Индекс согласованности типов (чем выше, тем более согласован профиль)'),
-    sa.Column('notes', sa.Text(), nullable=True, comment='Описание типа Холланда'),
     sa.Column('id', sa.UUID(), server_default=sa.text('gen_random_uuid()'), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
@@ -335,7 +323,6 @@ def upgrade():
     sa.Column('witty_quick', sa.Float(), nullable=True, comment='Остроумный юмор: быстрые реплики, интеллект (0=медленный, 1=острый ум)'),
     sa.Column('absurd_surreal', sa.Float(), nullable=True, comment='Абсурдный юмор: нелогичный, сюрреалистичный (0=не понимает, 1=любит)'),
     sa.Column('dry_deadpan', sa.Float(), nullable=True, comment='Сухой юмор: deadpan, без эмоций (0=не замечает, 1=мастер)'),
-    sa.Column('records', sa.Integer(), nullable=True, comment='количество записей'),
     sa.Column('accuracy_percent', sa.Float(), nullable=True, comment='процент точности'),
     sa.Column('dominant_humor', postgresql.ARRAY(sa.String()), nullable=True),
     sa.Column('id', sa.UUID(), server_default=sa.text('gen_random_uuid()'), nullable=False),
@@ -357,9 +344,35 @@ def upgrade():
     op.create_index('idx_userlog_user_created_at', 'user_logs', ['user_id', 'created_at'], unique=False)
     op.create_index('idx_userlog_user_date', 'user_logs', ['user_id', 'created_at'], unique=False)
     op.create_index(op.f('ix_user_logs_user_id'), 'user_logs', ['user_id'], unique=False)
+    op.create_table('user_records',
+    sa.Column('user_id', sa.UUID(), nullable=False),
+    sa.Column('profile_name', sa.String(), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('id', sa.UUID(), server_default=sa.text('gen_random_uuid()'), nullable=False),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_user_records_created_at'), 'user_records', ['created_at'], unique=False)
+    op.create_index(op.f('ix_user_records_profile_name'), 'user_records', ['profile_name'], unique=False)
+    op.create_index(op.f('ix_user_records_user_id'), 'user_records', ['user_id'], unique=False)
     op.create_table('user_socionics',
     sa.Column('user_id', sa.UUID(), nullable=False),
-    sa.Column('socionics_type', sa.Enum('ИЛЭ', 'СЭИ', 'ЭСЭ', 'ЛИИ', 'СЛЭ', 'ИЭИ', 'ЭИЭ', 'ЛСИ', 'СЭЭ', 'ИЛИ', 'ЛИЭ', 'ЭСИ', 'ЛСЭ', 'ЭИИ', 'ИЭЭ', 'СЛИ', name='socionics_type'), nullable=True),
+    sa.Column('ENTP', sa.Float(), nullable=True, comment='ENTP / ILE – Intuitive Logical Extravert (Don Quixote)'),
+    sa.Column('ISFJ', sa.Float(), nullable=True, comment='ISFJ / SEI – Sensing Ethical Introvert (Dumas)'),
+    sa.Column('ESFJ', sa.Float(), nullable=True, comment='ESFJ / ESE – Ethical Sensory Extravert (Hugo)'),
+    sa.Column('INTP', sa.Float(), nullable=True, comment='INTP / LII – Logical Intuitive Introvert (Robespierre)'),
+    sa.Column('ENFJ', sa.Float(), nullable=True, comment='ENFJ / EIE – Ethical Intuitive Extravert (Hamlet)'),
+    sa.Column('ISTP', sa.Float(), nullable=True, comment='ISTP / LSI – Logical Sensory Introvert (Maxim Gorky)'),
+    sa.Column('ESTP', sa.Float(), nullable=True, comment='ESTP / SLE – Sensory Logical Extravert (Zhukov)'),
+    sa.Column('INFJ', sa.Float(), nullable=True, comment='INFJ / IEI – Intuitive Ethical Introvert (Yesenin)'),
+    sa.Column('ESFP', sa.Float(), nullable=True, comment='ESFP / SEE – Sensory Ethical Extravert (Napoleon)'),
+    sa.Column('INTJ', sa.Float(), nullable=True, comment='INTJ / ILI – Intuitive Logical Introvert (Balzac)'),
+    sa.Column('ENTJ', sa.Float(), nullable=True, comment='ENTJ / LIE – Logical Intuitive Extravert (Jack London)'),
+    sa.Column('ISFP', sa.Float(), nullable=True, comment='ISFP / ESI – Ethical Sensory Introvert (Dreiser)'),
+    sa.Column('ENFP', sa.Float(), nullable=True, comment='ENFP / IEE – Intuitive Ethical Extravert (Huxley)'),
+    sa.Column('INFP', sa.Float(), nullable=True, comment='INFP / EII – Ethical Intuitive Introvert (Dostoevsky)'),
+    sa.Column('ESTJ', sa.Float(), nullable=True, comment='ESTJ / LSE – Logical Sensory Extravert (Stirlitz)'),
+    sa.Column('ISTJ', sa.Float(), nullable=True, comment='ISTJ / SLI – Sensory Logical Introvert (Gabin)'),
     sa.Column('id', sa.UUID(), server_default=sa.text('gen_random_uuid()'), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
@@ -394,6 +407,10 @@ def downgrade():
     op.drop_index(op.f('ix_users_comparison_user_a_id'), table_name='users_comparison')
     op.drop_table('users_comparison')
     op.drop_table('user_socionics')
+    op.drop_index(op.f('ix_user_records_user_id'), table_name='user_records')
+    op.drop_index(op.f('ix_user_records_profile_name'), table_name='user_records')
+    op.drop_index(op.f('ix_user_records_created_at'), table_name='user_records')
+    op.drop_table('user_records')
     op.drop_index(op.f('ix_user_logs_user_id'), table_name='user_logs')
     op.drop_index('idx_userlog_user_date', table_name='user_logs')
     op.drop_index('idx_userlog_user_created_at', table_name='user_logs')

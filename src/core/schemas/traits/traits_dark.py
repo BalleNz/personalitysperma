@@ -11,7 +11,7 @@ class DarkTriadsSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: Optional[UUID] = Field(default_factory=uuid4)
-    user_id: str = Field(description="Идентификатор пользователя")
+    user_id: UUID = Field(description="Идентификатор пользователя")
 
     cynicism: Optional[float] = Field(
         default=None,

@@ -24,12 +24,6 @@ class ClinicalProfile(IDMixin, TimestampsMixin):
     suicide_risk = mapped_column(Float, default=None, comment="Уровень суицидального риска (0-1)")
     suicide_ideation_frequency = mapped_column(String(20), default=None, comment="Частота суицидальных мыслей")  # TODO: enum + запихать эту таблицу в RESEARCH и PSYCHO промпты
 
-    records: Mapped[int | None] = mapped_column(
-        Integer,
-        default=None,
-        comment="количество записей"
-    )
-
     accuracy_percent: Mapped[int | None] = mapped_column(
         Float,
         default=None,

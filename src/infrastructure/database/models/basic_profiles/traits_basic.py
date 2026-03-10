@@ -2,11 +2,11 @@ from typing import Type
 
 from pydantic import ConfigDict
 from sqlalchemy import Float, ForeignKey, UUID, Integer
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.core.schemas.traits.traits_basic import BehavioralProfileSchema, EmotionalProfileSchema, CognitiveProfileSchema, \
+from src.core.schemas.traits.traits_basic import BehavioralProfileSchema, EmotionalProfileSchema, \
+    CognitiveProfileSchema, \
     SocialProfileSchema
 from src.infrastructure.database.models.base import IDMixin, S, TimestampsMixin
 
@@ -69,20 +69,11 @@ class SocialProfile(IDMixin, TimestampsMixin):
         comment="0=кооперативный, 1=соревновательный"
     )
 
-    records: Mapped[int | None] = mapped_column(
-        Integer,
-        default=None,
-        comment="количество записей"
-    )
-
     accuracy_percent: Mapped[int | None] = mapped_column(
         Float,
         default=None,
         comment="процент точности"
     )
-
-    @hybrid_property
-    # TODO сделать получение records везде
 
     @property
     def schema_class(self) -> Type[S]:
@@ -131,12 +122,6 @@ class CognitiveProfile(IDMixin, TimestampsMixin):
         Float,
         default=None,
         comment="Адаптивность. 0=ригидный, 1=гибкий"
-    )
-
-    records: Mapped[int | None] = mapped_column(
-        Integer,
-        default=None,
-        comment="количество записей"
     )
 
     accuracy_percent: Mapped[int | None] = mapped_column(
@@ -191,12 +176,6 @@ class EmotionalProfile(IDMixin, TimestampsMixin):
         Float,
         default=None,
         comment="Тревожность."
-    )
-
-    records: Mapped[int | None] = mapped_column(
-        Integer,
-        default=None,
-        comment="количество записей"
     )
 
     accuracy_percent: Mapped[int | None] = mapped_column(
@@ -258,12 +237,6 @@ class BehavioralProfile(IDMixin, TimestampsMixin):
         Float,
         default=None,
         comment="Самоконтроль. 0=импульсивный, 1=сдержанный"  # развитость префронтальной коры
-    )
-
-    records: Mapped[int | None] = mapped_column(
-        Integer,
-        default=None,
-        comment="количество записей"
     )
 
     accuracy_percent: Mapped[int | None] = mapped_column(
