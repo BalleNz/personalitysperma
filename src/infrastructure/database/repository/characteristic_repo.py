@@ -7,11 +7,11 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.response_schemas.characteristic import CharacteristicResponseRaw
-from src.core.schemas.clinical_disorders.anxiety_disorders import AnxietyDisordersSchema
-from src.core.schemas.clinical_disorders.clinical_profile import ClinicalProfileSchema
-from src.core.schemas.clinical_disorders.mood_disorders import MoodDisordersSchema
-from src.core.schemas.clinical_disorders.neuro_disorders import NeuroDisordersSchema
-from src.core.schemas.clinical_disorders.personality_disorders import PersonalityDisordersSchema
+from schemas.clinical_disorders import AnxietyDisordersSchema
+from schemas.clinical_disorders import ClinicalProfileSchema
+from schemas.clinical_disorders import MoodDisordersSchema
+from schemas.clinical_disorders import NeuroDisordersSchema
+from schemas.clinical_disorders import PersonalityDisordersSchema
 from src.core.schemas.personality_types.hexaco import UserHexacoSchema
 from src.core.schemas.personality_types.holland_codes import UserHollandCodesSchema
 from src.core.schemas.personality_types.socionics_type import UserSocionicsSchema
@@ -32,7 +32,7 @@ from src.infrastructure.database.models.clinical_disorders.anxiety_disorders imp
 from src.infrastructure.database.models.clinical_disorders.clinical_profile import ClinicalProfile
 from src.infrastructure.database.models.clinical_disorders.mood_disorders import MoodDisorders
 from src.infrastructure.database.models.clinical_disorders.neuro_disorders import NeuroDisorders
-from src.infrastructure.database.models.clinical_disorders.personality_disorders import PersonalityDisorders
+from src.infrastructure.database.models.clinical_disorders.bpd import PersonalityDisorders
 from src.infrastructure.database.models.logs import CharacteristicBatchLog
 from src.infrastructure.database.models.personality_types.hexaco import UserHexaco
 from src.infrastructure.database.models.personality_types.holland_codes import UserHollandCodes

@@ -36,7 +36,7 @@ async def show_listing(
 async def back(
         callback_query: CallbackQuery
 ):
-    """Открывает меню с листингом характеристик"""
+    """Возврат в листинг типов личности"""
     await callback_query.answer()
 
     await show_listing(
@@ -49,6 +49,8 @@ async def personality_listing_menu(
         message: Message
 ):
     """Открывает меню с листингом типов личности"""
+    # TODO if personality_quiz_passed ...
+
     await show_listing(
         message
     )

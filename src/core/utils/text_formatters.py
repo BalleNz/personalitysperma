@@ -3,10 +3,10 @@ from datetime import datetime, date
 from typing import Optional
 
 from database.models.base import S
-from schemas.clinical_disorders.anxiety_disorders import AnxietyDisordersSchema
-from schemas.clinical_disorders.mood_disorders import MoodDisordersSchema
-from schemas.clinical_disorders.neuro_disorders import NeuroDisordersSchema
-from schemas.clinical_disorders.personality_disorders import PersonalityDisordersSchema
+from schemas.clinical_disorders import AnxietyDisordersSchema
+from schemas.clinical_disorders import MoodDisordersSchema
+from schemas.clinical_disorders import NeuroDisordersSchema
+from schemas.clinical_disorders import PersonalityDisordersSchema
 from schemas.personality_types.hexaco import UserHexacoSchema
 from schemas.personality_types.holland_codes import UserHollandCodesSchema
 from schemas.personality_types.socionics_type import UserSocionicsSchema

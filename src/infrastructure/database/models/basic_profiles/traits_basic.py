@@ -32,6 +32,9 @@ class SocialProfile(IDMixin, TimestampsMixin):
         comment="0=зависим от мнения людей, 1=независим от мнения людей"
     )
 
+    social_anxiety = mapped_column(Float, default=None, comment="Социальная тревога (0-1)")
+    social_avoidance = mapped_column(Float, default=None, comment="Избегание социальных ситуаций (0-1)")
+
     # [ social profile ]
     empathy: Mapped[float | None] = mapped_column(
         Float,
@@ -42,7 +45,7 @@ class SocialProfile(IDMixin, TimestampsMixin):
         Float,
         default=None,
         comment="Тактильность"
-    )
+    )  # TODO: удалить
     extraversion: Mapped[float | None] = mapped_column(
         Float,
         default=None,
@@ -105,7 +108,8 @@ class CognitiveProfile(IDMixin, TimestampsMixin):
     )
     creativity: Mapped[float | None] = mapped_column(
         Float,
-        default=None, comment="0=практичный, 1=креативный")
+        default=None, comment="0=практичный, 1=креативный"
+    )
 
     # [ мышление ]
     thinking_style: Mapped[float | None] = mapped_column(
@@ -155,13 +159,15 @@ class EmotionalProfile(IDMixin, TimestampsMixin):
         default=None,
         comment="Самооценка. 0=низкая самооценка, 1=высокая самооценка"
     )
+    # TODO: удалить?
     self_irony: Mapped[float | None] = mapped_column(Float, default=None, comment="Способность к самоиронии")
 
     # [ эмоциональность ]
     intimacy_capacity: Mapped[float | None] = mapped_column(
         Float,
         default=None,
-        comment="Способность к глубокой эмоциональной близости.")
+        comment="Способность к глубокой эмоциональной близости."
+    )
     emotional_sensitivity: Mapped[float | None] = mapped_column(
         Float,
         default=None,
