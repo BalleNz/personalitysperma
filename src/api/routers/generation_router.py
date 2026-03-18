@@ -1,3 +1,4 @@
+import json
 import logging
 from typing import Annotated, Any
 
@@ -48,7 +49,7 @@ async def research_default_check_in(
     )
 
     # [ assistant ]
-    critical_characteristics = await get_characteristics(
+    critical_characteristics = await get_characteristics_json_to_assistant(
         characteristic_service,
         user
     )
@@ -94,7 +95,7 @@ async def research_survey_check_in(
         log_text=request.user_message
     )
 
-    characteristics = await get_characteristics(
+    characteristics = await get_characteristics_json_to_assistant(
         characteristic_service, user
     )
 
@@ -132,7 +133,7 @@ async def research_survey_finish(
         background_tasks: BackgroundTasks,
 ):
     """SURVEY: завершить и обновить характеристики"""
-    characteristics = await get_characteristics(
+    characteristics = await get_characteristics_json_to_assistant(
         user=user,
         characteristic_service=characteristic_service
     )
@@ -178,7 +179,7 @@ async def psycho(
 
     access_token = authorization.split(" ")[1]
 
-    critical_characteristics = await get_characteristics(
+    critical_characteristics = await get_characteristics_json_to_assistant(
         characteristic_service,
         user
     )
@@ -204,15 +205,20 @@ async def psycho(
     return response
 
 
-async def get_characteristics(
+async def get_characteristics_json_to_assistant(
         characteristic_service: CharacteristicService,
         user: UserSchema
-) -> dict[str, dict[str, Any]]:
-    # [ самые важные профили для входных данных ]
+) -> str:
+    """
+    ВОЗВРАЩАЕТ В ФОРМАТЕ:
+    <field_name>: <value> — <description>
+    """
+
     all_characteristics: list[CharacteristicResponseRaw] | None = await characteristic_service.repo.get_all_characteristics(
         user.id
     )
 
+    # [ самые важные профили для входных данных ]
     CRITICAL_SCHEMAS = {
         "SocialProfileSchema",
         "CognitiveProfileSchema",
@@ -243,9 +249,21 @@ async def get_characteristics(
                         "id", "user_id", "created_at", "updated_at", "telegram_id", "records"
                     }
                 }
+                for field_name, value in cleaned.items():
+                    field_info = schema_instance.model_fields.get(field_name)
+                    description = getattr(field_info, "description", "").strip()
+                    if not description:
+                        # запасной вариант — human-readable название поля
+                        description = field_name.replace("_", " ").title()
+
+                    key = field_name
+                    value_str = f"{value} — {description}"
+
+                    cleaned[key] = value_str
+
                 if cleaned:
                     critical_characteristics[schema_name] = cleaned
-    return critical_characteristics
+    return json.dumps(critical_characteristics, ensure_ascii=False, indent=2)
 
 
 async def process_survey_finish_in_background(

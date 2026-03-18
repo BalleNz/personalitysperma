@@ -277,13 +277,12 @@ class AssistantService:
             user_message: str,
             user_id: UUID,
             redis_service: RedisService,
-            user_characteristics: dict[str, dict[str, Any]] | None = None,
+            user_characteristics: str | None = None,
     ) -> PsychoResponse:
         """PSYCHO"""
         profile_text = ""
         if user_characteristics:
-            profile_text = "\n\nТекущий профиль пользователя:\n" + \
-                           json.dumps(user_characteristics, ensure_ascii=False, indent=2)
+            profile_text = "\n\nТекущий профиль пользователя:\n" + user_characteristics
             logger.info(profile_text)
 
         full_prompt: str = CHECK_IN_PSYCHO_PROMPT + profile_text
@@ -303,13 +302,12 @@ class AssistantService:
             user_message: str,
             user_id: UUID,
             redis_service: RedisService,
-            user_characteristics: dict[str, dict[str, Any]] | None = None,
+            user_characteristics: str | None = None,
     ) -> ResearchDefaultResponse:
         """research: DEFAULT"""
         profile_text = ""
         if user_characteristics:
-            profile_text = "\n\nТекущий профиль пользователя:\n" + \
-                           json.dumps(user_characteristics, ensure_ascii=False, indent=2)
+            profile_text = "\n\nТекущий профиль пользователя:\n" + user_characteristics
             logger.info(profile_text)
 
         full_prompt: str = RESEARCH_DEFAULT_PROMPT + profile_text
@@ -329,7 +327,7 @@ class AssistantService:
             user_message: str,
             user_id: UUID,
             redis_service: RedisService,
-            user_characteristics: dict[str, dict[str, Any]] | None = None
+            user_characteristics: str | None = None
     ) -> ResearchSurveyResponse:
         """SURVEY:
 
@@ -337,8 +335,7 @@ class AssistantService:
         """
         profile_text = ""
         if user_characteristics:
-            profile_text = "\n\nТекущий профиль пользователя:\n" + \
-                           json.dumps(user_characteristics, ensure_ascii=False, indent=2)
+            profile_text = "\n\nТекущий профиль пользователя:\n" + user_characteristics
             logger.info(profile_text)
 
         full_prompt: str = RESEARCH_SURVEY_PROMPT + profile_text
