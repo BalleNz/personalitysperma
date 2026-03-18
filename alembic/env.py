@@ -35,7 +35,7 @@ from src.infrastructure.database.models.clinical_disorders.clinical_profile impo
 from src.infrastructure.database.models.clinical_disorders.anxiety_disorders import *  # noqa
 from src.infrastructure.database.models.clinical_disorders.mood_disorders import *  # noqa
 from src.infrastructure.database.models.clinical_disorders.neuro_disorders import *  # noqa
-from src.infrastructure.database.models.clinical_disorders.bpd import *  # noqa
+from database.models.clinical_disorders.personality_disorders.bpd import *  # noqa
 from src.infrastructure.database.models.personality_types.hexaco import *  # noqa
 from src.infrastructure.database.models.personality_types.socionics import *  # noqa
 from src.infrastructure.database.models.personality_types.holland_codes import *  # noqa

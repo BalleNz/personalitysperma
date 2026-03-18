@@ -209,8 +209,7 @@ async def get_characteristics(
         user: UserSchema
 ) -> dict[str, dict[str, Any]]:
     # [ самые важные профили для входных данных ]
-    all_characteristics: list[
-                             CharacteristicResponseRaw] | None = await characteristic_service.repo.get_all_characteristics(
+    all_characteristics: list[CharacteristicResponseRaw] | None = await characteristic_service.repo.get_all_characteristics(
         user.id
     )
 

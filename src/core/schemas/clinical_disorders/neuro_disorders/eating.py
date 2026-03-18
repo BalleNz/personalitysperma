@@ -5,14 +5,15 @@ from typing import Optional
 from pydantic import BaseModel, Field, computed_field
 
 
-class EatingDisordersSchema(BaseModel):
+class EatingSchema(BaseModel):
     """Пищевое поведение схема"""
     id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4)
     user_id: uuid.UUID = Field(description="Идентификатор пользователя")
 
     eating: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Общий уровень РПП (0-1)")
-    anorexia: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Нервная анорексия (0-1)")
-    bulimia: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Нервная булимия (0-1)")
+
+    anorexia: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Нарушение аппетита / анорексия (0-1)")
+    bulimia: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Слишком сильный аппетит / булимия (0-1)")
     binge: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Компульсивное переедание (0-1)")
 
     records: int | None = Field(

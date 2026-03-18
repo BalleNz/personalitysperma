@@ -1,24 +1,73 @@
-from typing import Type
+from typing import Optional, Type
 
-from sqlalchemy import Float
-from sqlalchemy.orm import mapped_column, Mapped
+from sqlalchemy import Float, UUID, ForeignKey
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.infrastructure.database.models.base import S, IDMixin, TimestampsMixin
+from src.core.schemas.clinical_disorders.anxiety.gdr import GDRSchema
+from src.infrastructure.database.models.base import TimestampsMixin, IDMixin, S
 
 
-class GDR(IDMixin, TimestampsMixin):
+class GDRDisorder(IDMixin, TimestampsMixin):
     """Генерализированное тревожное расстройство"""
+    __tablename__ = "gdr_disorder"
 
-    # TODO: разделить таблицы везде по таким абзацам для лучшего качества ответов
-    # TODO: проверить соответствие полей и comment в grok
+    user_id: Mapped[UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
+    user = relationship("User", back_populates="gdr_disorder")
 
-    # TODO: присвоить каждому полю с "расстройство" группу "болезни" и собирать в check_in если юзер просит (инструкция в промпт: загружай все таблицы с расстройствами и болезнями если юзер просит или их важно учитывать)
-    #   - или сделать отдельный tuple с названиями таблиц, которые содержат эти поля
 
-    gad = mapped_column(Float, default=None, comment="Генерализованное тревожное расстройство (0-1)")
-    gad_worry = mapped_column(Float, default=None, comment="Беспокойство / тревога ожидания (0-1)")
-    gad_irritability = mapped_column(Float, default=None, comment="Раздражительность (0-1)")
-    gad_muscle = mapped_column(Float, default=None, comment="Мышечное напряжение (0-1)")
+    gad_worry: Mapped[Optional[float]] = mapped_column(
+        Float,
+        default=None,
+        comment="Чрезмерное беспокойство / тревожные ожидания (0-1)"
+    )
+    gad_uncontrollable: Mapped[Optional[float]] = mapped_column(
+        Float,
+        default=None,
+        comment="Трудности с контролем беспокойства (0-1)"
+    )
+    gad_catastrophic: Mapped[Optional[float]] = mapped_column(
+        Float,
+        default=None,
+        comment="Предчувствие беды / ощущение надвигающейся катастрофы (0-1)"
+    )
+
+    # Физические и поведенческие симптомы (ключевые по DSM-5 и GAD-7)
+    gad_restlessness: Mapped[Optional[float]] = mapped_column(
+        Float,
+        default=None,
+        comment="Моторное беспокойство, неусидчивость, ощущение на взводе (0-1)"
+    )
+    gad_fatigue: Mapped[Optional[float]] = mapped_column(
+        Float,
+        default=None,
+        comment="Лёгкая утомляемость, быстрое истощение (0-1)"
+    )
+    gad_concentration: Mapped[Optional[float]] = mapped_column(
+        Float,
+        default=None,
+        comment="Трудности с концентрацией внимания, «пустота в голове» (0-1)"
+    )
+    gad_irritability: Mapped[Optional[float]] = mapped_column(
+        Float,
+        default=None,
+        comment="Раздражительность, вспыльчивость (0-1)"
+    )
+    gad_muscle_tension: Mapped[Optional[float]] = mapped_column(
+        Float,
+        default=None,
+        comment="Мышечное напряжение, скованность (0-1)"
+    )
+
+    gad_relaxation: Mapped[Optional[float]] = mapped_column(
+        Float,
+        default=None,
+        comment="Трудности с расслаблением (0-1)"
+    )
 
     accuracy_percent: Mapped[int | None] = mapped_column(
         Float,
@@ -28,4 +77,4 @@ class GDR(IDMixin, TimestampsMixin):
 
     @property
     def schema_class(cls) -> Type[S]:
-        return ...
+        return GDRSchema

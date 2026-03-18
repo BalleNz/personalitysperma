@@ -10,10 +10,17 @@ class ADHDSchema(BaseModel):
     id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4)
     user_id: uuid.UUID = Field(description="Идентификатор пользователя")
 
-    adhd: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="СДВГ (0-1)")
+    adhd: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="уровень СДВГ (0-1)")
     adhd_inattention: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Невнимательность (0-1)")
     adhd_hyperactivity: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Гиперактивность (0-1)")
-    adhd_impulsivity: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Импульсивность (0-1)")
+
+    hyperfocus: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Склонность к гиперфокусу (осознанная защитная реакция) (0-1)")
+    internal_hyperactivity: Optional[float] = Field(default=None, ge=0.0, le=1.0,
+                                                    description="Внутренняя гиперактивность / постоянный внутренний шум (0-1)")
+    time_blindness: Optional[float] = Field(default=None, ge=0.0, le=1.0,
+                                            description="Нарушение чувства времени / тайм-слепота (0-1)")
+    motivation_problems: Optional[float] = Field(default=None, ge=0.0, le=1.0,
+                                                 description="Проблемы с внутренней мотивацией / прокрастинация при отсутствии дофаминового 'пинка' (0-1)")
 
     records: int | None = Field(
         default=None,

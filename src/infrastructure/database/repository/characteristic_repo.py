@@ -32,7 +32,7 @@ from src.infrastructure.database.models.clinical_disorders.anxiety_disorders imp
 from src.infrastructure.database.models.clinical_disorders.clinical_profile import ClinicalProfile
 from src.infrastructure.database.models.clinical_disorders.mood_disorders import MoodDisorders
 from src.infrastructure.database.models.clinical_disorders.neuro_disorders import NeuroDisorders
-from src.infrastructure.database.models.clinical_disorders.bpd import PersonalityDisorders
+from database.models.clinical_disorders.personality_disorders.bpd import PersonalityDisorders
 from src.infrastructure.database.models.logs import CharacteristicBatchLog
 from src.infrastructure.database.models.personality_types.hexaco import UserHexaco
 from src.infrastructure.database.models.personality_types.holland_codes import UserHollandCodes

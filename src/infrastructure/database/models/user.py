@@ -11,11 +11,17 @@ from src.infrastructure.database.models.basic_profiles.traits_basic import Socia
     CognitiveProfile
 from src.infrastructure.database.models.basic_profiles.traits_dark import DarkTriads
 from src.infrastructure.database.models.basic_profiles.traits_humor import HumorProfile
-from src.infrastructure.database.models.clinical_disorders.anxiety_disorders import AnxietyDisorders
-from src.infrastructure.database.models.clinical_disorders.clinical_profile import ClinicalProfile
-from src.infrastructure.database.models.clinical_disorders.mood_disorders import MoodDisorders
-from src.infrastructure.database.models.clinical_disorders.neuro_disorders import NeuroDisorders
-from src.infrastructure.database.models.clinical_disorders.bpd import PersonalityDisorders
+from src.infrastructure.database.models.clinical_disorders.anxiety.gdr import GDRDisorder
+from src.infrastructure.database.models.clinical_disorders.anxiety.panic import PanicDisorder
+from src.infrastructure.database.models.clinical_disorders.anxiety.ptsd import PTSDDisorder
+from src.infrastructure.database.models.clinical_disorders.mood_disorders.bipolar import BipolarDisorder
+from src.infrastructure.database.models.clinical_disorders.mood_disorders.depression import DepressionDisorder
+from src.infrastructure.database.models.clinical_disorders.neuro_disorders.adhd import ADHDDisorder
+from src.infrastructure.database.models.clinical_disorders.neuro_disorders.autism import AutismDisorder
+from src.infrastructure.database.models.clinical_disorders.neuro_disorders.dissociative import DissociativeDisorder
+from src.infrastructure.database.models.clinical_disorders.neuro_disorders.eating_disorders import EatingDisorder
+from src.infrastructure.database.models.clinical_disorders.neuro_disorders.looks_disorder import LooksDisorder
+from src.infrastructure.database.models.clinical_disorders.personality_disorders.bpd import BPDDisorder
 from src.infrastructure.database.models.diary import UserDiary
 from src.infrastructure.database.models.personality_types.hexaco import UserHexaco
 from src.infrastructure.database.models.personality_types.holland_codes import UserHollandCodes
@@ -158,28 +164,65 @@ class User(IDMixin, TimestampsMixin):
         passive_deletes=True,
     )
 
-    clinical_profile: Mapped["ClinicalProfile | None"] = relationship(
-        ClinicalProfile, back_populates="user", uselist=False,
+    # [ mood ]
+    bipolar_disorder: Mapped["BipolarDisorder | None"] = relationship(
+        BipolarDisorder, back_populates="user", uselist=False,
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
-    mood_disorders: Mapped["MoodDisorders | None"] = relationship(
-        MoodDisorders, back_populates="user", uselist=False,
+    depression_disorder: Mapped["DepressionDisorder | None"] = relationship(
+        DepressionDisorder, back_populates="user", uselist=False,
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
-    anxiety_disorders: Mapped["AnxietyDisorders | None"] = relationship(
-        AnxietyDisorders, back_populates="user", uselist=False,
+
+    # [ neuro ]
+    adhd_disorder: Mapped["ADHDDisorder | None"] = relationship(
+        ADHDDisorder, back_populates="user", uselist=False,
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
-    personality_disorders: Mapped["PersonalityDisorders | None"] = relationship(
-        PersonalityDisorders, back_populates="user", uselist=False,
+    autism_disorder: Mapped["AutismDisorder | None"] = relationship(
+        AutismDisorder, back_populates="user", uselist=False,
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
-    neuro_disorders: Mapped["NeuroDisorders | None"] = relationship(
-        NeuroDisorders, back_populates="user", uselist=False,
+    dissociative_disorder: Mapped["DissociativeDisorder | None"] = relationship(
+        DissociativeDisorder, back_populates="user", uselist=False,
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+    eating_disorder: Mapped["EatingDisorder | None"] = relationship(
+        EatingDisorder, back_populates="user", uselist=False,
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+    looks_disorder: Mapped["LooksDisorder | None"] = relationship(
+        LooksDisorder, back_populates="user", uselist=False,
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+
+    # [ anxiety ]
+    gdr_disorder: Mapped["GDRDisorder | None"] = relationship(
+        GDRDisorder, back_populates="user", uselist=False,
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+    panic_disorder: Mapped["PanicDisorder | None"] = relationship(
+        PanicDisorder, back_populates="user", uselist=False,
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+    ptsd_disorder: Mapped["PTSDDisorder | None"] = relationship(
+        PTSDDisorder, back_populates="user", uselist=False,
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+
+    # [ personality ]
+    bpd_disorder: Mapped["BPDDisorder | None"] = relationship(
+        BPDDisorder, back_populates="user", uselist=False,
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
