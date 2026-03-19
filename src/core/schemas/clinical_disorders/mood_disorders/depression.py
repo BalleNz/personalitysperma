@@ -10,12 +10,11 @@ class DepressionSchema(BaseModel):
     id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4)
     user_id: uuid.UUID = Field(description="Идентификатор пользователя")
 
-    anhedonia: Optional[float] = Field(default=None, ge=0.0, le=1.0,
-                                       description="Ангедония / потеря интереса и удовольствия (0-1)")
-    fatigue: Optional[float] = Field(default=None, ge=0.0, le=1.0,
-                                     description="Усталость, потеря энергии, ощущение истощения (0-1)")
-    sleep_disturbance: Optional[float] = Field(default=None, ge=0.0, le=1.0,
-                                               description="Нарушения сна (бессонница / гиперсомния) (0-1)")
+    depression_score: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Уровень депрессии (0-1)")
+
+    anhedonia: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Ангедония / потеря интереса и удовольствия (0-1)")
+    fatigue: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Усталость, потеря энергии, ощущение истощения (0-1)")
+    sleep_disturbance: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Нарушения сна (бессонница / гиперсомния) (0-1)")
     worthlessness: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Чувство никчёмности, вины (0-1)")
     suicidal: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Суицидальные мысли / поведение (0-1)")
 

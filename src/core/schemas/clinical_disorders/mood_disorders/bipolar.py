@@ -11,6 +11,7 @@ class BipolarDisorderSchema(BaseModel):
     id: Optional[UUID] = Field(default_factory=uuid4)
     user_id: uuid.UUID = Field(description="Идентификатор пользователя")
 
+    bipolar_score: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Вероятность биполярного расстройства (0-1)")
     bipolar_mania: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Маниакальные эпизоды (0-1)")
     bipolar_hypomania: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Гипоманиакальные эпизоды (0-1)")
     bipolar_depression: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Депрессивные эпизоды (0-1)")

@@ -11,10 +11,12 @@ class EatingSchema(BaseModel):
     user_id: uuid.UUID = Field(description="Идентификатор пользователя")
 
     eating: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Общий уровень РПП (0-1)")
-
     anorexia: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Нарушение аппетита / анорексия (0-1)")
     bulimia: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Слишком сильный аппетит / булимия (0-1)")
     binge: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Компульсивное переедание (0-1)")
+
+    body_image_distress: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Дистресс от образа тела / недовольство внешностью (0-1)")
+    compensatory_behaviors: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Компенсаторное поведение (рвота, слабительные, чрезмерные тренировки) (0-1)")
 
     records: int | None = Field(
         default=None,

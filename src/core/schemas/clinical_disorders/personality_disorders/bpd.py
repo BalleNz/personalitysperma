@@ -10,16 +10,17 @@ class BPDSchema(BaseModel):
     id: Optional[UUID] = Field(default_factory=uuid4)
     user_id: UUID = Field(description="Идентификатор пользователя")
 
-    bpd_severity: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Тяжесть ПРЛ (0-1)")
+    bpd_severity: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Уровень ПРЛ (0-1)")
     bpd_abandonment: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Страх брошенности (0-1)")
     bpd_unstable_relations: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Нестабильные отношения (0-1)")
     bpd_identity: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Нарушение идентичности (0-1)")
     bpd_impulsivity: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Импульсивность (0-1)")
-    bpd_suicidal: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Суицидальное поведение (0-1)")
     bpd_mood_swings: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Перепады настроения (0-1)")
     bpd_emptiness: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Чувство пустоты (0-1)")
     bpd_anger: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Неадекватный гнев (0-1)")
     bpd_paranoia: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Параноидные идеи (0-1)")
+
+    bpd_suicidal: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Суицидальное поведение, угрозы о суициде, самоповреждения (0-1)")
 
     records: int | None = Field(
         default=None,

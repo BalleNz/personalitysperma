@@ -19,15 +19,13 @@ class PanicDisorder(IDMixin, TimestampsMixin):
     )
     user = relationship("User", back_populates="panic_disorder")
 
-    panic_general = mapped_column(Float, default=None, comment="Общий уровень панического расстройства (0-1)")
     attack_frequency = mapped_column(Float, default=None, comment="Частота полноценных панических атак (0-1)")
 
-    anticipatory = mapped_column(Float, default=None, comment="Тревога ожидания новой атаки (0-1)")
-    fear_catastrophe = mapped_column(Float, default=None, comment="Страх смерти / сумасшествия / потери контроля (0-1)")
-
     situational_avoid = mapped_column(Float, default=None, comment="Избегание ситуаций / мест (0-1)")
-    interoceptive_avoid = mapped_column(Float, default=None, comment="Избегание телесных ощущений / триггеров (0-1)")
-    life_impairment = mapped_column(Float, default=None, comment="Нарушение жизни / функционирования из-за панического расстройства (0-1)")  # как сильно сказывается
+    anticipatory = mapped_column(Float, default=None, comment="Тревога ожидания новой атаки (0-1)")
+
+    fear_catastrophe = mapped_column(Float, default=None, comment="Страх смерти / сумасшествия / потери контроля (0-1)")
+    life_impairment = mapped_column(Float, default=None, comment="Нарушение жизни / социальности / функционирования из-за панического расстройства (0-1)")  # как сильно сказывается
 
     accuracy_percent: Mapped[int | None] = mapped_column(
         Float,

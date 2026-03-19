@@ -19,7 +19,6 @@ class GDRDisorder(IDMixin, TimestampsMixin):
     )
     user = relationship("User", back_populates="gdr_disorder")
 
-
     gad_worry: Mapped[Optional[float]] = mapped_column(
         Float,
         default=None,

@@ -23,6 +23,11 @@ class AutismDisorder(IDMixin, TimestampsMixin):
     autism_social = mapped_column(Float, default=None, comment="Нарушения социальной коммуникации (0-1)")
     autism_interests = mapped_column(Float, default=None, comment="Ограниченные интересы/ритуалы (0-1)")
 
+    masking = mapped_column(Float, default=None,
+                            comment="Маскировка / подавление аутистических черт для адаптации (0-1)")
+    sensory_overload = mapped_column(Float, default=None,
+                                     comment="Сенсорная перегрузка / гиперчувствительность к стимулам (0-1)")
+
     accuracy_percent: Mapped[int | None] = mapped_column(
         Float,
         default=None,

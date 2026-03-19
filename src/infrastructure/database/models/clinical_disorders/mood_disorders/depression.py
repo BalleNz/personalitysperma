@@ -19,6 +19,8 @@ class DepressionDisorder(IDMixin, TimestampsMixin):
     )
     user = relationship("User", back_populates="depression_disorder")
 
+    depression_score = mapped_column(Float, default=None, comment="Уровень депрессии (0-1)")
+
     anhedonia = mapped_column(Float, default=None, comment="Ангедония / потеря интереса и удовольствия (0-1)")
     fatigue = mapped_column(Float, default=None, comment="Усталость, потеря энергии, ощущение истощения (0-1)")
     sleep_disturbance = mapped_column(Float, default=None, comment="Нарушения сна (бессонница / гиперсомния) (0-1)")

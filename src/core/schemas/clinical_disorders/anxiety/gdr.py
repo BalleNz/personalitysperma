@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field, computed_field
 
 
 class GDRSchema(BaseModel):
-    """тревожное расстройство схема"""
+    """ТРЕВОГА"""
     id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4)
     user_id: uuid.UUID = Field(description="Идентификатор пользователя")
 

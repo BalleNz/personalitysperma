@@ -15,7 +15,7 @@ class BPDDisorder(IDMixin, TimestampsMixin):
     user = relationship("User", back_populates="bpd_disorder")
 
     # [ ПРЛ ]
-    bpd_severity = mapped_column(Float, default=None, comment="Тяжесть ПРЛ (0-1)")
+    bpd_severity = mapped_column(Float, default=None, comment="Уровень ПРЛ (0-1)")
     bpd_abandonment = mapped_column(Float, default=None, comment="Страх брошенности (0-1)")
     bpd_unstable_relations = mapped_column(Float, default=None, comment="Нестабильные отношения (0-1)")
     bpd_identity = mapped_column(Float, default=None, comment="Нарушение идентичности (0-1)")
@@ -24,6 +24,8 @@ class BPDDisorder(IDMixin, TimestampsMixin):
     bpd_emptiness = mapped_column(Float, default=None, comment="Чувство пустоты (0-1)")
     bpd_anger = mapped_column(Float, default=None, comment="Неадекватный гнев (0-1)")
     bpd_paranoia = mapped_column(Float, default=None, comment="Параноидные идеи (0-1)")
+
+    bpd_suicidal = mapped_column(Float, default=None, comment="Суицидальное поведение, угрозы, самоповреждения (0-1)")
 
     accuracy_percent: Mapped[int | None] = mapped_column(
         Float,

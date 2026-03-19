@@ -19,7 +19,7 @@ class PTSDDisorder(IDMixin, TimestampsMixin):
     )
     user = relationship("User", back_populates="ptsd_disorder")
 
-    ptsd = mapped_column(Float, default=None, comment="Посттравматическое стрессовое расстройство (0-1)")
+    ptsd = mapped_column(Float, default=None, comment="Общий уровень ПТСР / комплексного ПТСР (0-1)")
     ptsd_intrusions = mapped_column(Float, default=None, comment="Интрузивные воспоминания, флэшбэки (0-1)")
     ptsd_cognition = mapped_column(Float, default=None, comment="Негативные изменения в мышлении и настроении (0-1)")
     ptsd_arousal = mapped_column(Float, default=None, comment="Гипервозбуждение при триггере (0-1)")

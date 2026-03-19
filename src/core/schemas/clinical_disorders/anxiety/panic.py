@@ -6,16 +6,16 @@ from pydantic import BaseModel, Field, computed_field
 
 
 class PanicSchema(BaseModel):
-    """Панические расстройства"""
+    """ПАНИКА"""
     id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4)
     user_id: uuid.UUID = Field(description="Идентификатор пользователя")
 
     attack_frequency: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Частота полноценных панических атак (0-1)")
 
-    anticipatory: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Тревога ожидания новой атаки (0-1)")
-    fear_catastrophe: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Страх смерти / сумасшествия / потери контроля (0-1)")
     situational_avoid: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Избегание ситуаций / мест (0-1)")
-    interoceptive_avoid: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Избегание телесных ощущений / триггеров (0-1)")
+    anticipatory: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Тревога ожидания новой атаки (0-1)")
+
+    fear_catastrophe: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Страх смерти / сумасшествия / потери контроля (0-1)")
     life_impairment: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Нарушение жизни / функционирования из-за панического расстройства (0-1)")
 
     records: int | None = Field(

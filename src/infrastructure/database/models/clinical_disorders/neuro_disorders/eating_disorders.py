@@ -24,6 +24,11 @@ class EatingDisorder(IDMixin, TimestampsMixin):
     bulimia = mapped_column(Float, default=None, comment="Слишком сильный аппетит / булимия (0-1)")
     binge = mapped_column(Float, default=None, comment="Компульсивное переедание (0-1)")
 
+    body_image_distress = mapped_column(Float, default=None,
+                                        comment="Дистресс от образа тела / недовольство внешностью (0-1)")
+    compensatory_behaviors = mapped_column(Float, default=None,
+                                           comment="Компенсаторное поведение (рвота, слабительные, чрезмерные тренировки) (0-1)")
+
     accuracy_percent: Mapped[int | None] = mapped_column(
         Float,
         default=None,

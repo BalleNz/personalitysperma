@@ -14,6 +14,9 @@ class AutismSchema(BaseModel):
     autism_social: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Нарушения социальной коммуникации (0-1)")
     autism_interests: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Ограниченные интересы/ритуалы (0-1)")
 
+    masking: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Маскировка / подавление аутистических черт для адаптации (0-1)")
+    sensory_overload: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Сенсорная перегрузка / гиперчувствительность к стимулам (0-1)")
+
     records: int | None = Field(
         default=None,
         description="Количество записей"

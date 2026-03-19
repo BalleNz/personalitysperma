@@ -19,6 +19,7 @@ class BipolarDisorder(IDMixin, TimestampsMixin):
     )
     user = relationship("User", back_populates="bipolar_disorder")
 
+    bipolar_score = mapped_column(Float, default=None, comment="Вероятность биполярного расстройства (0-1)")
     bipolar_mania = mapped_column(Float, default=None, comment="Маниакальные эпизоды (0-1)")
     bipolar_hypomania = mapped_column(Float, default=None, comment="Гипоманиакальные эпизоды (0-1)")
     bipolar_depression = mapped_column(Float, default=None, comment="Депрессивные эпизоды (0-1)")
