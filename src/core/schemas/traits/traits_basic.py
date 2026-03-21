@@ -44,13 +44,13 @@ class SocialProfileSchema(BaseModel):
         default=None,
         ge=0.0,
         le=1.0,
-        description="0=интроверт, 1=экстраверт"
+        description="Экстравертность"
     )
     altruism: Optional[float] = Field(
         default=None,
         ge=0.0,
         le=1.0,
-        description="эгоизм → бескорыстная помощь"
+        description="0=эгоизм, 1=бескорыстная помощь"
     )
     conformity: Optional[float] = Field(
         default=None,
@@ -64,11 +64,17 @@ class SocialProfileSchema(BaseModel):
         le=1.0,
         description="0=застенчивый, 1=уверенный в общении"
     )
+    cooperativity: Optional[float] = Field(
+        default=None,
+        ge=0.0,
+        le=1.0,
+        description="Кооперативность"
+    )
     competitiveness: Optional[float] = Field(
         default=None,
         ge=0.0,
         le=1.0,
-        description="0=кооперативный, 1=соревновательный"
+        description="Соревновательность"
     )
 
     records: int | None = Field(
@@ -140,7 +146,7 @@ class CognitiveProfileSchema(BaseModel):
         default=None,
         ge=0.0,
         le=1.0,
-        description="Деревья важнее леса? 0=простой тип мышления, 1=аналитический/многомерный/сложный тип мышления"
+        description="0=простой тип мышления, 1=аналитический/многомерный/сложный тип мышления"
     )
     tolerance_for_ambiguity: Optional[float] = Field(
         default=None,
@@ -196,13 +202,13 @@ class EmotionalProfileSchema(BaseModel):
         default=None,
         ge=0.0,
         le=1.0,
-        description="0=пессимист, 1=оптимист"
+        description="Оптимизм"
     )
     self_esteem: Optional[float] = Field(
         default=None,
         ge=0.0,
         le=1.0,
-        description="Самооценка. 0=низкая самооценка, 1=высокая самооценка"
+        description="Самооценка"
     )
     self_irony: Optional[float] = Field(
         default=None,

@@ -6,5 +6,5 @@ class PsychoResponse(BaseModel):
     — таблицы, которые следует обновить
     """
 
-    classifications: list[str]
+    classifications: list[str] | None
     user_answer: str = Field(..., description="ответ пользователю (для продолжения диалога)")

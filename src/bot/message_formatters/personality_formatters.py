@@ -70,7 +70,7 @@ class PersonalityMessageFormatter:
         )
 
     @staticmethod
-    def get_characteristic_text_by_schema(
+    def get_personality_text_by_schema_name(
             schema_name: str,
             schema: S
     ) -> str:

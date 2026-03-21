@@ -10,3 +10,8 @@ class CharacteristicResponseRaw(BaseModel):
 
 class GetAllCharacteristicResponse(BaseModel):
     response: list[CharacteristicResponseRaw]
+
+
+class CheckInResponse(BaseModel):
+    """Список характеристик которые нужно учитывать"""
+    characteristics_list: list[str]

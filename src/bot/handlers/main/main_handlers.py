@@ -19,6 +19,7 @@ from src.core.services.api_client.personalityGPT_api import PersonalityGPT_APICl
 from src.core.services.cache_services.cache_service import CacheService
 from src.core.services.dependencies.speech_service_dep import get_speech_service
 from src.core.services.speech_to_text_service import SpeechService
+from src.core.utils.funcs import clean_characteristic_json
 from src.infrastructure.database.models.base import S
 from src.infrastructure.database.repository.characteristic_repo import SHORT_TO_FULL_SCHEMA, get_schema_type_from_name
 
@@ -61,7 +62,8 @@ async def main_voice(
         api_client,
         access_token,
         user,
-        cache_service
+        cache_service,
+        voice_text=text
     )
 
 
@@ -148,14 +150,15 @@ async def survey_final(
                 user_id=user.id
             ) if schema_cls else None  # пустая с дефолтами
 
+        characteristic_cleaned: dict = clean_characteristic_json(
+            schema_obj
+        )
+
         if schema_obj:
             characteristics.append(
                 Characteristic(
                     characteristic_name=name,
-                    characteristic=schema_obj.model_dump(
-                        exclude={"id", "user_id", "created_at", "updated_at", "telegram_id", "GROUP"},
-                        exclude_none=False
-                    )  # dict, все поля
+                    characteristic=characteristic_cleaned
                 )
             )
 

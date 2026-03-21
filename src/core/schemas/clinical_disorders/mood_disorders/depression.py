@@ -5,7 +5,7 @@ from typing import Optional
 from pydantic import Field, BaseModel, computed_field
 
 
-class DepressionSchema(BaseModel):
+class DepressionDisorderSchema(BaseModel):
     """Депрессия"""
     id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4)
     user_id: uuid.UUID = Field(description="Идентификатор пользователя")

@@ -70,14 +70,15 @@ async def show_personality(
     characteristic_name: str | None = callback_data.characteristic_name
     characteristic_type: type[S] = CharacteristicFormat.get_cls_from_schema_name(characteristic_name)
 
-    personality: S | list[S] = await cache_service.get_characteristic_row(
+    personality_row: list[S] | None = await cache_service.get_characteristic_row(
         access_token=access_token,
         telegram_id=telegram_id,
         characteristic_type=characteristic_type,
     )
+    personality: S | None = personality_row[0]
 
-    text: str = PersonalityMessageFormatter.get_characteristic_text_by_schema(
-        schema_name=personality.__name__,
+    text: str = PersonalityMessageFormatter.get_personality_text_by_schema_name(
+        schema_name=characteristic_name,
         schema=personality
     )
 

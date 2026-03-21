@@ -31,11 +31,10 @@ from src.infrastructure.database.models.users_comparison import *  # noqa
 from src.infrastructure.database.models.basic_profiles.traits_basic import *  # noqa
 from src.infrastructure.database.models.basic_profiles.traits_dark import *  # noqa
 from src.infrastructure.database.models.basic_profiles.traits_humor import *  # noqa
-from src.infrastructure.database.models.clinical_disorders.clinical_profile import *  # noqa
-from src.infrastructure.database.models.clinical_disorders.anxiety_disorders import *  # noqa
+from src.infrastructure.database.models.clinical_disorders.anxiety import *  # noqa
+from src.infrastructure.database.models.clinical_disorders.personality_disorders.bpd import *  # noqa
 from src.infrastructure.database.models.clinical_disorders.mood_disorders import *  # noqa
 from src.infrastructure.database.models.clinical_disorders.neuro_disorders import *  # noqa
-from database.models.clinical_disorders.personality_disorders.bpd import *  # noqa
 from src.infrastructure.database.models.personality_types.hexaco import *  # noqa
 from src.infrastructure.database.models.personality_types.socionics import *  # noqa
 from src.infrastructure.database.models.personality_types.holland_codes import *  # noqa

@@ -6,7 +6,7 @@ from uuid import UUID
 from sqlalchemy import update, delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from infrastructure.database.models.base import M, S
+from src.infrastructure.database.models.base import M, S
 
 
 def check_model_initialized(method: Callable) -> Callable:

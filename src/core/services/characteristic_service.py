@@ -1,17 +1,18 @@
+import json
 import logging
 import uuid
 from typing import Type, Sequence
 
 from src.api.response_schemas.research import Characteristic
 from src.core.consts import (
-    MIN_CHARS_LENGTH_TO_GENERATE, MIN_CHARS_LENGTH_TO_GENERATE_PERSONALITY,
-    MIN_CHARS_LENGTH_TO_GENERATE_CLINICAL
+    MIN_CHARS_LENGTH_TO_GENERATE, MIN_CHARS_LENGTH_TO_GENERATE_PERSONALITY
 )
 from src.core.schemas.log_schemas import CharacteristicBatchLogSchema
 from src.core.services.assistant_service import AssistantService
+from src.core.utils.funcs import clean_characteristic_json
 from src.infrastructure.database.models.base import S, M
 from src.infrastructure.database.repository.characteristic_repo import CharacteristicFormat, CharacteristicRepository, \
-    CHARACTERISTIC_SCHEMAS_TO_MODELS, CLINICAL_SCHEMAS, PERSONALITY_SCHEMAS
+    CHARACTERISTIC_SCHEMAS_TO_MODELS, PERSONALITY_SCHEMAS
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +26,6 @@ class CharacteristicService:
         self.repo = repo
         self.min_chars = MIN_CHARS_LENGTH_TO_GENERATE
         self.min_chars_personality = MIN_CHARS_LENGTH_TO_GENERATE_PERSONALITY
-        self.min_chars_clinical = MIN_CHARS_LENGTH_TO_GENERATE_CLINICAL
         self.assistant_service = assistant_service
 
     async def research_survey_finish(
@@ -60,8 +60,9 @@ class CharacteristicService:
         """
         Определяет, пора ли генерировать/обновлять характеристику
 
-        Если недостаточно длины, записывает лог в таблицу батчей.
-        Если достаточно, обновляет таблицу характеристики и удаляет таблицу батчей.
+        Если недостаточно длины —> записывает лог в таблицу батчей.
+
+        Если достаточно —> обновляет таблицу характеристики и удаляет таблицу батчей.
 
         :param message_text: текст пользователя
         :param schema_type: схема, полученная из CHECK_IN
@@ -88,11 +89,9 @@ class CharacteristicService:
 
         min_chars: int
         match schema_type:
-            case x if x in PERSONALITY_SCHEMAS:
+            case x if x in PERSONALITY_SCHEMAS:  # типы личности
                 min_chars = self.min_chars_personality
-            case x if x in CLINICAL_SCHEMAS:
-                min_chars = self.min_chars_clinical
-            case _:
+            case _:  # дефолт
                 min_chars = self.min_chars
 
         if logs_length >= min_chars:
@@ -126,21 +125,24 @@ class CharacteristicService:
         """
         Генерирует и сохраняет характеристику с учетом прошлой (если она есть.)
         """
-        old_characteristic: S | None = await self.repo.cache_service.get_characteristic_row(
+        old_characteristic: S | None = (await self.repo.cache_service.get_characteristic_row(
             characteristic_type=characteristic_type.__name__,
             access_token=access_token,
             telegram_id=telegram_id
-        )
+        ))[0]
 
-        # [ batch logs ]
-        all_text = [log.message for log in batch_logs]
-        if old_characteristic:
-            all_text.append(str(old_characteristic.model_dump()))
+        # [ batch logs + old characteristic + fields instruction]
+        all_text: list[str] = [log.message + "\n" for log in batch_logs]
 
-        combined_text = ' '.join(all_text)
+        cleaned: dict = clean_characteristic_json(old_characteristic or characteristic_type)
+        header = "Текущая характеристика пользователя: "
+
+        all_text.append(header + json.dumps(cleaned, ensure_ascii=False, indent=2))
+
+        combined_text: str = ' '.join(all_text)
 
         new_characteristic: S = await self.assistant_service.generate_characteristic(
-            messages_text=combined_text,
+            old_characteristic=combined_text,
             characteristic_type=characteristic_type
         )
 

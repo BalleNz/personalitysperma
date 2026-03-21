@@ -7,11 +7,13 @@ import aiohttp
 from openai import AsyncOpenAI, NOT_GIVEN, NotGiven, APIError
 from pydantic import ValidationError
 
+from prompts.check_in.check_in import CHECK_IN
+from response_schemas.characteristic import CheckInResponse
+from src.core.prompts.generation import GENERATE_CHARACTERISTIC_PROMPT
 from src.api.request_schemas.research import ResearchSurveyFinishRequest
 from src.api.response_schemas.psycho import PsychoResponse
 from src.api.response_schemas.research import ResearchSurveyFinishResponse, ResearchSurveyResponse, \
     ResearchDefaultResponse
-from src.core.prompts import GET_PROMPT_BY_SCHEMA_TYPE
 from src.core.prompts.check_in.psycho import CHECK_IN_PSYCHO_PROMPT
 from src.core.prompts.check_in.research import TO_LEARN_SURVEY_FINISH, RESEARCH_SURVEY_PROMPT, RESEARCH_DEFAULT_PROMPT
 from src.core.prompts.diary import GET_SUMMARY_LOG_FROM_DAILY_LOGS
@@ -257,20 +259,30 @@ class AssistantService:
     async def generate_characteristic(
             self,
             characteristic_type: type[S],
-            messages_text: str,
+            old_characteristic: str,  # старая характеристика + пояснение к полям
     ):
         """генерация характеристики"""
-
-        prompt = GET_PROMPT_BY_SCHEMA_TYPE.get(characteristic_type)
+        prompt: str = GENERATE_CHARACTERISTIC_PROMPT
         pydantic_model: type[S] = characteristic_type
 
         return await self.get_response(
-            messages_text,
+            old_characteristic,
             prompt=prompt,
             pydantic_model=pydantic_model
         )
 
     # [ CHECK IN ]
+
+    async def get_check_in(
+            self,
+            user_message: str
+    ) -> ...:
+        """Возвращает список названий характеристик которые нужно учитывать"""
+        return await self.get_response(
+            user_message,
+            prompt=CHECK_IN,
+            pydantic_model=CheckInResponse
+        )
 
     async def get_psycho_response(
             self,

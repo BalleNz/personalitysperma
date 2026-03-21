@@ -1,4 +1,3 @@
-import json
 import logging
 from typing import Annotated, Any
 
@@ -6,7 +5,7 @@ from fastapi import APIRouter, Depends, Header, BackgroundTasks
 
 from src.api.request_schemas.psycho import PsychoRequest
 from src.api.request_schemas.research import ResearchSurveyFinishRequest, ResearchSurveyRequest, ResearchDefaultRequest
-from src.api.response_schemas.characteristic import CharacteristicResponseRaw
+from src.api.response_schemas.characteristic import CheckInResponse, CharacteristicResponseRaw
 from src.api.response_schemas.psycho import PsychoResponse
 from src.api.response_schemas.research import ResearchSurveyFinishResponse, ResearchSurveyResponse, \
     ResearchDefaultResponse
@@ -24,6 +23,8 @@ from src.core.services.dependencies.telegram_service_dep import get_telegram_ser
 from src.core.services.dependencies.user_service_dep import get_user_service
 from src.core.services.telegram_service import TelegramService
 from src.core.services.user_service import UserService
+from src.core.utils.funcs import clean_characteristic_json, clean_characteristics_json
+from src.infrastructure.database.models.base import S
 from src.infrastructure.database.repository.characteristic_repo import get_schema_type_from_name
 
 router = APIRouter(prefix="/generation")
@@ -49,13 +50,15 @@ async def research_default_check_in(
     )
 
     # [ assistant ]
-    critical_characteristics = await get_characteristics_json_to_assistant(
-        characteristic_service,
-        user
+    check_in_response: CheckInResponse = await assistant_service.get_check_in(request.answer)
+    user_characteristics: str | None = await get_critical_profiles_to_assistant(
+        user=user,
+        characteristics_name=check_in_response.characteristics_list,
+        characteristic_service=characteristic_service
     )
     response: ResearchDefaultResponse = await assistant_service.get_research_default_response(
         user_message=request.user_message,
-        user_characteristics=critical_characteristics or {},
+        user_characteristics=user_characteristics,
         user_id=user.id,
         redis_service=cache_service.redis_service
     )
@@ -64,7 +67,7 @@ async def research_default_check_in(
         # [ background ]
         access_token = authorization.split(" ")[1]
         background_tasks.add_task(
-            process_check_in_background,
+            process_generation_background,
             user=user,
             message=request.user_message,
             classifications=response.classifications,
@@ -95,12 +98,15 @@ async def research_survey_check_in(
         log_text=request.user_message
     )
 
-    characteristics = await get_characteristics_json_to_assistant(
-        characteristic_service, user
+    check_in_response: CheckInResponse = await assistant_service.get_check_in(request.answer)
+    user_characteristics: str | None = await get_critical_profiles_to_assistant(
+        user=user,
+        characteristics_name=check_in_response.characteristics_list,
+        characteristic_service=characteristic_service
     )
-
     response: ResearchSurveyResponse = await assistant_service.get_research_survey_response(
         user_message=request.user_message,
+        user_characteristics=user_characteristics,
         redis_service=cache_service.redis_service,
         user_id=user.id
     )
@@ -108,7 +114,7 @@ async def research_survey_check_in(
     # [ background ]
     access_token = authorization.split(" ")[1]
     background_tasks.add_task(
-        process_check_in_with_getting_psycho_response,
+        process_generation_with_getting_psycho_response,
         user=user,
         user_message=request.user_message,
         characteristic_service=characteristic_service,
@@ -133,13 +139,16 @@ async def research_survey_finish(
         background_tasks: BackgroundTasks,
 ):
     """SURVEY: завершить и обновить характеристики"""
-    characteristics = await get_characteristics_json_to_assistant(
+
+    check_in_response: CheckInResponse = await assistant_service.get_check_in(request.answer)
+    user_characteristics: str | None = await get_critical_profiles_to_assistant(
         user=user,
+        characteristics_name=check_in_response.characteristics_list,
         characteristic_service=characteristic_service
     )
     response: PsychoResponse = await assistant_service.get_psycho_response(
         user_message=request.answer,
-        user_characteristics=characteristics,
+        user_characteristics=user_characteristics,
         redis_service=redis_service,
         user_id=user.id
     )
@@ -179,20 +188,21 @@ async def psycho(
 
     access_token = authorization.split(" ")[1]
 
-    critical_characteristics = await get_characteristics_json_to_assistant(
-        characteristic_service,
-        user
+    check_in_response: CheckInResponse = await assistant_service.get_check_in(request.answer)
+    user_characteristics: str | None = await get_critical_profiles_to_assistant(
+        user=user,
+        characteristics_name=check_in_response.characteristics_list,
+        characteristic_service=characteristic_service
     )
-
     response: PsychoResponse = await assistant_service.get_psycho_response(
         user_message=request.message,
-        user_characteristics=critical_characteristics or {},  # передаём профиль
+        user_characteristics=user_characteristics or {},  # передаём профиль
         redis_service=cache_service.redis_service,
         user_id=user.id
     )
 
     background_tasks.add_task(
-        process_check_in_background,
+        process_generation_background,
         user=user,
         message=request.message,
         classifications=response.classifications,
@@ -205,12 +215,13 @@ async def psycho(
     return response
 
 
-async def get_characteristics_json_to_assistant(
+async def get_critical_profiles_to_assistant(
         characteristic_service: CharacteristicService,
+        characteristics_name: list[str],
         user: UserSchema
 ) -> str:
     """
-    ВОЗВРАЩАЕТ В ФОРМАТЕ:
+    ВОЗВРАЩАЕТ ТЕКУЩИЕ ХАРАКТЕРИСТИКИ В ФОРМАТЕ:
     <field_name>: <value> — <description>
     """
 
@@ -218,7 +229,7 @@ async def get_characteristics_json_to_assistant(
         user.id
     )
 
-    # [ самые важные профили для входных данных ]
+    # [ ПЕРЕДАЮТСЯ ВСЕГДА ]
     CRITICAL_SCHEMAS = {
         "SocialProfileSchema",
         "CognitiveProfileSchema",
@@ -229,41 +240,28 @@ async def get_characteristics_json_to_assistant(
         #  'UserHexacoSchema', # экстраверсия / эмоциональность — задаём тон и энергию
         'UserSocionicsSchema',  # соционический тип — стиль общения, логика/этика и т.д.
     }
+    for characteristic_name in characteristics_name:
+        CRITICAL_SCHEMAS.add(characteristic_name)  # [ уникальность соблюдается ]
 
     critical_characteristics: dict[str, dict[str, Any]] = {}
     if all_characteristics:
         # преобразуем список в удобный словарь по имени типа
-        char_dict = {
+        all_characteristics_dict = {
             schema.type: schema.characteristics[0]
             for schema in all_characteristics
         }
 
         for schema_name in CRITICAL_SCHEMAS:
-            if schema_name in char_dict:
-                schema_instance = char_dict[schema_name]
+            if schema_name in all_characteristics_dict:
+                schema_instance: S = all_characteristics_dict[schema_name]
 
-                data = schema_instance.model_dump(exclude_none=True)
-                cleaned = {
-                    k: v for k, v in data.items()
-                    if k not in {
-                        "id", "user_id", "created_at", "updated_at", "telegram_id", "records"
-                    }
-                }
-                for field_name, value in cleaned.items():
-                    field_info = schema_instance.model_fields.get(field_name)
-                    description = getattr(field_info, "description", "").strip()
-                    if not description:
-                        # запасной вариант — human-readable название поля
-                        description = field_name.replace("_", " ").title()
-
-                    key = field_name
-                    value_str = f"{value} — {description}"
-
-                    cleaned[key] = value_str
+                cleaned: dict = clean_characteristic_json(schema_instance)
 
                 if cleaned:
                     critical_characteristics[schema_name] = cleaned
-    return json.dumps(critical_characteristics, ensure_ascii=False, indent=2)
+
+    text: str = clean_characteristics_json(critical_characteristics)
+    return text
 
 
 async def process_survey_finish_in_background(
@@ -291,7 +289,7 @@ async def process_survey_finish_in_background(
     # await telegram_service.
 
 
-async def process_check_in_with_getting_psycho_response(
+async def process_generation_with_getting_psycho_response(
         user: UserSchema,
         user_message: str,
         characteristic_service: CharacteristicService,
@@ -301,15 +299,16 @@ async def process_check_in_with_getting_psycho_response(
         access_token: str | None,
         background_tasks: BackgroundTasks,
 ) -> None:
+    """Генерация характеристик (возможная) для SURVEY: CHECK IN"""
     response_for_back: PsychoResponse = await assistant_service.get_psycho_response(
         user_message=user_message,
-        user_characteristics={},  # передаём профиль
+        user_characteristics=None,
         user_id=user.id,
         redis_service=cache_service.redis_service
     )
 
     background_tasks.add_task(
-        process_check_in_background,
+        process_generation_background,
         user=user,
         message=user_message,
         classifications=response_for_back.classifications,
@@ -320,7 +319,7 @@ async def process_check_in_with_getting_psycho_response(
     )
 
 
-async def process_check_in_background(
+async def process_generation_background(
         user: UserSchema,
         message: str,
         classifications: list[str],
@@ -339,13 +338,13 @@ async def process_check_in_background(
         try:
             schema_type = get_schema_type_from_name(characteristic_name)
 
-            generated = await characteristic_service.should_generate_characteristic(
+            generated: bool = await characteristic_service.should_generate_characteristic(
                 user_id=user.id,
                 message_text=message,
                 schema_type=schema_type,
                 access_token=access_token,
                 telegram_id=user.telegram_id
-            )
+            )  # возможно поменять bool на схему, какие характеристики поменялись
 
             if generated:
                 await cache_service.redis_service._invalidate_characteristics(user.telegram_id)

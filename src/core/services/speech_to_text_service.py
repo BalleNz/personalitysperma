@@ -4,7 +4,7 @@ from typing import Optional
 
 from deepgram import DeepgramClient
 
-from infrastructure.config.config import config
+from src.infrastructure.config.config import config
 
 logger = logging.getLogger(__name__)
 

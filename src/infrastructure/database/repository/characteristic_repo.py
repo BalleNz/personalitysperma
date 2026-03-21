@@ -1,17 +1,24 @@
 import logging
 import uuid
+from datetime import timedelta, datetime, timezone
 from typing import Type, Generic, Sequence, Any
 
-from sqlalchemy import select, delete, desc, func
+from sqlalchemy import select, delete, desc, func, Date, cast
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.api.response_schemas.characteristic import CharacteristicResponseRaw
-from schemas.clinical_disorders import AnxietyDisordersSchema
-from schemas.clinical_disorders import ClinicalProfileSchema
-from schemas.clinical_disorders import MoodDisordersSchema
-from schemas.clinical_disorders import NeuroDisordersSchema
-from schemas.clinical_disorders import PersonalityDisordersSchema
+from src.core.schemas.clinical_disorders.anxiety.gdr import GDRSchema
+from src.core.schemas.clinical_disorders.anxiety.panic import PanicSchema
+from src.core.schemas.clinical_disorders.anxiety.ptsd import PTSDSchema
+from src.core.schemas.clinical_disorders.mood_disorders.bipolar import BipolarDisorderSchema
+from src.core.schemas.clinical_disorders.mood_disorders.depression import DepressionDisorderSchema
+from src.core.schemas.clinical_disorders.neuro_disorders.adhd import ADHDSchema
+from src.core.schemas.clinical_disorders.neuro_disorders.autism import AutismSchema
+from src.core.schemas.clinical_disorders.neuro_disorders.dissociative import DissociativeSchema
+from src.core.schemas.clinical_disorders.neuro_disorders.eating import EatingSchema
+from src.core.schemas.clinical_disorders.neuro_disorders.looks_disorder import LooksSchema
+from src.core.schemas.clinical_disorders.personality_disorders.bpd import BPDSchema
 from src.core.schemas.personality_types.hexaco import UserHexacoSchema
 from src.core.schemas.personality_types.holland_codes import UserHollandCodesSchema
 from src.core.schemas.personality_types.socionics_type import UserSocionicsSchema
@@ -28,11 +35,17 @@ from src.infrastructure.database.models.basic_profiles.traits_basic import (
 )
 from src.infrastructure.database.models.basic_profiles.traits_dark import DarkTriads
 from src.infrastructure.database.models.basic_profiles.traits_humor import HumorProfile
-from src.infrastructure.database.models.clinical_disorders.anxiety_disorders import AnxietyDisorders
-from src.infrastructure.database.models.clinical_disorders.clinical_profile import ClinicalProfile
-from src.infrastructure.database.models.clinical_disorders.mood_disorders import MoodDisorders
-from src.infrastructure.database.models.clinical_disorders.neuro_disorders import NeuroDisorders
-from database.models.clinical_disorders.personality_disorders.bpd import PersonalityDisorders
+from src.infrastructure.database.models.clinical_disorders.anxiety.gdr import GDRDisorder
+from src.infrastructure.database.models.clinical_disorders.anxiety.panic import PanicDisorder
+from src.infrastructure.database.models.clinical_disorders.anxiety.ptsd import PTSDDisorder
+from src.infrastructure.database.models.clinical_disorders.mood_disorders.bipolar import BipolarDisorder
+from src.infrastructure.database.models.clinical_disorders.mood_disorders.depression import DepressionDisorder
+from src.infrastructure.database.models.clinical_disorders.neuro_disorders.adhd import ADHDDisorder
+from src.infrastructure.database.models.clinical_disorders.neuro_disorders.autism import AutismDisorder
+from src.infrastructure.database.models.clinical_disorders.neuro_disorders.dissociative import DissociativeDisorder
+from src.infrastructure.database.models.clinical_disorders.neuro_disorders.eating_disorders import EatingDisorder
+from src.infrastructure.database.models.clinical_disorders.neuro_disorders.looks_disorder import LooksDisorder
+from src.infrastructure.database.models.clinical_disorders.personality_disorders.bpd import BPDDisorder
 from src.infrastructure.database.models.logs import CharacteristicBatchLog
 from src.infrastructure.database.models.personality_types.hexaco import UserHexaco
 from src.infrastructure.database.models.personality_types.holland_codes import UserHollandCodes
@@ -68,11 +81,17 @@ CHARACTERISTIC_SCHEMAS_TO_MODELS = {
 
     HumorProfileSchema: HumorProfile,
 
-    ClinicalProfileSchema: ClinicalProfile,
-    MoodDisordersSchema: MoodDisorders,
-    AnxietyDisordersSchema: AnxietyDisorders,
-    NeuroDisordersSchema: NeuroDisorders,
-    PersonalityDisordersSchema: PersonalityDisorders,
+    BipolarDisorderSchema: BipolarDisorder,
+    DepressionDisorderSchema: DepressionDisorder,
+    ADHDSchema: ADHDDisorder,
+    AutismSchema: AutismDisorder,
+    DissociativeSchema: DissociativeDisorder,
+    EatingSchema: EatingDisorder,
+    LooksSchema: LooksDisorder,
+    GDRSchema: GDRDisorder,
+    PanicSchema: PanicDisorder,
+    PTSDSchema: PTSDDisorder,
+    BPDSchema: BPDDisorder,
 
     UserHexacoSchema: UserHexaco,
     UserHollandCodesSchema: UserHollandCodes,
@@ -89,14 +108,6 @@ PERSONALITY_SCHEMAS = (
     UserSocionicsSchema
 )
 
-CLINICAL_SCHEMAS = (
-    ClinicalProfileSchema,
-    MoodDisordersSchema,
-    AnxietyDisordersSchema,
-    NeuroDisordersSchema,
-    PersonalityDisordersSchema
-)
-
 # LOVE_SCHEMAS = (
 #     RelationshipPreferenceSchema,
 #     LoveLanguageSchema,
@@ -108,13 +119,22 @@ SCHEMA_SHORT_NAMES = {
     "CognitiveProfileSchema":   "cog",
     "EmotionalProfileSchema":   "emo",
     "BehavioralProfileSchema":  "beh",
+
     "DarkTriadsSchema":         "dark",
     "HumorProfileSchema":       "hum",
-    "ClinicalProfileSchema":    "cli",
-    "MoodDisordersSchema":      "mood",
-    "AnxietyDisordersSchema":   "anx",
-    "NeuroDisordersSchema":     "neuro",
-    "PersonalityDisordersSchema": "pers",
+
+    "BipolarDisorderSchema":    "bip",
+    "DepressionSchema":         "dep",
+    "ADHDSchema":               "adhd",
+    "AutismSchema":             "aut",
+    "DissociativeSchema":       "dis",
+    "EatingSchema":             "eat",
+    "LooksSchema":              "look",
+    "GDRSchema":                "gad",
+    "PanicSchema":              "pan",
+    "PTSDSchema":               "pts",
+    "BPDSchema":                "bpd",
+
     "UserHexacoSchema":         "hex",
     "UserHollandCodesSchema":   "hol",
     "UserSocionicsSchema":      "socion",
@@ -142,24 +162,14 @@ class CharacteristicRepository:
     ) -> list[CharacteristicResponseRaw]:
         """
         Получить все характеристики пользователя.
-        Возвращает список схем разных типов.
+        Возвращает список из CharacteristicRaw схем разных типов.
+
+        CharacteristicRaw содержит две схемы (самую свежую и самую свежую любого другого дня)
         """
+
         # Список пар (модель, схема)
         model_schema_pairs: list[tuple[M, S]] = [
-            (SocialProfile, SocialProfileSchema),
-            (CognitiveProfile, CognitiveProfileSchema),
-            (EmotionalProfile, EmotionalProfileSchema),
-            (BehavioralProfile, BehavioralProfileSchema),
-            (DarkTriads, DarkTriadsSchema),
-            (HumorProfile, HumorProfileSchema),
-            (ClinicalProfile, ClinicalProfileSchema),
-            (MoodDisorders, MoodDisordersSchema),
-            (AnxietyDisorders, AnxietyDisordersSchema),
-            (NeuroDisorders, NeuroDisordersSchema),
-            (PersonalityDisorders, PersonalityDisordersSchema),
-            (UserHexaco, UserHexacoSchema),
-            (UserHollandCodes, UserHollandCodesSchema),
-            (UserSocionics, UserSocionicsSchema),
+            (m, s) for s, m in CHARACTERISTIC_SCHEMAS_TO_MODELS.items()
         ]
 
         profile_models = [m for m, s in model_schema_pairs]
@@ -187,30 +197,47 @@ class CharacteristicRepository:
         else:
             records_map = {}
 
+        # [ получаем каждую модель в правильно порядке для CharacteristicRaw ]
         response: list[CharacteristicResponseRaw] = []
         for model_cls, schema_cls in model_schema_pairs:
             stmt = (
                 select(model_cls)
                 .where(model_cls.user_id == user_id)
                 .order_by(desc(model_cls.created_at))
-                .limit(2)
+                .limit(20)
             )
+
             result = await self.session.execute(stmt)
             instances: list[Any] | Any = result.scalars().all()
+
+            if not instances:
+                instances = []
+            else:
+                latest = instances[0]
+
+                latest_date = latest.created_at.date()
+                second = None
+
+                for inst in instances[1:]:
+                    if inst.created_at.date() != latest_date:
+                        second = inst
+                        break
+
+                instances = [latest]
+                if second:
+                    instances.append(second)
 
             if instances:
                 raw = CharacteristicResponseRaw(
                     type=schema_cls.__name__,
                     characteristics=[schema_cls.model_validate(instance, from_attributes=True) for instance in instances]
                 )
-                # Добавляем records
+                # [ добавление records ]
                 if model_cls.__tablename__ in records_map:
                     raw.characteristics[0].records = records_map[model_cls.__tablename__]
                 else:
                     raw.characteristics[0].records = 0
-
                 response += [raw]
-
         return response
 
     async def append_characteristic(
@@ -234,12 +261,12 @@ class CharacteristicRepository:
         )
         await self.session.execute(stmt)
 
+        # [ добавление UserRecords ]
         record_stmt = insert(UserRecords).values(
             user_id=str(user_id),
             profile_name=model_class.__tablename__,
         )
         await self.session.execute(record_stmt)
-
         await self.session.commit()
 
         await self.cache_service.redis_service._invalidate_characteristics(telegram_id)

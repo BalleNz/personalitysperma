@@ -3,7 +3,7 @@ from typing import Type
 from sqlalchemy import Float, UUID, ForeignKey
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 
-from schemas.clinical_disorders.mood_disorders.bipolar import BipolarDisorderSchema
+from src.core.schemas.clinical_disorders.mood_disorders.bipolar import BipolarDisorderSchema
 from src.infrastructure.database.models.base import S, IDMixin, TimestampsMixin
 
 

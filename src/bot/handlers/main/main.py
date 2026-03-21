@@ -20,7 +20,8 @@ async def main(
         api_client: PersonalityGPT_APIClient,
         access_token: str,
         user: UserSchema,
-        cache_service: CacheService
+        cache_service: CacheService,
+        voice_text: str | None = None
 ):
     """Главное действие пользователя
 
@@ -38,17 +39,19 @@ async def main(
             MessageText.get_process_message()
         )
 
+    user_text: str = message.text or voice_text
+
     # [ выбор режима ]
     if user.talk_mode == TALKING_MODES.INDIVIDUAL_PSYCHO:
         await individual_psycho(
-            user_message_text=message.text,
+            user_message_text=user_text,
             message_reply=message_reply,
             api_client=api_client,
             access_token=access_token
         )
     elif user.talk_mode == TALKING_MODES.RESEARCH:
         await research_check_in(
-            user_message_text=message.text,
+            user_message_text=user_text,
             message_reply=message_reply,
             api_client=api_client,
             access_token=access_token,
@@ -63,7 +66,8 @@ async def research_check_in(
         access_token: str,
         cache_service: CacheService
 ) -> None:
-    """режим познание:
+    """
+    режим познание:
     — DEFAULT: 60% - обычные вопросы
     — SURVEY: 40% - паки вопросов с клавиатурой
     — LONG: ..% - структурный ответ с просьбой прислать длинное голосовое сообщение

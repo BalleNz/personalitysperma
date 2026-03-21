@@ -5,11 +5,17 @@ from uuid import UUID
 from pydantic import Field, BaseModel
 
 from src.core.enums.user import TALKING_MODES, GENDER
-from schemas.clinical_disorders import AnxietyDisordersSchema
-from schemas.clinical_disorders import ClinicalProfileSchema
-from schemas.clinical_disorders import MoodDisordersSchema
-from schemas.clinical_disorders import NeuroDisordersSchema
-from schemas.clinical_disorders import PersonalityDisordersSchema
+from src.core.schemas.clinical_disorders.anxiety.gdr import GDRSchema
+from src.core.schemas.clinical_disorders.anxiety.panic import PanicSchema
+from src.core.schemas.clinical_disorders.anxiety.ptsd import PTSDSchema
+from src.core.schemas.clinical_disorders.mood_disorders.bipolar import BipolarDisorderSchema
+from src.core.schemas.clinical_disorders.mood_disorders.depression import DepressionDisorderSchema
+from src.core.schemas.clinical_disorders.neuro_disorders.adhd import ADHDSchema
+from src.core.schemas.clinical_disorders.neuro_disorders.autism import AutismSchema
+from src.core.schemas.clinical_disorders.neuro_disorders.dissociative import DissociativeSchema
+from src.core.schemas.clinical_disorders.neuro_disorders.eating import EatingSchema
+from src.core.schemas.clinical_disorders.neuro_disorders.looks_disorder import LooksSchema
+from src.core.schemas.clinical_disorders.personality_disorders.bpd import BPDSchema
 from src.core.schemas.diary_schema import DiarySchema
 from src.core.schemas.personality_types.hexaco import UserHexacoSchema
 from src.core.schemas.personality_types.holland_codes import UserHollandCodesSchema
@@ -79,11 +85,17 @@ class UserSchema(BaseModel):
     hexaco: Optional[UserHexacoSchema] = None
 
     # [ clinical disorders ]
-    clinical_profile: Optional[ClinicalProfileSchema] = None
-    mood_disorder: Optional[MoodDisordersSchema] = None
-    anxiety_ocd_trauma_disorder: Optional[AnxietyDisordersSchema] = None
-    personality_disorder: Optional[PersonalityDisordersSchema] = None
-    neurodevelopmental_eating_disorder: Optional[NeuroDisordersSchema] = None
+    bipolar_disorder: Optional[BipolarDisorderSchema] = None
+    depression_disorder: Optional[DepressionDisorderSchema] = None
+    adhd_disorder: Optional[ADHDSchema] = None
+    autism_disorder: Optional[AutismSchema] = None
+    dissociative_disorder: Optional[DissociativeSchema] = None
+    eating_disorder: Optional[EatingSchema] = None
+    looks_disorder: Optional[LooksSchema] = None
+    gdr_disorder: Optional[GDRSchema] = None
+    panic_disorder: Optional[PanicSchema] = None
+    ptsd_disorder: Optional[PTSDSchema] = None
+    bpd_disorder: Optional[BPDSchema] = None
 
     # [ romance_preferences ]
     # TODO:

@@ -1,7 +1,7 @@
 import datetime
 import logging
 import math
-from typing import Optional
+from typing import Optional, Any
 
 from pydantic import BaseModel, Field
 
@@ -37,10 +37,10 @@ def format_value(
     Форматирует значение в процентах и добавляет стрелки в зависимости от изменения.
 
     Правила стрелок (по абсолютной разнице в исходных значениях 0..1):
-    • |Δ| ≤ 0.05     → без стрелок
+    • |Δ| ≤ 0.05 → без стрелок
     • 0.05 < |Δ| ≤ 0.15 → одна стрелка
     • 0.15 < |Δ| ≤ 0.30 → две стрелки
-    • |Δ| > 0.30       → три стрелки
+    • |Δ| > 0.30 → три стрелки
 
     ↑ — значение выросло (стало лучше)
     ↓ — значение уменьшилось (стало хуже)
@@ -57,13 +57,13 @@ def format_value(
             delta = value - prev_value
             abs_delta = abs(delta)
 
-            if abs_delta <= 0.05:
+            if abs_delta <= 0.03:
                 arrows = "—"
             else:
                 count = 1
-                if abs_delta > 0.15:
+                if abs_delta > 0.07:
                     count = 2
-                if abs_delta > 0.30:
+                if abs_delta > 0.10:
                     count = 3
 
                 if delta > 0:

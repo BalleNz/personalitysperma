@@ -2,7 +2,7 @@ from typing import Final
 
 from redis.asyncio import ConnectionPool
 
-from infrastructure.config.config import config
+from src.infrastructure.config.config import config
 
 
 REDIS_URL: Final[str] = config.REDIS_URL

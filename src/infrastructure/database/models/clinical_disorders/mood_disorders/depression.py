@@ -3,7 +3,7 @@ from typing import Type
 from sqlalchemy import Float, UUID, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.core.schemas.clinical_disorders.mood_disorders.depression import DepressionSchema
+from src.core.schemas.clinical_disorders.mood_disorders.depression import DepressionDisorderSchema
 from src.infrastructure.database.models.base import TimestampsMixin, IDMixin, S
 
 
@@ -35,4 +35,4 @@ class DepressionDisorder(IDMixin, TimestampsMixin):
 
     @property
     def schema_class(cls) -> Type[S]:
-        return DepressionSchema
+        return DepressionDisorderSchema

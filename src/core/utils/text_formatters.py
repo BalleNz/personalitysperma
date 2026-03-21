@@ -2,18 +2,14 @@ import datetime
 from datetime import datetime, date
 from typing import Optional
 
-from database.models.base import S
-from schemas.clinical_disorders import AnxietyDisordersSchema
-from schemas.clinical_disorders import MoodDisordersSchema
-from schemas.clinical_disorders import NeuroDisordersSchema
-from schemas.clinical_disorders import PersonalityDisordersSchema
-from schemas.personality_types.hexaco import UserHexacoSchema
-from schemas.personality_types.holland_codes import UserHollandCodesSchema
-from schemas.personality_types.socionics_type import UserSocionicsSchema
-from schemas.traits.traits_basic import SocialProfileSchema, CognitiveProfileSchema, EmotionalProfileSchema, \
+from src.infrastructure.database.models.base import S
+from src.core.schemas.personality_types.hexaco import UserHexacoSchema
+from src.core.schemas.personality_types.holland_codes import UserHollandCodesSchema
+from src.core.schemas.personality_types.socionics_type import UserSocionicsSchema
+from src.core.schemas.traits.traits_basic import SocialProfileSchema, CognitiveProfileSchema, EmotionalProfileSchema, \
     BehavioralProfileSchema
-from schemas.traits.traits_dark import DarkTriadsSchema
-from schemas.traits.traits_humor import HumorProfileSchema
+from src.core.schemas.traits.traits_dark import DarkTriadsSchema
+from src.core.schemas.traits.traits_humor import HumorProfileSchema
 
 
 def format_russian_date(dt: datetime | date) -> str:
@@ -73,12 +69,12 @@ def get_characteristic_name(schema_name: type[S]):
         CognitiveProfileSchema: "Мышление",
         EmotionalProfileSchema: "Эмоциональность",
         BehavioralProfileSchema: "Поведение",
+
         DarkTriadsSchema: "Тёмная триада",
         HumorProfileSchema: "Чувство юмора",
-        MoodDisordersSchema: "Настроение",
-        AnxietyDisordersSchema: "Тревожность",
-        NeuroDisordersSchema: "Нейрокогнитивные нарушения",
-        PersonalityDisordersSchema: "Личностные расстройства",
+
+        # ... clinical TODO
+
         UserHexacoSchema: "HEXACO",
         UserHollandCodesSchema: "Коды Холланда",
         UserSocionicsSchema: "Соционический тип",

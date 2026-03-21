@@ -61,15 +61,21 @@ class SocialProfile(IDMixin, TimestampsMixin):
         default=None,
         comment="Конформизм"
     )  # independence → group influence
+
     social_confidence: Mapped[float | None] = mapped_column(
         Float,
         default=None,
         comment="0=застенчивый, 1=уверенный в общении"
     )
+    cooperativity: Mapped[float | None] = mapped_column(
+        Float,
+        default=None,
+        comment="Кооперативность"
+    )
     competitiveness: Mapped[float | None] = mapped_column(
         Float,
         default=None,
-        comment="0=кооперативный, 1=соревновательный"
+        comment="Соревновательность"
     )
 
     accuracy_percent: Mapped[int | None] = mapped_column(
