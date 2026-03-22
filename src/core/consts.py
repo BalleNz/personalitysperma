@@ -1,4 +1,4 @@
-MIN_CHARS_LENGTH_TO_GENERATE = 700  # минимальное количество символов для генерации
+MIN_CHARS_LENGTH_TO_GENERATE = 100  # минимальное количество символов для генерации
 MIN_CHARS_LENGTH_TO_GENERATE_PERSONALITY = 800  # минимальное количество символов для генерации ТИПОВ ЛИЧНОСТИ
 
 

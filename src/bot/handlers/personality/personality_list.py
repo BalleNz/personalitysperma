@@ -73,7 +73,7 @@ async def show_personality(
     personality_row: list[S] | None = await cache_service.get_characteristic_row(
         access_token=access_token,
         telegram_id=telegram_id,
-        characteristic_type=characteristic_type,
+        characteristic_name=characteristic_type,
     )
     personality: S | None = personality_row[0]
 

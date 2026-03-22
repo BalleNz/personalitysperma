@@ -7,16 +7,18 @@ import aiohttp
 from openai import AsyncOpenAI, NOT_GIVEN, NotGiven, APIError
 from pydantic import ValidationError
 
-from prompts.check_in.check_in import CHECK_IN
-from response_schemas.characteristic import CheckInResponse
-from src.core.prompts.generation import GENERATE_CHARACTERISTIC_PROMPT
 from src.api.request_schemas.research import ResearchSurveyFinishRequest
+from src.api.response_schemas.characteristic import CheckInResponse
 from src.api.response_schemas.psycho import PsychoResponse
 from src.api.response_schemas.research import ResearchSurveyFinishResponse, ResearchSurveyResponse, \
     ResearchDefaultResponse
-from src.core.prompts.check_in.psycho import CHECK_IN_PSYCHO_PROMPT
-from src.core.prompts.check_in.research import TO_LEARN_SURVEY_FINISH, RESEARCH_SURVEY_PROMPT, RESEARCH_DEFAULT_PROMPT
 from src.core.prompts.diary import GET_SUMMARY_LOG_FROM_DAILY_LOGS
+from src.core.prompts.generation import GENERATE_CHARACTERISTIC_PROMPT
+from src.core.prompts.main.check_in import CHECK_IN
+from src.core.prompts.main.psycho.psycho import CHECK_IN_PSYCHO_PROMPT
+from src.core.prompts.main.research.default import RESEARCH_SURVEY_PROMPT, RESEARCH_DEFAULT_PROMPT
+from src.core.prompts.main.research.survey import TO_LEARN_SURVEY_FINISH
+from src.core.prompts.telegram import TELEGRAM_CHARATERISTIC_DIFF
 from src.core.schemas.assistant_response import SummaryResponseSchema
 from src.core.services.cache_services.redis_service import RedisService
 from src.infrastructure.config.config import config
@@ -87,8 +89,7 @@ def clean_message_for_history(message: Any) -> str | None:
                 return compact
         except:
             pass
-
-    return None  # ничего не сохраняем
+    return None
 
 
 class AssistantService:
@@ -180,7 +181,7 @@ class AssistantService:
             pydantic_model: Type[S] | None = None,
             temperature: float = 0.6,
             max_tokens: int | NotGiven = NOT_GIVEN,
-            history_limit: int = 20,
+            history_limit: int = 12,
     ) -> S | str:
         """
         Запрос с поддержкой контекста (истории диалога).
@@ -216,7 +217,6 @@ class AssistantService:
             )
 
             content = response.choices[0].message.content.strip()
-
             logger.info("статистика по токенам (чат):\n")
             logger.info(response.usage)
 
@@ -229,7 +229,7 @@ class AssistantService:
                     await redis_service.add_message(user_id, "user", input_query)
                 else:
                     logger.error("ошибка парсинга ответа для контекста")
-                    raise
+                    raise  # если нет сообщения юзера, ассистента скипается
 
                 if assistant_message:
                     await redis_service.add_message(user_id, "assistant", assistant_message)
@@ -255,13 +255,13 @@ class AssistantService:
             raise
 
     # [ GENERATION ]
-
     async def generate_characteristic(
             self,
             characteristic_type: type[S],
             old_characteristic: str,  # старая характеристика + пояснение к полям
     ):
         """генерация характеристики"""
+
         prompt: str = GENERATE_CHARACTERISTIC_PROMPT
         pydantic_model: type[S] = characteristic_type
 
@@ -271,6 +271,15 @@ class AssistantService:
             pydantic_model=pydantic_model
         )
 
+    async def generate_telegram_message_characteristic_diff(
+            self,
+            input_query: str
+    ) -> str:
+        return await self.get_response(
+            input_query,
+            prompt=TELEGRAM_CHARATERISTIC_DIFF
+        )
+
     # [ CHECK IN ]
 
     async def get_check_in(
@@ -278,10 +287,14 @@ class AssistantService:
             user_message: str
     ) -> ...:
         """Возвращает список названий характеристик которые нужно учитывать"""
+
+        prompt: str = CHECK_IN
+        pydantic_model: type[S] = CheckInResponse
+
         return await self.get_response(
             user_message,
-            prompt=CHECK_IN,
-            pydantic_model=CheckInResponse
+            prompt=prompt,
+            pydantic_model=pydantic_model
         )
 
     async def get_psycho_response(
@@ -292,6 +305,7 @@ class AssistantService:
             user_characteristics: str | None = None,
     ) -> PsychoResponse:
         """PSYCHO"""
+
         profile_text = ""
         if user_characteristics:
             profile_text = "\n\nТекущий профиль пользователя:\n" + user_characteristics
@@ -303,7 +317,7 @@ class AssistantService:
             input_query=user_message,
             prompt=full_prompt,
             pydantic_model=PsychoResponse,
-            temperature=0.6,  # чуть выше, чтобы был живой стиль
+            temperature=0.3,  # чуть выше, чтобы был живой стиль
             max_tokens=600,
             user_id=user_id,
             redis_service=redis_service
@@ -317,6 +331,7 @@ class AssistantService:
             user_characteristics: str | None = None,
     ) -> ResearchDefaultResponse:
         """research: DEFAULT"""
+
         profile_text = ""
         if user_characteristics:
             profile_text = "\n\nТекущий профиль пользователя:\n" + user_characteristics
@@ -345,6 +360,7 @@ class AssistantService:
 
         получить пак с ответами
         """
+
         profile_text = ""
         if user_characteristics:
             profile_text = "\n\nТекущий профиль пользователя:\n" + user_characteristics
@@ -370,6 +386,7 @@ class AssistantService:
 
         Финальная обработка
         """
+
         prompt: str = TO_LEARN_SURVEY_FINISH
 
         return await self.get_chat_response(

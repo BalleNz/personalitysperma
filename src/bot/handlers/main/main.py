@@ -25,7 +25,7 @@ async def main(
 ):
     """Главное действие пользователя
 
-    — check_in:
+    — main:
     —— generation (with notification) / add to batches
     """
 

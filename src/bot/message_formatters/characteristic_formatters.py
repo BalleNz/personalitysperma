@@ -58,7 +58,7 @@ def format_value(
             abs_delta = abs(delta)
 
             if abs_delta <= 0.03:
-                arrows = "—"
+                arrows = ""
             else:
                 count = 1
                 if abs_delta > 0.07:

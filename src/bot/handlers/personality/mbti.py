@@ -32,7 +32,7 @@ async def show_reinin(
     await callback_query.answer()
 
     mbti: UserSocionicsSchema = await cache_service.get_characteristic_row(
-        characteristic_type="UserSocionicsSchema",
+        characteristic_name="UserSocionicsSchema",
         telegram_id=str(callback_query.from_user.id),
         access_token=access_token
     )
@@ -87,7 +87,7 @@ async def show_relationships(
 ):
     """взаимоотношения между двумя"""
     mbti_1: UserSocionicsSchema = await cache_service.get_characteristic_row(
-        characteristic_type="UserSocionicsSchema",
+        characteristic_name="UserSocionicsSchema",
         telegram_id=str(message.from_user.id),
         access_token=access_token
     )

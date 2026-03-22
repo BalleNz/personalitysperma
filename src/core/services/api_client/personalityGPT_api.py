@@ -63,7 +63,7 @@ class PersonalityGPT_APIClient(BaseHttpClient):
         return await self._request(
             HTTPMethod.POST,
             request_body=request,
-            endpoint="/v1/generation/research/default/check_in",
+            endpoint="/v1/generation/research/default",
             response_model=ResearchDefaultResponse,
             access_token=access_token
         )
@@ -73,7 +73,7 @@ class PersonalityGPT_APIClient(BaseHttpClient):
         return await self._request(
             HTTPMethod.POST,
             request_body=request,
-            endpoint="/v1/generation/research/survey/check_in",
+            endpoint="/v1/generation/research/survey",
             response_model=ResearchSurveyResponse,
             access_token=access_token
         )

@@ -128,7 +128,7 @@ async def survey_final(
         name: cache_service.get_characteristic_row(
             access_token=access_token,
             telegram_id=str(callback_query.from_user.id),
-            characteristic_type=name
+            characteristic_name=name
         )
         for name in characteristics_name
     }

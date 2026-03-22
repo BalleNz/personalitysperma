@@ -128,14 +128,14 @@ class CacheService:
             self,
             access_token: str,
             telegram_id: str,
-            characteristic_type: str,
+            characteristic_name: str,
             group: str | None = None,
             expiry: int = 86400 * 7
     ) -> list[S] | None:
         """
         Получить две последние характеристики.
         """
-        logger.info(f"Получение профиля типа {characteristic_type} для {telegram_id}")
+        logger.info(f"Получение профиля типа {characteristic_name} для {telegram_id}")
         all_chars = await self.get_all_characteristics(access_token, telegram_id, expiry)
 
         if group:
@@ -155,9 +155,9 @@ class CacheService:
 
         # [ без группы ]
         type_name = (
-            characteristic_type.__name__
-            if isinstance(characteristic_type, type)
-            else characteristic_type
+            characteristic_name.__name__
+            if isinstance(characteristic_name, type)
+            else characteristic_name
         )
         raw = all_chars.get(type_name)
         if not raw:

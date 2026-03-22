@@ -39,7 +39,7 @@ class PersonalityMessageFormatter:
     def format_socionics(
             mbti: UserSocionicsSchema,
     ):
-        top_3_types = mbti.get_top_3_types()
+        top_3_types = mbti.set_top_3_types()
         accuracy: int = int(mbti.accuracy_percent * 100)
 
         text = (

@@ -61,7 +61,6 @@ class HumorProfile(IDMixin, TimestampsMixin):
     dry_deadpan: Mapped[float | None] = mapped_column(Float, default=None,
                                                       comment="Сухой юмор: deadpan, без эмоций (0=не замечает, 1=мастер)")
 
-
     accuracy_percent: Mapped[int | None] = mapped_column(
         Float,
         default=None,

@@ -1,7 +1,7 @@
 from typing import Optional
 from uuid import uuid4, UUID
 
-from pydantic import BaseModel, Field, computed_field
+from pydantic import BaseModel, Field, computed_field, model_validator
 
 
 class UserSocionicsSchema(BaseModel):
@@ -48,6 +48,10 @@ class UserSocionicsSchema(BaseModel):
         return super().model_dump(**kwargs)
 
     primary_type: Optional[str] = Field(None, description="Основной тип (например 'ENTP', 'INFJ')")
+
+    top_1: str | None = Field(None, description="Самый вероятный тип личности")
+    top_2: str | None = Field(None, description="топ 2 по вероятности тип личности")
+    top_3: str | None = Field(None, description="топ 3 по вероятности тип личности")
 
     quadra: Optional[str] = Field(None, description="Квадра типа")
     club: Optional[str] = Field(None, description="Клуб типа")
@@ -123,26 +127,19 @@ class UserSocionicsSchema(BaseModel):
         """Инициализация с автоматическим вычислением всех полей"""
         super().__init__(**data)
         self.set_primary_type()
+        self.set_top_3_types()
         self._calculate_all_fields()
 
-    def is_same_quadra(self, other_type: str) -> bool:
-        """Проверяет, находится ли другой тип в той же квадре"""
-        if not self.primary_type or not other_type:
-            return False
+    @model_validator(mode='after')
+    def compute_all_fields(self) -> 'UserSocionicsSchema':
+        """Запускается после model_validate"""
+        self.set_primary_type()
+        self.set_top_3_types()
+        self._calculate_all_fields()  # если метод существует
+        return self
 
-        other_type = other_type.strip().upper()
-
-        quadra_map = {
-            "ENTP": "Альфа", "ISFJ": "Альфа", "ESFJ": "Альфа", "INTP": "Альфа",
-            "ESTP": "Бета", "INFJ": "Бета", "ENFJ": "Бета", "ISTP": "Бета",
-            "ESFP": "Гамма", "INTJ": "Гамма", "ENTJ": "Гамма", "ISFP": "Гамма",
-            "ESTJ": "Дельта", "INFP": "Дельта", "ENFP": "Дельта", "ISTJ": "Дельта",
-        }
-
-        return quadra_map.get(self.primary_type) == quadra_map.get(other_type)
-
-    def get_top_3_types(self) -> list:
-        """отдает 3 самых вероятных типа"""
+    def set_top_3_types(self) -> list:
+        """формирует 3 самых вероятных типа И возвращает их"""
         type_probs = {
             "ENTP": self.ENTP, "ISFJ": self.ISFJ, "ESFJ": self.ESFJ, "INTP": self.INTP,
             "ENFJ": self.ENFJ, "ISTP": self.ISTP, "ESTP": self.ESTP, "INFJ": self.INFJ,
@@ -155,6 +152,10 @@ class UserSocionicsSchema(BaseModel):
             key=lambda x: x[1],
             reverse=True
         )
+
+        self.top_1 = sorted_types[0][0] if len(sorted_types) > 0 else None
+        self.top_2 = sorted_types[1][0] if len(sorted_types) > 1 else None
+        self.top_3 = sorted_types[2][0] if len(sorted_types) > 2 else None
 
         return sorted_types[:3]
 

@@ -126,7 +126,7 @@ class CharacteristicService:
         Генерирует и сохраняет характеристику с учетом прошлой (если она есть.)
         """
         old_characteristic: S | None = (await self.repo.cache_service.get_characteristic_row(
-            characteristic_type=characteristic_type.__name__,
+            characteristic_name=characteristic_type.__name__,
             access_token=access_token,
             telegram_id=telegram_id
         ))[0]
@@ -134,7 +134,7 @@ class CharacteristicService:
         # [ batch logs + old characteristic + fields instruction]
         all_text: list[str] = [log.message + "\n" for log in batch_logs]
 
-        cleaned: dict = clean_characteristic_json(old_characteristic or characteristic_type)
+        cleaned: dict = clean_characteristic_json(old_characteristic or characteristic_type, False)
         header = "Текущая характеристика пользователя: "
 
         all_text.append(header + json.dumps(cleaned, ensure_ascii=False, indent=2))
@@ -145,6 +145,4 @@ class CharacteristicService:
             old_characteristic=combined_text,
             characteristic_type=characteristic_type
         )
-
-        await self.repo.append_characteristic(user_id=user_id, characteristic=new_characteristic,
-                                              telegram_id=telegram_id)
+        await self.repo.append_characteristic(user_id=user_id, characteristic=new_characteristic, telegram_id=telegram_id)

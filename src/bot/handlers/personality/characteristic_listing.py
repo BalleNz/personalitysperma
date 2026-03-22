@@ -101,7 +101,7 @@ async def show_characteristic(
     characteristic: list[S] = await cache_service.get_characteristic_row(
         access_token=access_token,
         telegram_id=telegram_id,
-        characteristic_type=characteristic_type,
+        characteristic_name=characteristic_type,
         group=characteristic_group
     )
 
