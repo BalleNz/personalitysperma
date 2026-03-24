@@ -5,14 +5,15 @@ from typing import Type, Sequence
 
 from src.api.response_schemas.research import Characteristic
 from src.core.consts import (
-    MIN_CHARS_LENGTH_TO_GENERATE, MIN_CHARS_LENGTH_TO_GENERATE_PERSONALITY
+    MIN_CHARS_LENGTH_TO_GENERATE_PSYCHO, MIN_CHARS_LENGTH_TO_GENERATE_LEARN
 )
+from src.core.enums.user import TALKING_MODES
 from src.core.schemas.log_schemas import CharacteristicBatchLogSchema
 from src.core.services.assistant_service import AssistantService
 from src.core.utils.funcs import clean_characteristic_json
 from src.infrastructure.database.models.base import S, M
 from src.infrastructure.database.repository.characteristic_repo import CharacteristicFormat, CharacteristicRepository, \
-    CHARACTERISTIC_SCHEMAS_TO_MODELS, PERSONALITY_SCHEMAS
+    CHARACTERISTIC_SCHEMAS_TO_MODELS
 
 logger = logging.getLogger(__name__)
 
@@ -24,8 +25,8 @@ class CharacteristicService:
             assistant_service: AssistantService
     ):
         self.repo = repo
-        self.min_chars = MIN_CHARS_LENGTH_TO_GENERATE
-        self.min_chars_personality = MIN_CHARS_LENGTH_TO_GENERATE_PERSONALITY
+        self.min_chars_psycho = MIN_CHARS_LENGTH_TO_GENERATE_PSYCHO
+        self.min_chars_learn = MIN_CHARS_LENGTH_TO_GENERATE_LEARN
         self.assistant_service = assistant_service
 
     async def research_survey_finish(
@@ -55,7 +56,8 @@ class CharacteristicService:
             message_text: str,
             schema_type: Type[S],  # таблица характеристики
             telegram_id: str,
-            access_token: str
+            access_token: str,
+            user_mode: TALKING_MODES
     ) -> bool | None:
         """
         Определяет, пора ли генерировать/обновлять характеристику
@@ -87,12 +89,12 @@ class CharacteristicService:
         logs = [log.message for log in batch_logs]
         logs_length = sum(len(log) for log in logs)
 
-        min_chars: int
-        match schema_type:
-            case x if x in PERSONALITY_SCHEMAS:  # типы личности
-                min_chars = self.min_chars_personality
-            case _:  # дефолт
-                min_chars = self.min_chars
+        min_chars: int = self.min_chars_psycho
+        match user_mode:
+            case TALKING_MODES.RESEARCH:
+                min_chars = self.min_chars_learn
+            case TALKING_MODES.INDIVIDUAL_PSYCHO:
+                min_chars = self.min_chars_psycho
 
         if logs_length >= min_chars:
             # генерируем новую характеристику

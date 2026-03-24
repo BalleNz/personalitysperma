@@ -164,7 +164,7 @@ class RedisService:
         cache_key = self._get_user_profile_key(telegram_id)
         await self.redis.delete(cache_key)
 
-    async def _invalidate_characteristics(self, telegram_id: str) -> None:
+    async def invalidate_characteristics(self, telegram_id: str) -> None:
         """Инвалидация кэша характеристик"""
         cache_key = self._get_characteristics_key(telegram_id)
         await self.redis.delete(cache_key)

@@ -1,9 +1,8 @@
 import logging
 import uuid
-from datetime import timedelta, datetime, timezone
 from typing import Type, Generic, Sequence, Any
 
-from sqlalchemy import select, delete, desc, func, Date, cast
+from sqlalchemy import select, delete, desc, func
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -269,7 +268,7 @@ class CharacteristicRepository:
         await self.session.execute(record_stmt)
         await self.session.commit()
 
-        await self.cache_service.redis_service._invalidate_characteristics(telegram_id)
+        await self.cache_service.redis_service.invalidate_characteristics(telegram_id)
 
     async def create_log_in_batch(
             self,

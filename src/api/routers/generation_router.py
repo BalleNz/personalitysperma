@@ -328,6 +328,7 @@ async def process_generation_background(
     — какие характеристики можно извлечь из сообщения юзера
     — последовательно генерирует их / добавляет в батч-очереди.
     """
+    notification_was_send: bool = False
 
     for characteristic_name in classifications:
         try:
@@ -338,17 +339,21 @@ async def process_generation_background(
                 message_text=message,
                 schema_type=schema_type,
                 access_token=access_token,
-                telegram_id=user.telegram_id
-            )  # возможно поменять bool на схему, какие характеристики поменялись
+                telegram_id=user.telegram_id,
+                user_mode=user.talk_mode
+            )
 
             if generated:
-                await cache_service.redis_service._invalidate_characteristics(user.telegram_id)
+                await cache_service.redis_service.invalidate_characteristics(user.telegram_id)
 
                 characteristics_raw: list[S] = await cache_service.get_characteristic_row(
                     access_token,
                     user.telegram_id,
                     characteristic_name=characteristic_name,
                 )
+
+                if notification_was_send:
+                    continue
 
                 if characteristic_name not in ["UserSocionicsSchema", "UserHollandCodesSchema", "UserHexacoSchema"]:
                     percent_diff, diff_type, field_name = get_characteristics_raw_most_diff(characteristics_raw)
@@ -362,9 +367,11 @@ async def process_generation_background(
                     )
                 else:
                     await telegram_service.send_message(
-                        message=f"<b>твой тип личности точнее з:</b>",
+                        message=f"<b>твой тип личности стал точнее з:</b>",
                         user_telegram_id=user.telegram_id
                     )
+
+                notification_was_send = True
 
         except Exception as e:
             # Важно: логировать, но не падать — фоновая задача
