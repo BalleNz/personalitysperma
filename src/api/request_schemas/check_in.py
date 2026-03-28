@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
 
 
-class PsychoRequest(BaseModel):
+class CheckInRequest(BaseModel):
     message: str = Field(..., description="сообщение юзера")

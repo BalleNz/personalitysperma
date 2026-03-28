@@ -5,7 +5,7 @@ from uuid import uuid4, UUID
 from pydantic import BaseModel, Field
 
 
-class UserHexacoSchema(BaseModel):
+class HexacoSchema(BaseModel):
     id: Optional[UUID] = Field(default_factory=uuid4)
     user_id: UUID = Field(description="Идентификатор пользователя")
 

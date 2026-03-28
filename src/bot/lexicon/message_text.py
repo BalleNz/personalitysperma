@@ -34,27 +34,6 @@ class MessageText:
         "можешь начать слать мне голосовые или текстовые сообщения!"
     )
 
-    # [ MODE ]
-    @staticmethod
-    def choose_talking_mode(mode: TALKING_MODES) -> str:
-        if mode == TALKING_MODES.RESEARCH:
-            return (
-                "<b>Выбран режим</b>\n\n"
-                "🔍 Изучение себя:\n"
-                "<blockquote>"
-                "Я буду задавать вопросы для <b>изучения</b> вашей личности"
-                "</blockquote>\n\n"
-            )
-        elif mode == TALKING_MODES.INDIVIDUAL_PSYCHO:
-            return (
-                "<b>Выбран режим</b>\n\n"
-                "🧚 Индивидуальный психолог:\n"
-                "<blockquote> "
-                "Я буду учитывать твои <b>типы личности</b> и <b>характеристику</b> во время нашей тёплой беседы."
-                "</blockquote>\n\n"
-            )
-        return ""
-
     # [ query messages ]
     @staticmethod
     def get_process_message() -> str:

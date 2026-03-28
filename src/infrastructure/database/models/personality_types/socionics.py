@@ -3,7 +3,7 @@ from typing import Type
 from sqlalchemy import UUID, ForeignKey, Float, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.core.schemas.personality_types.socionics_type import UserSocionicsSchema
+from src.core.schemas.personality_types.socionics_type import MBTISchema
 from src.infrastructure.database.models.base import IDMixin, TimestampsMixin, S
 
 
@@ -62,4 +62,4 @@ class UserSocionics(IDMixin, TimestampsMixin):
 
     @property
     def schema_class(self) -> Type[S]:
-        return UserSocionicsSchema
+        return MBTISchema

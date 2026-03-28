@@ -28,21 +28,20 @@ back_to_socionics_keyboard = InlineKeyboardMarkup(
 )
 
 
-def get_personality_types_keyboard(
-) -> InlineKeyboardMarkup:
+def get_personality_types_keyboard() -> InlineKeyboardMarkup:
     buttons = [
         [
             InlineKeyboardButton(
-                text=ButtonText.SOCIONICS,
+                text=ButtonText.MBTI,
                 callback_data=GetPersonalityCallback(
-                    characteristic_name="UserSocionicsSchema"
+                    characteristic_name="MBTISchema"
                 ).pack()
             )],
         [
             InlineKeyboardButton(
                 text=ButtonText.HEXACO,
                 callback_data=GetPersonalityCallback(
-                    characteristic_name="UserHexacoSchema"
+                    characteristic_name="HexacoSchema"
                 ).pack()
             )
         ],
@@ -50,7 +49,7 @@ def get_personality_types_keyboard(
             InlineKeyboardButton(
                 text=ButtonText.HOLLAND_CODES,
                 callback_data=GetPersonalityCallback(
-                    characteristic_name="UserHollandCodesSchema"
+                    characteristic_name="HollandCodesSchema"
                 ).pack()
             )
         ]
@@ -60,7 +59,7 @@ def get_personality_types_keyboard(
     )
 
 
-def get_socionics_keyboard(
+def get_mbti_keyboard(
         mbti_type: str
 ) -> InlineKeyboardMarkup:
     """клавиатуры для Соционики"""
@@ -91,4 +90,28 @@ def get_socionics_keyboard(
 
     return InlineKeyboardMarkup(
         inline_keyboard=buttons
+    )
+
+
+def get_about_mbti(
+    passed_typing: bool
+) -> InlineKeyboardMarkup:
+    """Возвращает клавиатуру с кнопкой 'Пройти типирование' или 'MBTI тип'"""
+    button: InlineKeyboardButton
+
+    if not passed_typing:
+        button = InlineKeyboardButton(
+            text=ButtonText.MBTI_GET_TEST,
+            callback_data=...  # TODO
+        )
+    else:
+        button = InlineKeyboardButton(
+            text=ButtonText.MBTI_ABOUT,
+            callback_data=GetPersonalityCallback(
+                characteristic_name="MBTISchema"
+            ).pack()
+        )
+
+    return InlineKeyboardMarkup(
+        inline_keyboard=[[button]]
     )

@@ -27,11 +27,6 @@ from src.infrastructure.database.models.personality_types.hexaco import UserHexa
 from src.infrastructure.database.models.personality_types.holland_codes import UserHollandCodes
 from src.infrastructure.database.models.personality_types.socionics import UserSocionics
 
-TALKING_MODES_SQL = Enum(
-    TALKING_MODES,
-    name="talking_modes",
-    values_callable=lambda obj: [e.value for e in obj]
-)
 
 GENDER_SQL = Enum(
     GENDER,
@@ -48,12 +43,7 @@ class User(IDMixin, TimestampsMixin):
     first_name: Mapped[str | None] = mapped_column(String, comment="first name")
     last_name: Mapped[str | None] = mapped_column(String, comment="last name")
 
-    # [ MODE ]
-    talk_mode: Mapped[str] = mapped_column(
-        TALKING_MODES_SQL,
-        comment="режим общения",
-        server_default=TALKING_MODES.RESEARCH.value
-    )
+    real_name: Mapped[str | None] = mapped_column(String, comment="реальное имя")
 
     # [ ACCESSES ]
     used_voice_messages: Mapped[int] = mapped_column(
@@ -68,6 +58,16 @@ class User(IDMixin, TimestampsMixin):
         nullable=False,
         server_default=text("false"),
         comment="полный доступ: безлимит гс, базовая характеристика"
+    )
+
+    # [ Quizzes, tests ]
+
+    passed_typing: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        nullable=False,
+        server_default=text("false"),
+        comment="типирование пройдено"
     )
 
     dark_triads_full: Mapped[bool] = mapped_column(

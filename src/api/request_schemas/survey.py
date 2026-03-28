@@ -1,19 +1,6 @@
 from pydantic import BaseModel, Field
 
-from src.api.response_schemas.research import Characteristic
-
-# [ DEFAULT ]
-
-
-class ResearchDefaultRequest(BaseModel):
-    user_message: str = Field(..., description="Сообщение юзера")
-
-
-# [ SURVEY ]
-
-
-class ResearchSurveyRequest(BaseModel):
-    user_message: str = Field(..., description="Сообщение юзера")
+from src.api.response_schemas.survey import Characteristic
 
 
 class ResearchSurveyFinishRequest(BaseModel):

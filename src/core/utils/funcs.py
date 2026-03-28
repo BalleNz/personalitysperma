@@ -18,8 +18,7 @@ async def get_telegram_schema_from_data(user: User) -> UserTelegramDataSchema:
 
 
 SOCIONICS_BANNED_FIELDS = {
-    "ENTP", "ISFJ", "ESFJ", "INTP", "positivist", "process", "aristocratic", "merry", "yielding",
-    "ENFJ", "ISTP", "ESTP", "INFJ", "ESFP", "INTJ", "ENTJ", "ISFP", "ENFP", "INFP", "ESTJ", "ISTJ",
+    "positivist", "process", "aristocratic", "merry", "yielding",
     "primary_type", "quadra", "club", "extraversion", "intuition", "logic", "rationality", "static",
     "declaring", "constructivist", "careful", "farsighted", "judicious", "tactical", "questioning", "merging",
 }
@@ -27,13 +26,11 @@ SOCIONICS_BANNED_FIELDS = {
 
 def clean_characteristic_json(
         schema_instance: S | Type[S],
-        need_socionics_ban: bool = True
+        generate: bool = False
 ) -> dict[str, str]:
     """
     Возвращает словарь в формате:
-    {
-        "<field_name>": "<value> — <description>"
-    }
+        — "<field_name>": "<value> — <description>"
 
     - Если передан экземпляр → использует реальные значения (None → "неизвестно")
     - Если передан класс схемы → все поля считаются "неизвестно"
@@ -42,8 +39,9 @@ def clean_characteristic_json(
         "id", "user_id", "created_at", "updated_at",
         "telegram_id", "accuracy_percent", "GROUP"
     }
-    if need_socionics_ban:
-        exclude.update(SOCIONICS_BANNED_FIELDS)
+    if generate:
+        exclude.update("records")
+        exclude.update("SOCIONICS_BANNED_FIELDS")
 
     if isinstance(schema_instance, type) and issubclass(schema_instance, BaseModel):
         # Случай: передан класс схемы → все поля неизвестны
@@ -53,14 +51,6 @@ def clean_characteristic_json(
         # Случай: передан экземпляр
         model = schema_instance.__class__
         data = schema_instance.model_dump(exclude_none=False)
-
-        # [ SOCIONICS ]
-        if need_socionics_ban:
-            if hasattr(schema_instance, 'top_3'):
-                data['top_3'] = schema_instance.top_3
-                data['top_2'] = schema_instance.top_2
-                data['top_1'] = schema_instance.top_1
-                data['records'] = schema_instance.records
 
     result: dict[str, str] = {}
 
@@ -73,11 +63,11 @@ def clean_characteristic_json(
             description = field_name.replace("_", " ").title()
 
         if isinstance(schema_instance, type):
-            value = "неизвестно"
+            value = "None"
         else:
             value = data.get(field_name)
             if value is None:
-                value = "неизвестно"
+                value = "None"
 
         result[field_name] = f"{value} — {description}"
 

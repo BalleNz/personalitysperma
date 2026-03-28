@@ -20,21 +20,7 @@ class QuestionPack(BaseModel):
     answer_packs: list[AnswerPacks]
 
 
-# [ DEFAULT ]
-
-class ResearchDefaultResponse(BaseModel):
-    """ответ от check in:
-    — таблицы, которые следует обновить
-    """
-    classifications: list[str] | None
-    precise_question: str = Field(..., description="ответ пользователю (для продолжения диалога)")
-
-
 # [ SURVEY ]
-
-
-class ResearchSurveyResponse(BaseModel):
-    question_pack: QuestionPack
 
 
 class ResearchSurveyFinishResponse(BaseModel):

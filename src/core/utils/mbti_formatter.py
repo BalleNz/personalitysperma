@@ -1,8 +1,8 @@
 from src.core.lexicon import mbti_relationships_briefly, SOCIONICS_RELATIONSHIPS
-from src.core.schemas.personality_types.socionics_type import UserSocionicsSchema
+from src.core.schemas.personality_types.socionics_type import MBTISchema
 
 
-def get_reinin_descriptions(schema: UserSocionicsSchema) -> str:
+def get_reinin_descriptions(schema: MBTISchema) -> str:
     """Возвращает текстовое описание всех признаков Рейнина с абзацами от лица психолога"""
 
     descriptions = {

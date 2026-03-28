@@ -1,13 +1,11 @@
 class ButtonText:
     # [ reply ]
-    PSYCHO_MODE = "🧚 (beta) Индивидуальный психолог"
-    RESEARCH_MODE = "🔍 Познать себя"
     DIARY = "📙 Личный дневник"
     MY_CHARACTERISTIC = "🌀 Моя характеристика"
     MY_PERSONALITY = "🌀 Типы личности"
 
     # TODO:  (или в моя характеристика)
-    MUSIC_PREFERENCES = "Музыкальные предпочтения"
+    MUSIC_PREFERENCES = "музыкальные предпочтения"
 
     # [ inline ]
     ARROW_LEFT = "<———"
@@ -16,17 +14,19 @@ class ButtonText:
     GET_FULL_ACCESS = "Полный доступ"
 
     # [ listing ]
-    TRAITS_BASIC = "Твой характер"
+    TRAITS_BASIC = "базовая хуйня"
 
-    DARK_TRIADS = "Тёмная триада"
-    HUMOR_CHARACTERISTIC = "Стиль юмора"
-    CLINICAL_CHARACTERISTIC = "Клинические характеристики"
+    DARK_TRIADS = "тёмная триада"
+    HUMOR_CHARACTERISTIC = "стиль юмора"
+    CLINICAL_CHARACTERISTIC = "клинические характеристики"
 
-    SOCIONICS = "👾 MBTI"
+    MBTI = "👾 MBTI"
     HEXACO = "HEXACO"
     HOLLAND_CODES = "Коды Холланда"
 
     # [ socionics keyboard ]
-    SOCIONICS_REININ = "Глубокий анализ"
-    SOCIONICS_RELATIONSHIPS = "Совместимость"
+    SOCIONICS_REININ = "глубокий анализ"
+    SOCIONICS_RELATIONSHIPS = "совместимость"
 
+    MBTI_GET_TEST = "пройти типирование"
+    MBTI_ABOUT = "твой MBTI тип"

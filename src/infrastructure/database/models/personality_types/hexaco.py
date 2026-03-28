@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from sqlalchemy import Float, ForeignKey, UUID, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.core.schemas.personality_types.hexaco import UserHexacoSchema
+from src.core.schemas.personality_types.hexaco import HexacoSchema
 from src.infrastructure.database.models.base import TimestampsMixin, IDMixin
 
 
@@ -37,4 +37,4 @@ class UserHexaco(IDMixin, TimestampsMixin):
 
     @property
     def schema_class(self) -> Type[BaseModel]:
-        return UserHexacoSchema
+        return HexacoSchema

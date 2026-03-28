@@ -1,4 +1,4 @@
-from .generation_router import router as generation_router
+from .main_router import router as generation_router
 from .auth_router import auth_router
 from .characteristics_router import router as characteristics_router
 from .user_router import router as user_router

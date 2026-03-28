@@ -3,7 +3,7 @@ import logging
 import uuid
 from typing import Type, Sequence
 
-from src.api.response_schemas.research import Characteristic
+from src.api.response_schemas.survey import Characteristic
 from src.core.consts import (
     MIN_CHARS_LENGTH_TO_GENERATE_PSYCHO, MIN_CHARS_LENGTH_TO_GENERATE_LEARN
 )
@@ -57,7 +57,7 @@ class CharacteristicService:
             schema_type: Type[S],  # таблица характеристики
             telegram_id: str,
             access_token: str,
-            user_mode: TALKING_MODES
+            talk_mode: TALKING_MODES
     ) -> bool | None:
         """
         Определяет, пора ли генерировать/обновлять характеристику
@@ -90,7 +90,7 @@ class CharacteristicService:
         logs_length = sum(len(log) for log in logs)
 
         min_chars: int = self.min_chars_psycho
-        match user_mode:
+        match talk_mode:
             case TALKING_MODES.RESEARCH:
                 min_chars = self.min_chars_learn
             case TALKING_MODES.INDIVIDUAL_PSYCHO:
@@ -127,16 +127,18 @@ class CharacteristicService:
         """
         Генерирует и сохраняет характеристику с учетом прошлой (если она есть.)
         """
-        old_characteristic: S | None = (await self.repo.cache_service.get_characteristic_row(
+        old_characteristic: list[S] | None = await self.repo.cache_service.get_characteristic_row(
             characteristic_name=characteristic_type.__name__,
             access_token=access_token,
             telegram_id=telegram_id
-        ))[0]
+        )
+        if old_characteristic:
+            old_characteristic = old_characteristic[0]
 
         # [ batch logs + old characteristic + fields instruction]
         all_text: list[str] = [log.message + "\n" for log in batch_logs]
 
-        cleaned: dict = clean_characteristic_json(old_characteristic or characteristic_type, False)
+        cleaned: dict = clean_characteristic_json(old_characteristic or characteristic_type, generate=True)
         header = "Текущая характеристика пользователя: "
 
         all_text.append(header + json.dumps(cleaned, ensure_ascii=False, indent=2))

@@ -5,9 +5,9 @@ import logging
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery
 
-from src.api.request_schemas.research import ResearchSurveyFinishRequest
-from src.api.response_schemas.psycho import PsychoResponse
-from src.api.response_schemas.research import Characteristic
+from src.api.request_schemas.survey import ResearchSurveyFinishRequest
+from src.api.response_schemas.check_in import AssistantResponse
+from src.api.response_schemas.survey import Characteristic
 from src.bot.bot_instance import bot
 from src.bot.callbacks.callbacks import SurveyAnswerCallback
 from src.bot.handlers.main.main import main
@@ -61,7 +61,6 @@ async def main_voice(
         message,
         api_client,
         access_token,
-        user,
         cache_service,
         voice_text=text
     )
@@ -75,16 +74,10 @@ async def main_handler(
         cache_service: CacheService
 ):
     """Главное действие пользователя"""
-    user: UserSchema = await cache_service.get_user_profile(
-        access_token,
-        str(message.from_user.id),
-    )
-
     await main(
         message,
         api_client,
         access_token,
-        user,
         cache_service
     )
 
@@ -151,7 +144,8 @@ async def survey_final(
             ) if schema_cls else None  # пустая с дефолтами
 
         characteristic_cleaned: dict = clean_characteristic_json(
-            schema_obj
+            schema_obj,
+            generate=False
         )
 
         if schema_obj:
@@ -168,7 +162,7 @@ async def survey_final(
         characteristics=characteristics
     )
 
-    response: PsychoResponse = await api_client.research_survey_finish(
+    response: AssistantResponse = await api_client.research_survey_finish(
         access_token=access_token,
         request=request
     )

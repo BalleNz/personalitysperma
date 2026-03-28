@@ -1,35 +1,46 @@
-from src.core.prompts.main.classifications import CLASSIFICATIONS
-from src.core.prompts.main.instruction import MBTI_INSTRUCTION, RESEARCH_INSTRUCTION, BANNED_INSTRUCTION
+from src.core.prompts.classifications import CLASSIFICATIONS_SURVEY
+from src.core.prompts.instructions.instructions import BANNED_INSTRUCTION
+from src.core.prompts.instructions.records_fields import FIELDS_INSTRUCTION, RECORDS_INSTRUCTION
 
-RESEARCH_DEFAULT_PROMPT: str = f"""
-По сообщениям пользователя ты должен определить, какую информацию о нём можно узнать.
+TO_LEARN_SURVEY_FINISH: str = f"""
+Ты должен узнать как изменить текущую характеристику о пользователе в зависимости от его ответа на вопрос.
 
-Формат ответа JSON: 
+Ты получаешь на вход характеристики с полями.
+
+{RECORDS_INSTRUCTION}
+
+{FIELDS_INSTRUCTION}
+
+Входные данные JSON:
 {{
-    "classifications": ["<какие характеристики можно узнать исходя из текста>", ...],
-    "precise_question": "<обязательное поле. уточняющий вопрос пользователю>"
+    "question": <вопрос на который отвечал человек>,
+    "answer": <что он ответил на него>,
+    "characteristics": [
+        {{
+            "characteristic_name": "<название одной из текущих характеристик>",
+            "characteristic": "<одна из его текущих характеристик>"
+        }},
+        ...
+    ]
+}}
+
+ВАЖНО для входных данных characteristics:
+— Если characteristic содержит пустые поля или None: ты должен вычислить ВСЕ эти поля самостоятельно
+— Если входное поле в characteristic None и его нельзя вычислить исходя из ответа юзера = оставь None
+
+Выходные данные JSON:
+{{
+    "user_answer": "<ответ пользователю в зависимости от его answer (для продолжения диалога)>",
+    "new_characteristics": [
+        "characteristic_name": "<название новой характеристики>",
+        "characteristic": "<новая характеристика>"
+    ]
 }}
 
 ВСЕГДА отвечай ТОЛЬКО валидным JSON, даже если контекст странный. Никогда не возвращай пустую строку или текст вне JSON.
-
-СТРОГО: стиль precise_question — уточняющий вопрос, ОБЯЗАТЕЛЬНОЕ ПОЛЕ.
-
-{BANNED_INSTRUCTION}
-{RESEARCH_INSTRUCTION}
-
-{MBTI_INSTRUCTION}
-
-Цель каждого precise_question — сделать так, 
-чтобы пользователю было очень интересно ответить именно тебе и продолжил отвечать на вопросы, раскрывая тему все сильнее.
-
-{CLASSIFICATIONS}
-— СТРОГО пропускай поле classifications если сообщение не несет информации о личности человека.
-
-Во входных данных будет прилагаться характеристика из разных схем пользователя!
-
 """
 
-RESEARCH_SURVEY_PROMPT: str = f"""
+SURVEY_PROMPT: str = f"""
 По сообщениям пользователя ты должен придумать уточняющие вопросы, которые помогут узнать об этом человеке как можно больше информации.
 
 Даже если сообщение не несет информации, ты ОБЯЗАН составить минимум 3 вопроса.
@@ -44,11 +55,11 @@ RESEARCH_SURVEY_PROMPT: str = f"""
         — ответь пользователю на его сообщение
     3) обязательно учитывай все характеристики пользователя для составления вопроса, особенно типы личности
 — даже если сообщение бессмысленное или не несет информации — найди любой вопрос (попытайся углубиться в прошлые сообщения)
+— СТРОГО: ВСЕГДА МИНИМУМ 2 элемента в answer_packs
 
 {BANNED_INSTRUCTION}
-{MBTI_INSTRUCTION}
 
-{CLASSIFICATIONS}
+{CLASSIFICATIONS_SURVEY}
 
 Выходные данные строго JSON:
 {{
@@ -68,5 +79,4 @@ RESEARCH_SURVEY_PROMPT: str = f"""
 }}
 
 ВСЕГДА отвечай ТОЛЬКО валидным JSON, даже если контекст странный. Никогда не возвращай пустую строку или текст вне JSON.
-
 """

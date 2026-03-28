@@ -5,7 +5,7 @@ from uuid import uuid4, UUID
 from pydantic import BaseModel, Field
 
 
-class UserHollandCodesSchema(BaseModel):
+class HollandCodesSchema(BaseModel):
     """Схема для кодов Холланда (RIASEC)"""
     id: Optional[UUID] = Field(default_factory=uuid4)
     user_id: UUID = Field(description="Идентификатор пользователя")

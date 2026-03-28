@@ -1,4 +1,4 @@
-from src.core.prompts.main.instruction import RECORDS_INSTRUCTION, FIELDS_INSTRUCTION
+from src.core.prompts.instructions.records_fields import RECORDS_INSTRUCTION, FIELDS_INSTRUCTION
 
 GENERATE_CHARACTERISTIC_PROMPT: str = f"""
 Ты – профессиональный клинический психолог.
@@ -13,6 +13,7 @@ GENERATE_CHARACTERISTIC_PROMPT: str = f"""
 Каждое сообщение юзера будет с новой строки (они могут быть не связаны по смыслу тк присланы в разное время)
 
 {RECORDS_INSTRUCTION}
+
 {FIELDS_INSTRUCTION}
 
 Пример выходных данных JSON:
@@ -22,6 +23,4 @@ GENERATE_CHARACTERISTIC_PROMPT: str = f"""
     ...
     "<переданное_поле_N>": <...>,
 }}
-
-
 """

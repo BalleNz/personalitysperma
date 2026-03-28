@@ -3,7 +3,7 @@ from typing import Optional, Any
 
 from src.api.response_schemas.characteristic import GetAllCharacteristicResponse
 from src.core.schemas.diary_schema import DiarySchema
-from src.core.schemas.personality_types.socionics_type import UserSocionicsSchema
+from src.core.schemas.personality_types.socionics_type import MBTISchema
 from src.core.schemas.traits.traits_basic import EmotionalProfileSchema, BehavioralProfileSchema, \
     CognitiveProfileSchema, \
     SocialProfileSchema
@@ -30,7 +30,8 @@ SCHEMA_REGISTRY = {
     "EmotionalProfileSchema": EmotionalProfileSchema,
     "BehavioralProfileSchema": BehavioralProfileSchema,
 
-    "UserSocionicsSchema": UserSocionicsSchema,
+    "MBTISchema": MBTISchema,
+    # TODO
 }
 
 

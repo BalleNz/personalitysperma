@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, HTTPException, status
 from fastapi.params import Depends
 
-from src.api.request_schemas.user import ChangeGenderRequest, ChangeTalkModeRequest
+from src.api.request_schemas.user import ChangeGenderRequest
 from src.api.utils.auth import get_auth_user
 from src.core import consts
 from src.core.schemas.user_schemas import UserSchema
@@ -46,7 +46,7 @@ async def increase_used_voices(
         )
 
     await user_service.repo.increase_used_voice_message(user.id)
-    await redis_service._invalidate_user_profile(user.telegram_id)
+    await redis_service.invalidate_user_profile(user.telegram_id)
 
 
 @router.put(path="/change_gender")
@@ -62,24 +62,6 @@ async def change_gender(
         request.gender
     )
 
-    await redis_service._invalidate_user_profile(
-        user.telegram_id
-    )
-
-
-@router.put(path="/change_talking_mode")
-async def change_talking_mode(
-        user: Annotated[UserSchema, Depends(get_auth_user)],
-        request: ChangeTalkModeRequest,
-        user_service: Annotated[UserService, Depends(get_user_service)],
-        redis_service: Annotated[RedisService, Depends(get_redis_service)],
-):
-    """Инверсивно Меняет режим общения пользователя"""
-    await user_service.repo.change_talking_mode(
-        user.id,
-        request.talk_mode
-    )
-
-    await redis_service._invalidate_user_profile(
+    await redis_service.invalidate_user_profile(
         user.telegram_id
     )

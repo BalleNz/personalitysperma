@@ -1,8 +1,8 @@
 import math
 
 from src.bot.lexicon.message_text import MessageText
-from src.core.schemas.personality_types.hexaco import UserHexacoSchema
-from src.core.schemas.personality_types.socionics_type import UserSocionicsSchema
+from src.core.schemas.personality_types.hexaco import HexacoSchema
+from src.core.schemas.personality_types.socionics_type import MBTISchema
 from src.core.utils.mbti_formatter import get_mbti_briefly_description
 from src.core.utils.text_formatters import get_characteristic_name, get_date_word_from_iso
 from src.infrastructure.database.models.base import S
@@ -12,7 +12,7 @@ class PersonalityMessageFormatter:
     """форматирование сообщения для типов личности"""
 
     @staticmethod
-    def format_hexaco(schema: UserHexacoSchema) -> str:
+    def format_hexaco(schema: HexacoSchema) -> str:
         fields = (
             f"Честность-Скромность (H): {math.ceil(100 * schema.honesty_humility)}%" if schema.honesty_humility is not None else "",
             f"Эмоциональность (E): {math.ceil(100 * schema.emotionality)}%" if schema.emotionality is not None else "",
@@ -37,7 +37,7 @@ class PersonalityMessageFormatter:
 
     @staticmethod
     def format_socionics(
-            mbti: UserSocionicsSchema,
+            mbti: MBTISchema,
     ):
         top_3_types = mbti.set_top_3_types()
         accuracy: int = int(mbti.accuracy_percent * 100)
@@ -75,11 +75,11 @@ class PersonalityMessageFormatter:
             schema: S
     ) -> str:
         match schema_name:
-            case "UserSocionicsSchema":
+            case "MBTISchema":
                 return PersonalityMessageFormatter.format_socionics(
                     mbti=schema
                 )
-            case "UserHexacoSchema":
+            case "HexacoSchema":
                 return PersonalityMessageFormatter.format_hexaco(
                     schema=schema
                 )

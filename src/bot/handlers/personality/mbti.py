@@ -8,7 +8,7 @@ from src.bot.handlers.main.main import main
 from src.bot.keyboards.inline.personality import back_to_personality_listing_keyboard
 from src.bot.message_formatters.formatters import Formatter
 from src.bot.states import States
-from src.core.schemas.personality_types.socionics_type import UserSocionicsSchema
+from src.core.schemas.personality_types.socionics_type import MBTISchema
 from src.core.services.api_client.personalityGPT_api import PersonalityGPT_APIClient
 from src.core.services.cache_services.cache_service import CacheService
 
@@ -31,14 +31,14 @@ async def show_reinin(
     """признаки рейнина в зависимости от mbti букв"""
     await callback_query.answer()
 
-    mbti: UserSocionicsSchema = await cache_service.get_characteristic_row(
-        characteristic_name="UserSocionicsSchema",
+    mbti: list[MBTISchema] = await cache_service.get_characteristic_row(
+        characteristic_name="MBTISchema",
         telegram_id=str(callback_query.from_user.id),
         access_token=access_token
     )
 
     text: str = Formatter.format_reinin_socionics(
-        mbti=mbti
+        mbti=mbti[0]
     )
 
     keyboard: InlineKeyboardMarkup = back_to_personality_listing_keyboard
@@ -86,11 +86,11 @@ async def show_relationships(
         state: FSMContext
 ):
     """взаимоотношения между двумя"""
-    mbti_1: UserSocionicsSchema = await cache_service.get_characteristic_row(
+    mbti_1: MBTISchema = (await cache_service.get_characteristic_row(
         characteristic_name="UserSocionicsSchema",
         telegram_id=str(message.from_user.id),
         access_token=access_token
-    )
+    ))[0]
 
     mbti_2 = message.text.upper()
 
@@ -107,7 +107,6 @@ async def show_relationships(
         # [ главное действие ]
         await main(
             api_client=api_client,
-            user=user,
             access_token=access_token,
             message=message,
             cache_service=cache_service

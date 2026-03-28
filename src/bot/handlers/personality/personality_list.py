@@ -4,7 +4,7 @@ from aiogram.types import Message, InlineKeyboardMarkup, CallbackQuery
 from src.bot.callbacks.callbacks import GetPersonalityCallback, \
     BackToListingPersonalityCallback
 from src.bot.keyboards.inline.personality import get_personality_types_keyboard, back_to_personality_listing_keyboard, \
-    get_socionics_keyboard
+    get_mbti_keyboard
 from src.bot.lexicon.button_text import ButtonText
 from src.bot.lexicon.message_text import MessageText
 from src.bot.message_formatters.personality_formatters import PersonalityMessageFormatter
@@ -46,10 +46,11 @@ async def back(
 
 @router.message(F.text == ButtonText.MY_PERSONALITY)
 async def personality_listing_menu(
-        message: Message
+        message: Message,
+        cache_service: CacheService
 ):
     """Открывает меню с листингом типов личности"""
-    # TODO if personality_quiz_passed ...
+    # TODO if user.typing_passed ...
 
     await show_listing(
         message
@@ -75,7 +76,7 @@ async def show_personality(
         telegram_id=telegram_id,
         characteristic_name=characteristic_type,
     )
-    personality: S | None = personality_row[0]
+    personality: S | None = personality_row[0] if personality_row else None
 
     text: str = PersonalityMessageFormatter.get_personality_text_by_schema_name(
         schema_name=characteristic_name,
@@ -84,8 +85,8 @@ async def show_personality(
 
     keyboard: InlineKeyboardMarkup
     match characteristic_name:
-        case "UserSocionicsSchema":
-            keyboard = get_socionics_keyboard(
+        case "MBTISchema":
+            keyboard = get_mbti_keyboard(
                 personality.primary_type
             )
         case _:

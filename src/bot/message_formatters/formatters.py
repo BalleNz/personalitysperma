@@ -1,5 +1,5 @@
 from src.bot.lexicon.message_text import MessageText
-from src.core.schemas.personality_types.socionics_type import UserSocionicsSchema
+from src.core.schemas.personality_types.socionics_type import MBTISchema
 from src.core.utils.mbti_formatter import get_reinin_descriptions, get_relationships_description, get_relationships_briefly
 
 
@@ -8,7 +8,7 @@ class Formatter:
     # [ MBTI ]
     @staticmethod
     def format_reinin_socionics(
-            mbti: UserSocionicsSchema
+            mbti: MBTISchema
     ) -> str:
         """Глубокий анализ MBTI"""
         reinin_text: str = get_reinin_descriptions(mbti)

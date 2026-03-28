@@ -5,7 +5,7 @@ from sqlalchemy import UUID, ForeignKey, Float, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.infrastructure.database.models.base import IDMixin, TimestampsMixin
-from src.core.schemas.personality_types.holland_codes import UserHollandCodesSchema
+from src.core.schemas.personality_types.holland_codes import HollandCodesSchema
 
 
 class UserHollandCodes(IDMixin, TimestampsMixin):
@@ -51,4 +51,4 @@ class UserHollandCodes(IDMixin, TimestampsMixin):
 
     @property
     def schema_class(self) -> Type[BaseModel]:
-        return UserHollandCodesSchema
+        return HollandCodesSchema

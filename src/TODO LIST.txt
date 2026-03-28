@@ -49,18 +49,19 @@ SHIZA DATING (INTEGRATION with SHIZA DIARY):
 
 – BPDSchema: пограничное расстройство (Страх брошенности, Нестабильные отношения, Перепады настроения, Чувство пустоты, Неадекватный гнев)
 
-– UserHollandCodesSchema
-– UserHexacoSchema
-– UserSocionicsSchema: ближайшие соционические / MBTI типы
+– HollandCodesSchema
+– HexacoSchema
+– MBTISchema: ближайшие соционические / MBTI типы
 
 СПОРНЫЕ ПОЛЯ:
 1) тактильность в SocialProfileSchema (лучше в sexual prefs)
 2) self_irony в EmotionalProfileSchema (лучше в HumorProfile)
 3) anxiety_level в EmotionalProfileSchema (лучше в clinical profile: anxiety ocd)
 
-как будет работать check_in:
-— какой у меня уровень тревоги? (смотрит соответствие полей и схем в инструкции)
-— ответ: AnxietyProfile достается –> ответ психолога будет включать эту хар-ку (число и процент, не дробные)
+# TODO:
+    как будет работать check_in:
+    — какой у меня уровень тревоги? (смотрит соответствие полей и схем в инструкции)
+    — ответ: AnxietyProfile достается –> ответ психолога будет включать эту хар-ку (число и процент, не дробные)
 
 — какая вероятность, что у меня ПТСР?
 или
@@ -72,3 +73,6 @@ SHIZA DATING (INTEGRATION with SHIZA DIARY):
 # TODO: типирование будет определять сразу 4 типа личности. За минимальное количество вопросов.
 
 # TODO: проверь меня на аутизм и тд.. посмотреть как он будет реагировать. (или сделать в check_in action: <psycho, research default, research survey, ...>)
+# TODO:
+   — проверь меня на .. точно будет research
+   — research default: подталкивать юзера к свободному ответу

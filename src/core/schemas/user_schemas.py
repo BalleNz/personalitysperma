@@ -4,7 +4,7 @@ from uuid import UUID
 
 from pydantic import Field, BaseModel
 
-from src.core.enums.user import TALKING_MODES, GENDER
+from src.core.enums.user import GENDER
 from src.core.schemas.clinical_disorders.anxiety.gdr import GDRSchema
 from src.core.schemas.clinical_disorders.anxiety.panic import PanicSchema
 from src.core.schemas.clinical_disorders.anxiety.ptsd import PTSDSchema
@@ -17,9 +17,9 @@ from src.core.schemas.clinical_disorders.neuro_disorders.eating import EatingSch
 from src.core.schemas.clinical_disorders.neuro_disorders.looks_disorder import LooksSchema
 from src.core.schemas.clinical_disorders.personality_disorders.bpd import BPDSchema
 from src.core.schemas.diary_schema import DiarySchema
-from src.core.schemas.personality_types.hexaco import UserHexacoSchema
-from src.core.schemas.personality_types.holland_codes import UserHollandCodesSchema
-from src.core.schemas.personality_types.socionics_type import UserSocionicsSchema
+from src.core.schemas.personality_types.hexaco import HexacoSchema
+from src.core.schemas.personality_types.holland_codes import HollandCodesSchema
+from src.core.schemas.personality_types.socionics_type import MBTISchema
 from src.core.schemas.traits.traits_basic import BehavioralProfileSchema, EmotionalProfileSchema, \
     CognitiveProfileSchema, \
     SocialProfileSchema
@@ -47,12 +47,13 @@ class UserSchema(BaseModel):
     last_name: Optional[str] = Field(None, description="Фамилия пользователя")
     age: int | None = Field(None, description="приблизительный возраст пользователя")
 
-    gender: GENDER = Field(..., description="пол")
+    real_name: Optional[str] = Field(None, description="Имя пользователя")
 
-    # [ settings ]
-    talk_mode: TALKING_MODES = Field(..., description="режим общения")
+    gender: GENDER = Field(..., description="пол")
+    passed_typing: bool = Field(..., description="прошел типирование или не")
 
     # [ charges ]
+
     used_voice_messages: int = Field(..., description="количество бесплатных голосовых")
     full_access: int | bool = Field(..., description="полный доступ")
 
@@ -80,9 +81,9 @@ class UserSchema(BaseModel):
     humor_profile: Optional[HumorProfileSchema] = None
 
     # [ personality types ]
-    socionics: Optional[UserSocionicsSchema] = None
-    holland_codes: Optional[UserHollandCodesSchema] = None
-    hexaco: Optional[UserHexacoSchema] = None
+    socionics: Optional[MBTISchema] = None
+    holland_codes: Optional[HollandCodesSchema] = None
+    hexaco: Optional[HexacoSchema] = None
 
     # [ clinical disorders ]
     bipolar_disorder: Optional[BipolarDisorderSchema] = None

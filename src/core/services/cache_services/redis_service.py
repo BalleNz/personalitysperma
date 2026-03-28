@@ -52,10 +52,6 @@ class RedisService:
         await self.redis.lpush(key, json.dumps(msg))  # добавляем слева
         await self.redis.ltrim(key, 0, 49)  # храним максимум 50 сообщений
 
-    async def clear_history(self, user_id: UUID):
-        key = f"chat:history:{user_id}"
-        await self.redis.delete(key)
-
     # [ GETTERS ]
     async def get_diary(self, telegram_id: str) -> list[DiarySchema] | None:
         redis_key = self._get_diary_key(telegram_id)
@@ -159,10 +155,15 @@ class RedisService:
         )
 
     # [ INVALIDATE ]
-    async def _invalidate_user_profile(self, telegram_id: str) -> None:
+    async def invalidate_user_profile(self, telegram_id: str) -> None:
         """Инвалидация кэша профиля пользователя"""
         cache_key = self._get_user_profile_key(telegram_id)
         await self.redis.delete(cache_key)
+
+    async def invalidate_chat_context(self, user_id: UUID) -> None:
+        """Инвалидация контекста"""
+        key = f"chat:history:{user_id}"
+        await self.redis.delete(key)
 
     async def invalidate_characteristics(self, telegram_id: str) -> None:
         """Инвалидация кэша характеристик"""

@@ -12,7 +12,6 @@ from src.bot.handlers.start.start import router as start_router
 from src.bot.handlers.personality.mbti import router as socionics_router
 from src.bot.handlers.personality.personality_list import router as personality_router
 from src.bot.handlers.personality.characteristic_listing import router as characteristic_listing_router
-from src.bot.handlers.start.choose_talking_mode import router as choose_mode_router
 from src.bot.handlers.diary import router as diary_router
 from src.bot.middlewares.depends_injectors import DependencyInjectionMiddleware
 from src.core.services.dependencies.redis_service_dep import redis_client
@@ -29,7 +28,6 @@ def setup_auth(dp: Dispatcher):
         characteristic_listing_router,
         personality_router,
         socionics_router,
-        choose_mode_router,
         diary_router,
         main_router,
     ]:

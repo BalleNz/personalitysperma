@@ -4,7 +4,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 from src.core.services.cache_services.redis_service import RedisService
 from src.infrastructure.database.repository.characteristic_repo import SCHEMA_SHORT_NAMES
-from src.api.response_schemas.research import QuestionPack
+from src.api.response_schemas.survey import QuestionPack
 from src.bot.callbacks.callbacks import SurveyAnswerCallback
 
 

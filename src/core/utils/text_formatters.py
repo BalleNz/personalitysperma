@@ -3,9 +3,9 @@ from datetime import datetime, date
 from typing import Optional
 
 from src.infrastructure.database.models.base import S
-from src.core.schemas.personality_types.hexaco import UserHexacoSchema
-from src.core.schemas.personality_types.holland_codes import UserHollandCodesSchema
-from src.core.schemas.personality_types.socionics_type import UserSocionicsSchema
+from src.core.schemas.personality_types.hexaco import HexacoSchema
+from src.core.schemas.personality_types.holland_codes import HollandCodesSchema
+from src.core.schemas.personality_types.socionics_type import MBTISchema
 from src.core.schemas.traits.traits_basic import SocialProfileSchema, CognitiveProfileSchema, EmotionalProfileSchema, \
     BehavioralProfileSchema
 from src.core.schemas.traits.traits_dark import DarkTriadsSchema
@@ -75,9 +75,9 @@ def get_characteristic_name(schema_name: type[S]):
 
         # ... clinical TODO
 
-        UserHexacoSchema: "HEXACO",
-        UserHollandCodesSchema: "Коды Холланда",
-        UserSocionicsSchema: "Соционический тип",
+        HexacoSchema: "HEXACO",
+        HollandCodesSchema: "Коды Холланда",
+        MBTISchema: "Соционический тип",
     }
     return names[schema_name]
 

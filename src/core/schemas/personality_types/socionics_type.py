@@ -4,7 +4,7 @@ from uuid import uuid4, UUID
 from pydantic import BaseModel, Field, computed_field, model_validator
 
 
-class UserSocionicsSchema(BaseModel):
+class MBTISchema(BaseModel):
     """Схема соционического профиля пользователя"""
     id: Optional[UUID] = Field(default_factory=uuid4)
     GROUP: str = "personality"
@@ -47,9 +47,8 @@ class UserSocionicsSchema(BaseModel):
         kwargs.setdefault("exclude_none", True)
         return super().model_dump(**kwargs)
 
-    primary_type: Optional[str] = Field(None, description="Основной тип (например 'ENTP', 'INFJ')")
+    primary_type: Optional[str] = Field(None, description="топ 1 по вероятности тип личности")
 
-    top_1: str | None = Field(None, description="Самый вероятный тип личности")
     top_2: str | None = Field(None, description="топ 2 по вероятности тип личности")
     top_3: str | None = Field(None, description="топ 3 по вероятности тип личности")
 
@@ -131,7 +130,7 @@ class UserSocionicsSchema(BaseModel):
         self._calculate_all_fields()
 
     @model_validator(mode='after')
-    def compute_all_fields(self) -> 'UserSocionicsSchema':
+    def compute_all_fields(self) -> 'MBTISchema':
         """Запускается после model_validate"""
         self.set_primary_type()
         self.set_top_3_types()
@@ -153,7 +152,6 @@ class UserSocionicsSchema(BaseModel):
             reverse=True
         )
 
-        self.top_1 = sorted_types[0][0] if len(sorted_types) > 0 else None
         self.top_2 = sorted_types[1][0] if len(sorted_types) > 1 else None
         self.top_3 = sorted_types[2][0] if len(sorted_types) > 2 else None
 

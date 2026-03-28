@@ -1,10 +1,8 @@
-from src.api.request_schemas.psycho import PsychoRequest
-from src.api.request_schemas.research import ResearchDefaultRequest, ResearchSurveyRequest, ResearchSurveyFinishRequest
+from src.api.request_schemas.check_in import CheckInRequest
+from src.api.request_schemas.survey import ResearchSurveyFinishRequest
 from src.api.response_schemas.characteristic import GetAllCharacteristicResponse
-from src.api.response_schemas.psycho import PsychoResponse
-from src.api.response_schemas.research import ResearchSurveyResponse, ResearchSurveyFinishResponse, \
-    ResearchDefaultResponse
-from src.core.enums.user import GENDER, TALKING_MODES
+from src.api.response_schemas.check_in import AssistantResponse
+from src.core.enums.user import GENDER
 from src.core.schemas.diary_schema import DiarySchema
 from src.core.schemas.user_schemas import UserSchema, UserTelegramDataSchema
 from src.core.services.api_client.base_http_client import BaseHttpClient, HTTPMethod
@@ -48,43 +46,23 @@ class PersonalityGPT_APIClient(BaseHttpClient):
         )
 
     # [ CHARACTERISTIC ]
-    async def individual_psycho_check_in(self, access_token: str, request: PsychoRequest) -> PsychoResponse:
-        """режим психолога"""
+    async def check_in(self, access_token: str, request: CheckInRequest) -> AssistantResponse:
+        """check_in"""
         return await self._request(
             HTTPMethod.POST,
             request_body=request,
-            endpoint="/v1/generation/individual_psycho",
-            response_model=PsychoResponse,
+            endpoint="/v1/main/check_in",
+            response_model=AssistantResponse,
             access_token=access_token
         )
 
-    async def research_default_check_in(self, access_token: str, request: ResearchDefaultRequest) -> ResearchDefaultResponse:
-        """режим исследования: обычный"""
-        return await self._request(
-            HTTPMethod.POST,
-            request_body=request,
-            endpoint="/v1/generation/research/default",
-            response_model=ResearchDefaultResponse,
-            access_token=access_token
-        )
-
-    async def research_survey_check_in(self, access_token: str, request: ResearchSurveyRequest) -> ResearchSurveyResponse:
-        """режим исследования: survey"""
-        return await self._request(
-            HTTPMethod.POST,
-            request_body=request,
-            endpoint="/v1/generation/research/survey",
-            response_model=ResearchSurveyResponse,
-            access_token=access_token
-        )
-
-    async def research_survey_finish(self, access_token: str, request: ResearchSurveyFinishRequest) -> PsychoResponse:
+    async def research_survey_finish(self, access_token: str, request: ResearchSurveyFinishRequest) -> AssistantResponse:
         """режим исследования: survey — финал"""
         return await self._request(
             HTTPMethod.POST,
             request_body=request,
-            endpoint="/v1/generation/research/survey/finish",
-            response_model=PsychoResponse,
+            endpoint="/v1/main/research/survey/finish",
+            response_model=AssistantResponse,
             access_token=access_token
         )
 
@@ -96,18 +74,6 @@ class PersonalityGPT_APIClient(BaseHttpClient):
             access_token=access_token
         )
         return response
-
-    # [ SETTINGS ]
-    async def change_talk_mode(self, access_token: str, talk_mode: TALKING_MODES) -> None:
-        """меняет режим общения"""
-        await self._request(
-            HTTPMethod.PUT,
-            endpoint="/v1/user/change_talking_mode",
-            access_token=access_token,
-            request_body={
-                "talk_mode": talk_mode
-            }
-        )
 
     async def change_gender(self, gender: GENDER, access_token: str) -> None:
         """поменять гендер"""

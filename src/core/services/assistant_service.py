@@ -4,21 +4,19 @@ from typing import Type, Any
 from uuid import UUID
 
 import aiohttp
-from openai import AsyncOpenAI, NOT_GIVEN, NotGiven, APIError
+from fastapi import HTTPException
+from openai import AsyncOpenAI, NOT_GIVEN, NotGiven
 from pydantic import ValidationError
+from starlette import status
 
-from src.api.request_schemas.research import ResearchSurveyFinishRequest
-from src.api.response_schemas.characteristic import CheckInResponse
-from src.api.response_schemas.psycho import PsychoResponse
-from src.api.response_schemas.research import ResearchSurveyFinishResponse, ResearchSurveyResponse, \
-    ResearchDefaultResponse
-from src.core.prompts.diary import GET_SUMMARY_LOG_FROM_DAILY_LOGS
-from src.core.prompts.generation import GENERATE_CHARACTERISTIC_PROMPT
-from src.core.prompts.main.check_in import CHECK_IN
-from src.core.prompts.main.psycho.psycho import CHECK_IN_PSYCHO_PROMPT
-from src.core.prompts.main.research.default import RESEARCH_SURVEY_PROMPT, RESEARCH_DEFAULT_PROMPT
-from src.core.prompts.main.research.survey import TO_LEARN_SURVEY_FINISH
-from src.core.prompts.telegram import TELEGRAM_CHARATERISTIC_DIFF
+from src.api.response_schemas.check_in import CheckInResponse, AssistantResponse
+from src.api.response_schemas.survey import ResearchSurveyFinishResponse
+from src.core.prompts.check_in import CHECK_IN
+from src.core.prompts.funcs.diary import GET_SUMMARY_LOG_FROM_DAILY_LOGS
+from src.core.prompts.funcs.extract_name import EXTRACT_NAME_PROMPT
+from prompts.generation.generation import GENERATE_CHARACTERISTIC_PROMPT
+from src.core.prompts.funcs.telegram import TELEGRAM_CHARACTERISTIC_DIFF
+from prompts.main.psycho import PSYCHO_PROMPT
 from src.core.schemas.assistant_response import SummaryResponseSchema
 from src.core.services.cache_services.redis_service import RedisService
 from src.infrastructure.config.config import config
@@ -31,14 +29,13 @@ def clean_message_for_history(message: Any) -> str | None:
     """
     Очищает сообщение перед сохранением в историю.
 
-    Возвращает:
-    - строку с "answer", "question", "precise_question" или "user_answer" — если нашлось
-    - None — если ничего осмысленного не найдено (тогда сообщение НЕ сохраняется)
+    - Извлекает самое осмысленное поле (answer, question, precise_question, user_answer)
+    - Обрезает результат до ~150–250 токенов (примерно 550–950 символов)
+    - Возвращает None, если после очистки ничего осмысленного не осталось.
     """
     if message is None:
         return None
 
-    # Если уже строка — пробуем распарсить как JSON
     if isinstance(message, str):
         message = message.strip()
         if not message:
@@ -47,49 +44,70 @@ def clean_message_for_history(message: Any) -> str | None:
             parsed = json.loads(message)
             message = parsed
         except json.JSONDecodeError:
-            # обычная строка — возвращаем
-            return message
+            # обычная строка — продолжаем с ней
+            pass
 
-    # Теперь работаем с dict / list
     if not isinstance(message, (dict, list)):
-        return str(message).strip() or None
+        text = str(message).strip()
+        return truncate_to_token_limit(text) if text else None
 
-    # Рекурсивный поиск "answer", "question", "precise_question", "user_answer"
     def find_meaningful_text(data: Any) -> str | None:
         if isinstance(data, dict):
             for key in ("answer", "question", "precise_question", "user_answer"):
                 val = data.get(key)
                 if isinstance(val, str) and val.strip():
                     return val.strip()
-
             for v in data.values():
                 result = find_meaningful_text(v)
                 if result:
                     return result
-
         elif isinstance(data, list):
             for item in data:
                 result = find_meaningful_text(item)
                 if result:
                     return result
-
         return None
 
     meaningful = find_meaningful_text(message)
-
-    # Если ничего осмысленного не нашли — возвращаем None (не сохраняем)
     if meaningful:
-        return meaningful
+        return truncate_to_token_limit(meaningful)
 
-    # Последний fallback — компактный JSON или строка
+    # Fallback — компактный JSON
     if isinstance(message, dict):
         try:
             compact = json.dumps(message, ensure_ascii=False, separators=(",", ":"))
-            if len(compact) > 10:  # минимальная длина, чтобы не сохранять пустышки
-                return compact
-        except:
+            if len(compact) > 10:
+                return truncate_to_token_limit(compact)
+        finally:
             pass
+
     return None
+
+
+def truncate_to_token_limit(text: str) -> str:
+    """
+    Обрезает текст примерно до 150–250 токенов.
+    Используем грубую, но очень быструю и надёжную оценку:
+    ~4 символа = 1 токен (для смешанного русско-английского текста это хорошее приближение).
+    """
+    if not text:
+        return text
+
+    # Примерно 600–1000 символов → 150–250 токенов
+    target_chars = 800  # середина диапазона (≈200 токенов)
+
+    if len(text) <= target_chars + 50:  # небольшой запас
+        return text
+
+    # Обрезаем по символам + пытаемся не резать слово посередине
+    truncated = text[:target_chars]
+
+    # Отрезаем до последнего пробела, чтобы не обрывать слово (если возможно)
+    last_space = truncated.rfind(' ')
+    if last_space > target_chars * 0.7:  # обрезаем только если потеряем не слишком много
+        truncated = truncated[:last_space]
+
+    return truncated.rstrip() + "…"
 
 
 class AssistantService:
@@ -97,7 +115,8 @@ class AssistantService:
         self.client = AsyncOpenAI(api_key=config.DEEPSEEK_API_KEY, base_url="https://api.deepseek.com")
         self._session: aiohttp.ClientSession | None = None
 
-    async def check_balance(self):
+    @staticmethod
+    async def check_balance():
         """Асинхронная проверка баланса"""
         try:
             async with aiohttp.ClientSession() as session:
@@ -121,7 +140,10 @@ class AssistantService:
                         return
 
                     logger.error(f"На балансе недостаточно денег: {balance_now} < {config.MINIMUM_USD_ON_BALANCE}")
-                    raise APIError(message="На балансе DeepseekAPI недостаточно денег!")
+                    raise HTTPException(
+                        status_code=status.HTTP_402_PAYMENT_REQUIRED,
+                        detail="На балансе DeepseekAPI недостаточно денег!"
+                    )
 
         except aiohttp.ClientError as e:
             logger.error(f"Ошибка при проверке баланса: {e}")
@@ -181,7 +203,7 @@ class AssistantService:
             pydantic_model: Type[S] | None = None,
             temperature: float = 0.6,
             max_tokens: int | NotGiven = NOT_GIVEN,
-            history_limit: int = 12,
+            history_limit: int = 40,
     ) -> S | str:
         """
         Запрос с поддержкой контекста (истории диалога).
@@ -220,26 +242,24 @@ class AssistantService:
             logger.info("статистика по токенам (чат):\n")
             logger.info(response.usage)
 
+            # [ cache ]
+            assistant_content = content.strip()
+            input_query = clean_message_for_history(message=input_query)
+            assistant_message = clean_message_for_history(message=assistant_content)
             try:
-                assistant_content = content.strip()
-                input_query = clean_message_for_history(message=input_query)
-                assistant_message = clean_message_for_history(message=assistant_content)
-
-                if input_query:
-                    await redis_service.add_message(user_id, "user", input_query)
+                if input_query not in (message['content'] for message in history):  # anti-duplicates
+                    if input_query and assistant_message:
+                        await redis_service.add_message(user_id, "user", input_query)
+                        await redis_service.add_message(user_id, "assistant", assistant_message)
+                    else:
+                        logger.error("ошибка парсинга ответа для контекста")
+                        raise
                 else:
-                    logger.error("ошибка парсинга ответа для контекста")
-                    raise  # если нет сообщения юзера, ассистента скипается
-
-                if assistant_message:
-                    await redis_service.add_message(user_id, "assistant", assistant_message)
-                else:
-                    logger.error("ошибка парсинга ответа для контекста")
-                    raise
-
+                    logger.info(f"дубликат лога пропущен: {input_query}")
             except Exception as e:
                 logger.warning(f"Не удалось сохранить историю для {user_id}: {e}")
 
+            # [ response format ]
             try:
                 if pydantic_model:
                     return pydantic_model.model_validate_json(content)
@@ -248,6 +268,11 @@ class AssistantService:
                 logger.error(f"Validation error in chat: {e}")
                 logger.error(f"User message: {input_query}")
                 logger.error(f"Raw response: {content}")
+                if prompt == PSYCHO_PROMPT:
+                    # noinspection PyArgumentList
+                    return AssistantResponse(
+                        user_answer="шиза дневник не понимает тебя ;( \nпопробуй написать что-то другое"
+                    )
                 raise ValueError(f"Invalid chat response: {e}")
 
         except Exception as ex:
@@ -277,7 +302,7 @@ class AssistantService:
     ) -> str:
         return await self.get_response(
             input_query,
-            prompt=TELEGRAM_CHARATERISTIC_DIFF
+            prompt=TELEGRAM_CHARACTERISTIC_DIFF
         )
 
     # [ CHECK IN ]
@@ -287,7 +312,6 @@ class AssistantService:
             user_message: str
     ) -> ...:
         """Возвращает список названий характеристик которые нужно учитывать"""
-
         prompt: str = CHECK_IN
         pydantic_model: type[S] = CheckInResponse
 
@@ -297,102 +321,30 @@ class AssistantService:
             pydantic_model=pydantic_model
         )
 
-    async def get_psycho_response(
+    async def get_shiza_response(
             self,
             user_message: str,
             user_id: UUID,
+            prompt: str,
             redis_service: RedisService,
-            user_characteristics: str | None = None,
-    ) -> PsychoResponse:
-        """PSYCHO"""
-
+            temperature: float | None = 0.6,
+            user_profile: str | None = None,
+            pydantic_model: type[S] = None
+    ) -> AssistantResponse | ResearchSurveyFinishResponse:
+        """ШИЗА ответ"""
         profile_text = ""
-        if user_characteristics:
-            profile_text = "\n\nТекущий профиль пользователя:\n" + user_characteristics
+        if user_profile:
+            profile_text = "\n\nТекущий профиль пользователя:\n" + user_profile
             logger.info(profile_text)
 
-        full_prompt: str = CHECK_IN_PSYCHO_PROMPT + profile_text
+        full_prompt: str = prompt + profile_text
 
         return await self.get_chat_response(
             input_query=user_message,
             prompt=full_prompt,
-            pydantic_model=PsychoResponse,
-            temperature=0.3,  # чуть выше, чтобы был живой стиль
+            pydantic_model=AssistantResponse if not pydantic_model else pydantic_model,
+            temperature=temperature,
             max_tokens=600,
-            user_id=user_id,
-            redis_service=redis_service
-        )
-
-    async def get_research_default_response(
-            self,
-            user_message: str,
-            user_id: UUID,
-            redis_service: RedisService,
-            user_characteristics: str | None = None,
-    ) -> ResearchDefaultResponse:
-        """research: DEFAULT"""
-
-        profile_text = ""
-        if user_characteristics:
-            profile_text = "\n\nТекущий профиль пользователя:\n" + user_characteristics
-            logger.info(profile_text)
-
-        full_prompt: str = RESEARCH_DEFAULT_PROMPT + profile_text
-
-        return await self.get_chat_response(
-            input_query=user_message,
-            prompt=full_prompt,
-            pydantic_model=ResearchDefaultResponse,
-            temperature=0.6,  # чуть выше, чтобы был живой стиль
-            max_tokens=600,
-            user_id=user_id,
-            redis_service=redis_service
-        )
-
-    async def get_research_survey_response(
-            self,
-            user_message: str,
-            user_id: UUID,
-            redis_service: RedisService,
-            user_characteristics: str | None = None
-    ) -> ResearchSurveyResponse:
-        """SURVEY:
-
-        получить пак с ответами
-        """
-
-        profile_text = ""
-        if user_characteristics:
-            profile_text = "\n\nТекущий профиль пользователя:\n" + user_characteristics
-            logger.info(profile_text)
-
-        full_prompt: str = RESEARCH_SURVEY_PROMPT + profile_text
-
-        return await self.get_chat_response(
-            input_query=user_message,
-            prompt=full_prompt,
-            pydantic_model=ResearchSurveyResponse,
-            user_id=user_id,
-            redis_service=redis_service
-        )
-
-    async def get_to_learn_survey_finish_response(
-            self,
-            request: ResearchSurveyFinishRequest,
-            user_id: UUID,
-            redis_service: RedisService,
-    ) -> ResearchSurveyFinishResponse:
-        """SURVEY:
-
-        Финальная обработка
-        """
-
-        prompt: str = TO_LEARN_SURVEY_FINISH
-
-        return await self.get_chat_response(
-            input_query=request.model_dump_json(),
-            prompt=prompt,
-            pydantic_model=ResearchSurveyFinishResponse,
             user_id=user_id,
             redis_service=redis_service
         )
@@ -404,7 +356,6 @@ class AssistantService:
             user_logs: str
     ) -> SummaryResponseSchema:
         """создает один рассказ из всех логов"""
-
         prompt: str = GET_SUMMARY_LOG_FROM_DAILY_LOGS
 
         pydantic_model: type[S] = SummaryResponseSchema
@@ -413,4 +364,12 @@ class AssistantService:
             input_query=user_logs,
             pydantic_model=pydantic_model,
             prompt=prompt
+        )
+
+    # [ FUNCS ]
+
+    async def extract_user_name(self, input_query: str) -> str:
+        return await self.get_response(
+            input_query,
+            prompt=EXTRACT_NAME_PROMPT
         )

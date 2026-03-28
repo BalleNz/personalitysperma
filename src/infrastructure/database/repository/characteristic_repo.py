@@ -18,9 +18,9 @@ from src.core.schemas.clinical_disorders.neuro_disorders.dissociative import Dis
 from src.core.schemas.clinical_disorders.neuro_disorders.eating import EatingSchema
 from src.core.schemas.clinical_disorders.neuro_disorders.looks_disorder import LooksSchema
 from src.core.schemas.clinical_disorders.personality_disorders.bpd import BPDSchema
-from src.core.schemas.personality_types.hexaco import UserHexacoSchema
-from src.core.schemas.personality_types.holland_codes import UserHollandCodesSchema
-from src.core.schemas.personality_types.socionics_type import UserSocionicsSchema
+from src.core.schemas.personality_types.hexaco import HexacoSchema
+from src.core.schemas.personality_types.holland_codes import HollandCodesSchema
+from src.core.schemas.personality_types.socionics_type import MBTISchema
 from src.core.schemas.traits.traits_basic import CognitiveProfileSchema, EmotionalProfileSchema, \
     BehavioralProfileSchema, \
     SocialProfileSchema
@@ -92,9 +92,9 @@ CHARACTERISTIC_SCHEMAS_TO_MODELS = {
     PTSDSchema: PTSDDisorder,
     BPDSchema: BPDDisorder,
 
-    UserHexacoSchema: UserHexaco,
-    UserHollandCodesSchema: UserHollandCodes,
-    UserSocionicsSchema: UserSocionics,
+    HexacoSchema: UserHexaco,
+    HollandCodesSchema: UserHollandCodes,
+    MBTISchema: UserSocionics,
 
     # "RelationshipPreferenceSchema": RelationshipPreference,
     # "LoveLanguageSchema": LoveLanguage,
@@ -102,9 +102,9 @@ CHARACTERISTIC_SCHEMAS_TO_MODELS = {
 }
 
 PERSONALITY_SCHEMAS = (
-    UserHexacoSchema,
-    UserHollandCodesSchema,
-    UserSocionicsSchema
+    HexacoSchema,
+    HollandCodesSchema,
+    MBTISchema
 )
 
 # LOVE_SCHEMAS = (
@@ -134,9 +134,11 @@ SCHEMA_SHORT_NAMES = {
     "PTSDSchema":               "pts",
     "BPDSchema":                "bpd",
 
-    "UserHexacoSchema":         "hex",
-    "UserHollandCodesSchema":   "hol",
-    "UserSocionicsSchema":      "socion",
+    "HexacoSchema":         "hex",
+    "HollandCodesSchema":   "hol",
+    "MBTISchema":      "socion",
+
+    "ChangeName": "name"
     # добавляй новые по мере появления
 }
 SHORT_TO_FULL_SCHEMA = {v: k for k, v in SCHEMA_SHORT_NAMES.items()}
