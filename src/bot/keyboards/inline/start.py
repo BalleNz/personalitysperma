@@ -1,7 +1,7 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 from callbacks.callbacks import GetFullAccessCallback
-from lexicon.button_text import ButtonText
+from lexicon.mbti import ButtonText
 
 from src.bot.callbacks.callbacks import SelectGenderCallback
 from src.core.enums.user import GENDER

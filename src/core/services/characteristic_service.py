@@ -8,6 +8,7 @@ from src.core.consts import (
     MIN_CHARS_LENGTH_TO_GENERATE_PSYCHO, MIN_CHARS_LENGTH_TO_GENERATE_LEARN
 )
 from src.core.enums.user import TALKING_MODES
+from src.core.prompts.typifications.finish import END_TYPIFICATION_PROMPT
 from src.core.schemas.log_schemas import CharacteristicBatchLogSchema
 from src.core.services.assistant_service import AssistantService
 from src.core.utils.funcs import clean_characteristic_json
@@ -150,3 +151,44 @@ class CharacteristicService:
             characteristic_type=characteristic_type
         )
         await self.repo.append_characteristic(user_id=user_id, characteristic=new_characteristic, telegram_id=telegram_id)
+
+    async def typification_end(
+            self,
+            user_id: uuid.UUID,
+            answers: list[str],
+            characteristic_name: str,
+            access_token: str,
+            user_telegram_id: str
+    ) -> None:
+        """
+        ЗАКАНЧИВАЕТ ТИПИРОВАНИЕ:
+            — берет старую хар-ку если есть
+            — выбираем нужный промпт
+            — генерит новую хар-ку (кладем туда answers)
+        """
+        old_profile: list[S] | None = await self.repo.cache_service.get_characteristic_row(
+            access_token=access_token,
+            telegram_id=user_telegram_id,
+            characteristic_name=characteristic_name
+        )
+
+        assistant_request: dict = {
+            "answers": answers
+        }
+        if old_profile:
+            old_profile: S = old_profile[0]
+            assistant_request["old_characteristic"] = old_profile.model_dump_json()
+
+        pydantic_model: S = CharacteristicFormat.get_cls_from_schema_name(schema_name=characteristic_name)
+
+        profile: S = await self.assistant_service.get_response(
+            input_query=json.dumps(assistant_request, ensure_ascii=False, indent=2),
+            prompt=END_TYPIFICATION_PROMPT,
+            pydantic_model=pydantic_model
+        )
+
+        await self.repo.append_characteristic(
+            user_id,
+            profile,
+            telegram_id=user_telegram_id
+        )

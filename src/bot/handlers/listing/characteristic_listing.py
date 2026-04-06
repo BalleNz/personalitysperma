@@ -51,8 +51,6 @@ async def back(
         str(callback_query.message.from_user.id)
     )
 
-    await callback_query.answer()
-
     await show_listing(
         callback_query,
         user_characteristics

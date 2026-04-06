@@ -7,7 +7,7 @@ from aiogram.types import Message, CallbackQuery
 
 from src.bot.callbacks.callbacks import SelectGenderCallback
 from src.bot.keyboards.inline.start import gender_select_keyboard
-from src.bot.keyboards.reply import MAIN_KEYBOARD
+from src.bot.keyboards.reply import MAIN_KEYBOARD_PSYCHO
 from src.bot.lexicon.message_text import MessageText
 from src.core.enums.user import GENDER
 from src.core.materials.get_file import get_file_by_name
@@ -38,7 +38,7 @@ async def select_gender(
     await callback.message.delete()
     await callback.message.answer(
         text,
-        reply_markup=MAIN_KEYBOARD
+        reply_markup=MAIN_KEYBOARD_PSYCHO
     )
 
 

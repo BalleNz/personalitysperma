@@ -29,10 +29,10 @@ from src.infrastructure.database.models.diary import *  # noqa
 from src.infrastructure.database.models.records import *  # noqa
 from src.infrastructure.database.models.users_comparison import *  # noqa
 from src.infrastructure.database.models.basic_profiles.traits_basic import *  # noqa
-from src.infrastructure.database.models.basic_profiles.traits_dark import *  # noqa
+from database.models.triads.dark_triad import *  # noqa
 from src.infrastructure.database.models.basic_profiles.traits_humor import *  # noqa
 from src.infrastructure.database.models.clinical_disorders.anxiety import *  # noqa
-from src.infrastructure.database.models.clinical_disorders.personality_disorders.bpd import *  # noqa
+from database.models.clinical_disorders.mood_disorders.bpd import *  # noqa
 from src.infrastructure.database.models.clinical_disorders.mood_disorders import *  # noqa
 from src.infrastructure.database.models.clinical_disorders.neuro_disorders import *  # noqa
 from src.infrastructure.database.models.personality_types.hexaco import *  # noqa

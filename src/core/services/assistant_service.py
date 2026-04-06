@@ -1,5 +1,6 @@
 import json
 import logging
+import time
 from typing import Type, Any
 from uuid import UUID
 
@@ -9,9 +10,11 @@ from openai import AsyncOpenAI, NOT_GIVEN, NotGiven
 from pydantic import ValidationError
 from starlette import status
 
+from lexicon.typifications import TypificationPack
+from request_schemas.typification import TypificationAssistantRequest
 from src.api.response_schemas.check_in import CheckInResponse, AssistantResponse
 from src.api.response_schemas.survey import ResearchSurveyFinishResponse
-from src.core.prompts.check_in import CHECK_IN
+from src.core.prompts.check_in import CHECK_IN_PROMPT
 from src.core.prompts.funcs.diary import GET_SUMMARY_LOG_FROM_DAILY_LOGS
 from src.core.prompts.funcs.extract_name import EXTRACT_NAME_PROMPT
 from prompts.generation.generation import GENERATE_CHARACTERISTIC_PROMPT
@@ -203,7 +206,7 @@ class AssistantService:
             pydantic_model: Type[S] | None = None,
             temperature: float = 0.6,
             max_tokens: int | NotGiven = NOT_GIVEN,
-            history_limit: int = 40,
+            history_limit: int = 12,
     ) -> S | str:
         """
         Запрос с поддержкой контекста (истории диалога).
@@ -211,6 +214,7 @@ class AssistantService:
         Если redis_service и user_id переданы — загружает историю, добавляет новое сообщение
         и сохраняет ответ в историю после успешного ответа.
         """
+        time_start = time.time()
         try:
             await self.check_balance()
 
@@ -237,6 +241,8 @@ class AssistantService:
                 temperature=temperature,
                 max_tokens=max_tokens,
             )
+
+            logger.info(f"Время ответа: {(time.time() - time_start)}")
 
             content = response.choices[0].message.content.strip()
             logger.info("статистика по токенам (чат):\n")
@@ -312,7 +318,7 @@ class AssistantService:
             user_message: str
     ) -> ...:
         """Возвращает список названий характеристик которые нужно учитывать"""
-        prompt: str = CHECK_IN
+        prompt: str = CHECK_IN_PROMPT
         pydantic_model: type[S] = CheckInResponse
 
         return await self.get_response(
@@ -334,7 +340,7 @@ class AssistantService:
         """ШИЗА ответ"""
         profile_text = ""
         if user_profile:
-            profile_text = "\n\nТекущий профиль пользователя:\n" + user_profile
+            profile_text = "\n\nТекущая характеристика юзера:\n" + user_profile
             logger.info(profile_text)
 
         full_prompt: str = prompt + profile_text

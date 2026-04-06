@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 
-from src.core.enums.user import TALKING_MODES
 from src.api.response_schemas.survey import QuestionPack
+from src.core.enums.user import TALKING_MODES_CHECK_IN
 
 
 class AssistantResponse(BaseModel):
@@ -22,5 +22,5 @@ class CheckInResponse(BaseModel):
     """Список характеристик которые нужно учитывать"""
 
     characteristics_list: list[str]
-    talk_mode: TALKING_MODES
+    talk_mode: TALKING_MODES_CHECK_IN
     about_mbti: bool | None = False

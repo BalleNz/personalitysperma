@@ -1,4 +1,4 @@
-from src.core.prompts.classifications import CLASSIFICATIONS_SURVEY
+from prompts.classifications.classifications import CLASSIFICATIONS_SURVEY
 from src.core.prompts.instructions.instructions import BANNED_INSTRUCTION
 from src.core.prompts.instructions.records_fields import FIELDS_INSTRUCTION, RECORDS_INSTRUCTION
 

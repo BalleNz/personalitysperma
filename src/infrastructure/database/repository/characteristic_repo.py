@@ -1,6 +1,6 @@
 import logging
 import uuid
-from typing import Type, Generic, Sequence, Any
+from typing import Generic, Sequence, Any
 
 from sqlalchemy import select, delete, desc, func
 from sqlalchemy.dialects.postgresql import insert
@@ -24,7 +24,7 @@ from src.core.schemas.personality_types.socionics_type import MBTISchema
 from src.core.schemas.traits.traits_basic import CognitiveProfileSchema, EmotionalProfileSchema, \
     BehavioralProfileSchema, \
     SocialProfileSchema
-from src.core.schemas.traits.traits_dark import DarkTriadsSchema
+from schemas.triads.dark_triad import DarkTriadsSchema
 from src.core.schemas.traits.traits_humor import HumorProfileSchema
 from src.core.services.cache_services.cache_service import CacheService
 from src.infrastructure.database.models.base import M, S
@@ -32,7 +32,7 @@ from src.infrastructure.database.models.basic_profiles.traits_basic import (
     CognitiveProfile, EmotionalProfile, BehavioralProfile,
     SocialProfile
 )
-from src.infrastructure.database.models.basic_profiles.traits_dark import DarkTriads
+from database.models.triads.dark_triad import DarkTriads
 from src.infrastructure.database.models.basic_profiles.traits_humor import HumorProfile
 from src.infrastructure.database.models.clinical_disorders.anxiety.gdr import GDRDisorder
 from src.infrastructure.database.models.clinical_disorders.anxiety.panic import PanicDisorder
@@ -41,10 +41,10 @@ from src.infrastructure.database.models.clinical_disorders.mood_disorders.bipola
 from src.infrastructure.database.models.clinical_disorders.mood_disorders.depression import DepressionDisorder
 from src.infrastructure.database.models.clinical_disorders.neuro_disorders.adhd import ADHDDisorder
 from src.infrastructure.database.models.clinical_disorders.neuro_disorders.autism import AutismDisorder
-from src.infrastructure.database.models.clinical_disorders.neuro_disorders.dissociative import DissociativeDisorder
+from database.models.clinical_disorders.personality_disorders.dissociative import DissociativeDisorder
 from src.infrastructure.database.models.clinical_disorders.neuro_disorders.eating_disorders import EatingDisorder
 from src.infrastructure.database.models.clinical_disorders.neuro_disorders.looks_disorder import LooksDisorder
-from src.infrastructure.database.models.clinical_disorders.personality_disorders.bpd import BPDDisorder
+from database.models.clinical_disorders.mood_disorders.bpd import BPDDisorder
 from src.infrastructure.database.models.logs import CharacteristicBatchLog
 from src.infrastructure.database.models.personality_types.hexaco import UserHexaco
 from src.infrastructure.database.models.personality_types.holland_codes import UserHollandCodes
@@ -58,8 +58,6 @@ logger = logging.getLogger(__name__)
 
 
 class CharacteristicFormat(Generic[S, M]):
-    def get_model_type_from_schema_type(self, schema_type: Type[S]) -> Type[M]:
-        return CHARACTERISTIC_SCHEMAS_TO_MODELS[schema_type]
 
     @staticmethod
     def get_cls_from_schema_name(schema_name: str) -> type[S] | None:
@@ -150,6 +148,7 @@ def get_schema_type_from_name(schema_name: str) -> type[S] | None:
             return schema
 
 
+# noinspection SpellCheckingInspection
 class CharacteristicRepository:
     """Репозиторий для работы со всеми характеристиками пользователя"""
 
@@ -194,6 +193,7 @@ class CharacteristicRepository:
             counts_result = await self.session.execute(
                 select(count_subquery.c.profile_name, count_subquery.c.record_count)
             )
+            # noinspection PyTypeChecker
             records_map = dict(counts_result.all())  # {"social": 42, "emotional": 15, ...}
         else:
             records_map = {}
@@ -201,6 +201,7 @@ class CharacteristicRepository:
         # [ получаем каждую модель в правильно порядке для CharacteristicRaw ]
         response: list[CharacteristicResponseRaw] = []
         for model_cls, schema_cls in model_schema_pairs:
+            # noinspection PyTypeChecker
             stmt = (
                 select(model_cls)
                 .where(model_cls.user_id == user_id)

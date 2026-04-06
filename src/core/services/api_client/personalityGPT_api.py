@@ -1,8 +1,10 @@
+from request_schemas.typification import TypificationRequest, TypificationGetQuestion, DeleteTypificationRequest, \
+    TypificationGetStatisticsRequest
 from src.api.request_schemas.check_in import CheckInRequest
 from src.api.request_schemas.survey import ResearchSurveyFinishRequest
 from src.api.response_schemas.characteristic import GetAllCharacteristicResponse
 from src.api.response_schemas.check_in import AssistantResponse
-from src.core.enums.user import GENDER
+from src.core.enums.user import GENDER, TALKING_MODES
 from src.core.schemas.diary_schema import DiarySchema
 from src.core.schemas.user_schemas import UserSchema, UserTelegramDataSchema
 from src.core.services.api_client.base_http_client import BaseHttpClient, HTTPMethod
@@ -75,6 +77,7 @@ class PersonalityGPT_APIClient(BaseHttpClient):
         )
         return response
 
+    # [ SETTINGS ]
     async def change_gender(self, gender: GENDER, access_token: str) -> None:
         """поменять гендер"""
         await self._request(
@@ -84,4 +87,53 @@ class PersonalityGPT_APIClient(BaseHttpClient):
             request_body={
                 "gender": gender
             }
+        )
+
+    async def change_talk_mode(self, access_token: str, talk_mode: TALKING_MODES) -> None:
+        """меняет режим общения"""
+        await self._request(
+            HTTPMethod.PUT,
+            endpoint="/v1/user/change_talking_mode",
+            access_token=access_token,
+            request_body={
+                "talk_mode": talk_mode
+            }
+        )
+
+    # [ TYPIFICATION ]
+    async def get_additional_text_on_mid_test(self, access_token: str, request: TypificationGetStatisticsRequest) -> str:
+        """получить доп текст на середине теста"""
+        response = await self._request(
+            HTTPMethod.GET,
+            endpoint="/v1/typifications/get_stats_on_middle_of_test",
+            access_token=access_token,
+            request_body=request
+        )
+        return response
+
+    async def post_typification_results(self, access_token: str, request: TypificationRequest) -> None:
+        """закончить типирование"""
+        await self._request(
+            HTTPMethod.POST,
+            endpoint="/v1/typification/end_typification",
+            access_token=access_token,
+            request_body=request
+        )
+
+    async def get_next_question(self, access_token: str, request: TypificationGetQuestion) -> str:
+        """склеить прошлый вопрос + ответ с новым вопросом"""
+        return await self._request(
+            HTTPMethod.GET,
+            endpoint="/v1/typification/get_question",
+            request_body=request,
+            access_token=access_token
+        )
+
+    async def delete_typification(self, access_token: str, request: DeleteTypificationRequest) -> str:
+        """склеить прошлый вопрос + ответ с новым вопросом"""
+        return await self._request(
+            HTTPMethod.PUT,
+            endpoint="/v1/typification/delete_progress",
+            request_body=request,
+            access_token=access_token
         )

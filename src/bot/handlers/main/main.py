@@ -40,10 +40,12 @@ async def main(
     user_text: str = message.text or voice_text
 
     # [ выбор режима ]
+    user: UserSchema = await cache_service.get_user_profile(access_token, telegram_id=str(message.from_user.id))
     response: AssistantResponse = await api_client.check_in(
         access_token,
         request=CheckInRequest(
-            message=user_text
+            message=user_text,
+            talk_mode_input=user.talk_mode
         )
     )
 

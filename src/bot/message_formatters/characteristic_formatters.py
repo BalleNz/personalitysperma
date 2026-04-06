@@ -1,6 +1,7 @@
 import datetime
 import logging
 import math
+from enum import Enum
 from typing import Optional, Any
 
 from pydantic import BaseModel, Field
@@ -8,18 +9,67 @@ from pydantic import BaseModel, Field
 from src.bot.lexicon.button_text import ButtonText
 from src.bot.lexicon.message_text import MessageText
 from src.core.enums.dark_triads import DarkTriadsTypes
+from src.core.schemas.clinical_disorders.anxiety.gdr import GDRSchema
+from src.core.schemas.clinical_disorders.anxiety.panic import PanicSchema
+from src.core.schemas.clinical_disorders.anxiety.ptsd import PTSDSchema
+from src.core.schemas.clinical_disorders.mood_disorders.bipolar import BipolarDisorderSchema
+from src.core.schemas.clinical_disorders.mood_disorders.depression import DepressionDisorderSchema
+from src.core.schemas.clinical_disorders.neuro_disorders.adhd import ADHDSchema
+from src.core.schemas.clinical_disorders.neuro_disorders.autism import AutismSchema
+from src.core.schemas.clinical_disorders.neuro_disorders.dissociative import DissociativeSchema
+from src.core.schemas.clinical_disorders.neuro_disorders.eating import EatingSchema
+from src.core.schemas.clinical_disorders.neuro_disorders.looks_disorder import LooksSchema
+from src.core.schemas.clinical_disorders.personality_disorders.bpd import BPDSchema
 from src.core.schemas.traits.traits_basic import (
     SocialProfileSchema,
     CognitiveProfileSchema,
     EmotionalProfileSchema,
     BehavioralProfileSchema,
 )
-from src.core.schemas.traits.traits_dark import DarkTriadsSchema
-from src.core.schemas.traits.traits_humor import HumorProfileSchema, HUMOR_FIELDS
+from src.core.schemas.traits.traits_humor import HumorProfileSchema
+from src.core.schemas.triads.dark_triad import DarkTriadsSchema
+from src.core.schemas.triads.light_triad import LightTriadsSchema
 from src.core.utils.text_formatters import get_characteristic_name, get_date_word_from_iso
 from src.infrastructure.database.models.base import S
 
 logger = logging.getLogger(__name__)
+
+
+class CharacteristicGroups(str, Enum):
+    """ГРУППЫ ХАРАКТЕРИСТИК"""
+
+    MBTI = "mbti"
+    HOLLAND_CODES = "holland_codes"
+    HEXACO = "hexaco"
+
+    BASIC = "basic"
+    TRIADS = "triads"
+    HUMOR = "humor"
+
+    NEURO = "neuro"
+    MOOD_DISORDERS = "mood_disorders"
+    BPD = "bpd"
+    DISSOCIATIVE_DISORDER = "dissociative"
+    ANXIETY = "anxiety"
+    LOOKS = "looks"
+
+
+CharacteristicGroup_To_ButtonText: dict = {
+    CharacteristicGroups.MBTI: ButtonText.MBTI,
+    CharacteristicGroups.HOLLAND_CODES: ButtonText.HOLLAND_CODES,
+    CharacteristicGroups.HEXACO: ButtonText.HEXACO,
+
+    CharacteristicGroups.BASIC: ButtonText.BASIC,
+    CharacteristicGroups.TRIADS: ButtonText.TRIADS,
+    CharacteristicGroups.HUMOR: ButtonText.HUMOR,
+
+    CharacteristicGroups.NEURO: ButtonText.NEURO,
+    CharacteristicGroups.MOOD_DISORDERS: ButtonText.MOOD_DISORDERS,
+    CharacteristicGroups.BPD: ButtonText.BPD,
+    CharacteristicGroups.DISSOCIATIVE_DISORDER: ButtonText.DISSOCIATIVE_DISORDER,
+    CharacteristicGroups.ANXIETY: ButtonText.ANXIETY,
+    CharacteristicGroups.LOOKS: ButtonText.LOOKS
+}
 
 
 class CharacteristicInfo(BaseModel):
@@ -77,8 +127,8 @@ def format_value(
 class CharacteristicMessageFormatter:
     """форматирование для характеристик"""
 
-    @staticmethod
     def format_traits_core(
+            self,
             schemas: list[list[S]],
             full_access: bool
     ) -> str:
@@ -89,13 +139,25 @@ class CharacteristicMessageFormatter:
         for schema_row in schemas:
             match schema_row[0].__class__.__name__:
                 case SocialProfileSchema.__name__:
-                    characteristic_info = CharacteristicMessageFormatter.format_social_profile(schema_row, full_access)
+                    characteristic_info = self.format_social_profile(
+                        schema_row,
+                        full_access
+                    )
                 case BehavioralProfileSchema.__name__:
-                    characteristic_info = CharacteristicMessageFormatter.format_behavioral_profile(schema_row, full_access)
+                    characteristic_info = self.format_behavioral_profile(
+                        schema_row,
+                        full_access
+                    )
                 case EmotionalProfileSchema.__name__:
-                    characteristic_info = CharacteristicMessageFormatter.format_emotional_profile(schema_row, full_access)
+                    characteristic_info = self.format_emotional_profile(
+                        schema_row,
+                        full_access
+                    )
                 case CognitiveProfileSchema.__name__:
-                    characteristic_info = CharacteristicMessageFormatter.format_cognitive_profile(schema_row, full_access)
+                    characteristic_info = self.format_cognitive_profile(
+                        schema_row,
+                        full_access
+                    )
                 case _:
                     raise
 
@@ -119,7 +181,405 @@ class CharacteristicMessageFormatter:
             verdict = "Эта характеристика не окончательная! Продолжайте рассказывать о себе!\n\n"
 
         return MessageText.CHARACTERISTIC_LISTING.format(
-            characteristic_name=ButtonText.TRAITS_BASIC,
+            characteristic_name=ButtonText.BASIC,
+            characteristic=all_text,
+            accuracy_percent=accuracy_percent,
+            last_update=last_update_text,
+            verdict=verdict
+        )
+
+    def format_humor(
+            self,
+            schemas: list[list[S]],
+            full_access: bool
+    ) -> str:
+        characteristic_texts: list[str] = []
+        accuracy_percents: list[float] = []
+        last_update_list: list[datetime] = []
+
+        for schema_row in schemas:
+            match schema_row[0].__class__.__name__:
+                case HumorProfileSchema.__name__:
+                    characteristic_info = self.format_humor_profile(
+                        schema_row,
+                        full_access
+                    )
+                case _:
+                    raise
+
+            characteristic_texts.append(characteristic_info.characteristic_text)
+            accuracy_percents.append(characteristic_info.accuracy_percent)
+            last_update_list.append(characteristic_info.last_update)
+
+        # [ общий текст ]
+        all_text: str = ''.join(characteristic_texts)
+
+        # [ точность ]
+        accuracy_percent: float = math.fsum(accuracy_percents) / len(accuracy_percents) if accuracy_percents else 0.0
+        accuracy_percent = math.ceil(accuracy_percent * 100)
+
+        # [ дата ]
+        last_update = min(last_update_list)
+        last_update_text = get_date_word_from_iso(last_update)
+
+        verdict = ""
+        if accuracy_percent < 0.24:
+            verdict = "Эта характеристика не окончательная! Продолжайте рассказывать о себе!\n\n"
+
+        return MessageText.CHARACTERISTIC_LISTING.format(
+            characteristic_name="Чувство юмора",
+            characteristic=all_text,
+            accuracy_percent=accuracy_percent,
+            last_update=last_update_text,
+            verdict=verdict
+        )
+
+    def format_neurodivergence(
+            self,
+            schemas: list[list[S]],
+            full_access: bool
+    ) -> str:
+        characteristic_texts: list[str] = []
+        accuracy_percents: list[float] = []
+        last_update_list: list[datetime] = []
+
+        for schema_row in schemas:
+            match schema_row[0].__class__.__name__:
+                case AutismSchema.__name__:
+                    characteristic_info = self.format_autism_profile(
+                        schema_row,
+                        full_access
+                    )
+                case ADHDSchema.__name__:
+                    characteristic_info = self.format_adhd_profile(
+                        schema_row,
+                        full_access
+                    )
+                case _:
+                    raise
+
+            characteristic_texts.append(characteristic_info.characteristic_text)
+            accuracy_percents.append(characteristic_info.accuracy_percent)
+            last_update_list.append(characteristic_info.last_update)
+
+        # [ общий текст ]
+        all_text: str = ''.join(characteristic_texts)
+
+        # [ точность ]
+        accuracy_percent: float = math.fsum(accuracy_percents) / len(accuracy_percents) if accuracy_percents else 0.0
+        accuracy_percent = math.ceil(accuracy_percent * 100)
+
+        # [ дата ]
+        last_update = min(last_update_list)
+        last_update_text = get_date_word_from_iso(last_update)
+
+        verdict = ""
+        if accuracy_percent < 0.24:
+            verdict = "Эта характеристика не окончательная! Продолжайте рассказывать о себе!\n\n"
+
+        return MessageText.CHARACTERISTIC_LISTING.format(
+            characteristic_name="Нейроотличия (Аутизм, СДВГ)",
+            characteristic=all_text,
+            accuracy_percent=accuracy_percent,
+            last_update=last_update_text,
+            verdict=verdict
+        )
+
+    def format_mood_disorders(
+            self,
+            schemas: list[list[S]],
+            full_access: bool
+    ) -> str:
+        characteristic_texts: list[str] = []
+        accuracy_percents: list[float] = []
+        last_update_list: list[datetime] = []
+
+        for schema_row in schemas:
+            match schema_row[0].__class__.__name__:
+                case DepressionDisorderSchema.__name__:
+                    characteristic_info = self.format_depression_profile(
+                        schema_row,
+                        full_access
+                    )
+                case BipolarDisorderSchema.__name__:
+                    characteristic_info = self.format_bipolar_profile(
+                        schema_row,
+                        full_access
+                    )
+                case _:
+                    raise
+
+            characteristic_texts.append(characteristic_info.characteristic_text)
+            accuracy_percents.append(characteristic_info.accuracy_percent)
+            last_update_list.append(characteristic_info.last_update)
+
+        # [ общий текст ]
+        all_text: str = ''.join(characteristic_texts)
+
+        # [ точность ]
+        accuracy_percent: float = math.fsum(accuracy_percents) / len(accuracy_percents) if accuracy_percents else 0.0
+        accuracy_percent = math.ceil(accuracy_percent * 100)
+
+        # [ дата ]
+        last_update = min(last_update_list)
+        last_update_text = get_date_word_from_iso(last_update)
+
+        verdict = ""
+        if accuracy_percent < 0.24:
+            verdict = "Эта характеристика не окончательная! Продолжайте рассказывать о себе!\n\n"
+
+        return MessageText.CHARACTERISTIC_LISTING.format(
+            characteristic_name="Депрессия и биполярное расстройство",
+            characteristic=all_text,
+            accuracy_percent=accuracy_percent,
+            last_update=last_update_text,
+            verdict=verdict
+        )
+
+    def format_bpd(
+            self,
+            schemas: list[list[S]],
+            full_access: bool
+    ) -> str:
+        characteristic_texts: list[str] = []
+        accuracy_percents: list[float] = []
+        last_update_list: list[datetime] = []
+
+        for schema_row in schemas:
+            match schema_row[0].__class__.__name__:
+                case BPDSchema.__name__:
+                    characteristic_info = self.format_bpd_profile(
+                        schema_row,
+                        full_access
+                    )
+                case _:
+                    raise
+
+            characteristic_texts.append(characteristic_info.characteristic_text)
+            accuracy_percents.append(characteristic_info.accuracy_percent)
+            last_update_list.append(characteristic_info.last_update)
+
+        # [ общий текст ]
+        all_text: str = ''.join(characteristic_texts)
+
+        # [ точность ]
+        accuracy_percent: float = math.fsum(accuracy_percents) / len(accuracy_percents) if accuracy_percents else 0.0
+        accuracy_percent = math.ceil(accuracy_percent * 100)
+
+        # [ дата ]
+        last_update = min(last_update_list)
+        last_update_text = get_date_word_from_iso(last_update)
+
+        verdict = ""
+        if accuracy_percent < 0.24:
+            verdict = "Эта характеристика не окончательная! Продолжайте рассказывать о себе!\n\n"
+
+        return MessageText.CHARACTERISTIC_LISTING.format(
+            characteristic_name="Пограничное расстройство личности",
+            characteristic=all_text,
+            accuracy_percent=accuracy_percent,
+            last_update=last_update_text,
+            verdict=verdict
+        )
+
+    def format_dissociative(
+            self,
+            schemas: list[list[S]],
+            full_access: bool
+    ) -> str:
+        characteristic_texts: list[str] = []
+        accuracy_percents: list[float] = []
+        last_update_list: list[datetime] = []
+
+        for schema_row in schemas:
+            match schema_row[0].__class__.__name__:
+                case DissociativeSchema.__name__:
+                    characteristic_info = self.format_dissociative_profile(
+                        schema_row,
+                        full_access
+                    )
+                case _:
+                    raise
+
+            characteristic_texts.append(characteristic_info.characteristic_text)
+            accuracy_percents.append(characteristic_info.accuracy_percent)
+            last_update_list.append(characteristic_info.last_update)
+
+        # [ общий текст ]
+        all_text: str = ''.join(characteristic_texts)
+
+        # [ точность ]
+        accuracy_percent: float = math.fsum(accuracy_percents) / len(accuracy_percents) if accuracy_percents else 0.0
+        accuracy_percent = math.ceil(accuracy_percent * 100)
+
+        # [ дата ]
+        last_update = min(last_update_list)
+        last_update_text = get_date_word_from_iso(last_update)
+
+        verdict = ""
+        if accuracy_percent < 0.24:
+            verdict = "Эта характеристика не окончательная! Продолжайте рассказывать о себе!\n\n"
+
+        return MessageText.CHARACTERISTIC_LISTING.format(
+            characteristic_name="Нарушения личности",
+            characteristic=all_text,
+            accuracy_percent=accuracy_percent,
+            last_update=last_update_text,
+            verdict=verdict
+        )
+
+    def format_anxiety_stress(
+            self,
+            schemas: list[list[S]],
+            full_access: bool
+    ) -> str:
+        characteristic_texts: list[str] = []
+        accuracy_percents: list[float] = []
+        last_update_list: list[datetime] = []
+
+        for schema_row in schemas:
+            match schema_row[0].__class__.__name__:
+                case PanicSchema.__name__:
+                    characteristic_info = self.format_panic_profile(
+                        schema_row,
+                        full_access
+                    )
+                case GDRSchema.__name__:
+                    characteristic_info = self.format_gdr_profile(
+                        schema_row,
+                        full_access
+                    )
+                case PTSDSchema.__name__:
+                    characteristic_info = self.format_ptsd_profile(
+                        schema_row,
+                        full_access
+                    )
+                case _:
+                    raise
+
+            characteristic_texts.append(characteristic_info.characteristic_text)
+            accuracy_percents.append(characteristic_info.accuracy_percent)
+            last_update_list.append(characteristic_info.last_update)
+
+        # [ общий текст ]
+        all_text: str = ''.join(characteristic_texts)
+
+        # [ точность ]
+        accuracy_percent: float = math.fsum(accuracy_percents) / len(accuracy_percents) if accuracy_percents else 0.0
+        accuracy_percent = math.ceil(accuracy_percent * 100)
+
+        # [ дата ]
+        last_update = min(last_update_list)
+        last_update_text = get_date_word_from_iso(last_update)
+
+        verdict = ""
+        if accuracy_percent < 0.24:
+            verdict = "Эта характеристика не окончательная! Продолжайте рассказывать о себе!\n\n"
+
+        return MessageText.CHARACTERISTIC_LISTING.format(
+            characteristic_name="Тревога и стресс",
+            characteristic=all_text,
+            accuracy_percent=accuracy_percent,
+            last_update=last_update_text,
+            verdict=verdict
+        )
+
+    def format_body_image_eating(
+            self,
+            schemas: list[list[S]],
+            full_access: bool
+    ) -> str:
+        characteristic_texts: list[str] = []
+        accuracy_percents: list[float] = []
+        last_update_list: list[datetime] = []
+
+        for schema_row in schemas:
+            match schema_row[0].__class__.__name__:
+                case LooksSchema.__name__:
+                    characteristic_info = self.format_looks_profile(
+                        schema_row,
+                        full_access
+                    )
+                case EatingSchema.__name__:
+                    characteristic_info = self.format_eating_profile(
+                        schema_row,
+                        full_access
+                    )
+                case _:
+                    raise
+
+            characteristic_texts.append(characteristic_info.characteristic_text)
+            accuracy_percents.append(characteristic_info.accuracy_percent)
+            last_update_list.append(characteristic_info.last_update)
+
+        # [ общий текст ]
+        all_text: str = ''.join(characteristic_texts)
+
+        # [ точность ]
+        accuracy_percent: float = math.fsum(accuracy_percents) / len(accuracy_percents) if accuracy_percents else 0.0
+        accuracy_percent = math.ceil(accuracy_percent * 100)
+
+        # [ дата ]
+        last_update = min(last_update_list)
+        last_update_text = get_date_word_from_iso(last_update)
+
+        verdict = ""
+        if accuracy_percent < 0.24:
+            verdict = "Эта характеристика не окончательная! Продолжайте рассказывать о себе!\n\n"
+
+        return MessageText.CHARACTERISTIC_LISTING.format(
+            characteristic_name="Дисморфофобия и РПП",
+            characteristic=all_text,
+            accuracy_percent=accuracy_percent,
+            last_update=last_update_text,
+            verdict=verdict
+        )
+
+    def format_triads(
+            self,
+            schemas: list[list[S]],
+            full_access: bool
+    ) -> str:
+        characteristic_texts: list[str] = []
+        accuracy_percents: list[float] = []
+        last_update_list: list[datetime] = []
+
+        for schema_row in schemas:
+            match schema_row[0].__class__.__name__:
+                case DarkTriadsSchema.__name__:
+                    characteristic_info = self.format_dark_triad_profile(
+                        schema_row,
+                        full_access
+                    )
+                case LightTriadsSchema.__name__:
+                    characteristic_info = self.format_light_triad_profile(
+                        schema_row,
+                        full_access
+                    )
+                case _:
+                    raise
+
+            characteristic_texts.append(characteristic_info.characteristic_text)
+            accuracy_percents.append(characteristic_info.accuracy_percent)
+            last_update_list.append(characteristic_info.last_update)
+
+        # [ общий текст ]
+        all_text: str = ''.join(characteristic_texts)
+
+        # [ точность ]
+        accuracy_percent: float = math.fsum(accuracy_percents) / len(accuracy_percents) if accuracy_percents else 0.0
+        accuracy_percent = math.ceil(accuracy_percent * 100)
+
+        # [ дата ]
+        last_update = min(last_update_list)
+        last_update_text = get_date_word_from_iso(last_update)
+
+        verdict = ""
+        if accuracy_percent < 0.24:
+            verdict = "Эта характеристика не окончательная! Продолжайте рассказывать о себе!\n\n"
+
+        return MessageText.CHARACTERISTIC_LISTING.format(
+            characteristic_name="Тёмная и Светлая триады",
             characteristic=all_text,
             accuracy_percent=accuracy_percent,
             last_update=last_update_text,
@@ -204,7 +664,7 @@ class CharacteristicMessageFormatter:
             schemas: list[EmotionalProfileSchema],
             full_access: bool
     ) -> CharacteristicInfo:
-        fields = tuple()
+        fields: tuple
 
         schema: EmotionalProfileSchema = schemas[0]
         previous: EmotionalProfileSchema = schemas[1]
@@ -301,29 +761,478 @@ class CharacteristicMessageFormatter:
         )
 
     @staticmethod
-    def format_humor_profile(schemas: list[HumorProfileSchema]) -> str:
-        schema = schemas[0]
-        fields = tuple(
-            f"{field.replace('_', ' ').capitalize()}: {math.ceil(100 * getattr(schema, field))}%"
-            for field in HUMOR_FIELDS
-            if getattr(schema, field) is not None
+    def format_autism_profile(schemas: list[AutismSchema], full_access: bool) -> CharacteristicInfo:
+        fields: tuple
+
+        schema: AutismSchema = schemas[0]
+        previous: AutismSchema = schemas[1]
+
+        if full_access:
+            fields = (
+                f"<b>— Аутистические черты:</b> {format_value(schema.autism, 'autism', previous)}" if schema.autism is not None else "",
+                f"<b>— Нарушения социальной коммуникации:</b> {format_value(schema.autism_social, 'autism_social', previous)}" if schema.autism_social is not None else "",
+                f"<b>— Ограниченные интересы / ритуалы:</b> {format_value(schema.autism_interests, 'autism_interests', previous)}" if schema.autism_interests is not None else "",
+                f"<b>— Маскировка:</b> {format_value(schema.masking, 'masking', previous)}" if schema.masking is not None else "",
+                f"<b>— Сенсорная перегрузка:</b> {format_value(schema.sensory_overload, 'sensory_overload', previous)}" if schema.sensory_overload is not None else "",
+            )
+        else:
+            fields = (
+                f"<b>— Аутистические черты:</b> {format_value(schema.autism, 'autism', previous)}" if schema.autism is not None else "",
+                f"<b>— Нарушения социальной коммуникации:</b> {format_value(schema.autism_social, 'autism_social', previous)}" if schema.autism_social is not None else "",
+                f"<b>— ...</b>",
+                f"<i>для просмотра ещё 3 полей необходим полный доступ</i>",
+            )
+
+        characteristic: str = "🧠 <b>Аутистические черты</b>\n" + "<blockquote>" + '\n'.join(
+            [field for field in fields if field]) + "</blockquote>\n\n"
+
+        return CharacteristicInfo(
+            accuracy_percent=schema.accuracy_percent,
+            characteristic_text=characteristic,
+            last_update=schema.updated_at
         )
 
-        # TODO
-        extra = (
-            f"Доминирующий юмор: {', '.join(schema.dominant_humor) if schema.dominant_humor else '—'}"
+    @staticmethod
+    def format_adhd_profile(schemas: list[ADHDSchema], full_access: bool) -> CharacteristicInfo:
+        fields: tuple
+
+        schema: ADHDSchema = schemas[0]
+        previous: ADHDSchema = schemas[1]
+
+        if full_access:
+            fields = (
+                f"<b>— Уровень СДВГ:</b> {format_value(schema.adhd, 'adhd', previous)}" if schema.adhd is not None else "",
+                f"<b>— Невнимательность:</b> {format_value(schema.adhd_inattention, 'adhd_inattention', previous)}" if schema.adhd_inattention is not None else "",
+                f"<b>— Гиперактивность:</b> {format_value(schema.adhd_hyperactivity, 'adhd_hyperactivity', previous)}" if schema.adhd_hyperactivity is not None else "",
+                f"<b>— Гиперфокус:</b> {format_value(schema.hyperfocus, 'hyperfocus', previous)}" if schema.hyperfocus is not None else "",
+                f"<b>— Внутренняя гиперактивность:</b> {format_value(schema.internal_hyperactivity, 'internal_hyperactivity', previous)}" if schema.internal_hyperactivity is not None else "",
+                f"<b>— Тайм-слепота:</b> {format_value(schema.time_blindness, 'time_blindness', previous)}" if schema.time_blindness is not None else "",
+                f"<b>— Проблемы с мотивацией:</b> {format_value(schema.motivation_problems, 'motivation_problems', previous)}" if schema.motivation_problems is not None else "",
+            )
+        else:
+            fields = (
+                f"<b>— Уровень СДВГ:</b> {format_value(schema.adhd, 'adhd', previous)}" if schema.adhd is not None else "",
+                f"<b>— Невнимательность:</b> {format_value(schema.adhd_inattention, 'adhd_inattention', previous)}" if schema.adhd_inattention is not None else "",
+                f"<b>— ...</b>",
+                f"<i>для просмотра ещё 5 полей необходим полный доступ</i>",
+            )
+
+        characteristic: str = "🧬 <b>СДВГ</b>\n" + "<blockquote>" + '\n'.join(
+            [field for field in fields if field]) + "</blockquote>\n\n"
+
+        return CharacteristicInfo(
+            accuracy_percent=schema.accuracy_percent,
+            characteristic_text=characteristic,
+            last_update=schema.updated_at
         )
 
-        characteristic_name = get_characteristic_name(type(schema))
-        characteristic_text = '\n'.join([field for field in fields if field])
+    @staticmethod
+    def format_humor_profile(schemas: list[HumorProfileSchema], full_access: bool) -> CharacteristicInfo:
+        fields: tuple
 
-        last_update: str = get_date_word_from_iso(schema.updated_at)
+        schema: HumorProfileSchema = schemas[0]
+        previous: HumorProfileSchema = schemas[1]
 
-        return MessageText.CHARACTERISTIC_LISTING.format(
-            characteristic_name=characteristic_name,
-            characteristic=characteristic_text,
-            accuracy_percent=math.ceil(schema.accuracy_percent * 100),
-            last_update=last_update
+        if full_access:
+            fields = (
+                f"<b>— Аффилиативный юмор:</b> {format_value(schema.affiliative_humor, 'affiliative_humor', previous)}" if schema.affiliative_humor is not None else "",
+                f"<b>— Игры слов / каламбуры:</b> {format_value(schema.puns_wordplay, 'puns_wordplay', previous)}" if schema.puns_wordplay is not None else "",
+                f"<b>— Физический юмор:</b> {format_value(schema.slapstick_physical, 'slapstick_physical', previous)}" if schema.slapstick_physical is not None else "",
+                f"<b>— Наблюдательный юмор:</b> {format_value(schema.observational_humor, 'observational_humor', previous)}" if schema.observational_humor is not None else "",
+                f"<b>— Самоподдерживающий юмор:</b> {format_value(schema.self_enhancing_humor, 'self_enhancing_humor', previous)}" if schema.self_enhancing_humor is not None else "",
+                f"<b>— Частота использования юмора:</b> {format_value(schema.humor_frequency, 'humor_frequency', previous)}" if schema.humor_frequency is not None else "",
+                f"<b>— Юмор в стрессе:</b> {format_value(schema.humor_in_stress, 'humor_in_stress', previous)}" if schema.humor_in_stress is not None else "",
+                f"<b>— Агрессивный юмор:</b> {format_value(schema.aggressive_humor, 'aggressive_humor', previous)}" if schema.aggressive_humor is not None else "",
+                f"<b>— Сарказм:</b> {format_value(schema.sarcasm_level, 'sarcasm_level', previous)}" if schema.sarcasm_level is not None else "",
+                f"<b>— Чёрный юмор:</b> {format_value(schema.dark_humor, 'dark_humor', previous)}" if schema.dark_humor is not None else "",
+                f"<b>— Самоуничижительный юмор:</b> {format_value(schema.self_defeating_humor, 'self_defeating_humor', previous)}" if schema.self_defeating_humor is not None else "",
+                f"<b>— Остроумный / быстрый юмор:</b> {format_value(schema.witty_quick, 'witty_quick', previous)}" if schema.witty_quick is not None else "",
+                f"<b>— Абсурдный юмор:</b> {format_value(schema.absurd_surreal, 'absurd_surreal', previous)}" if schema.absurd_surreal is not None else "",
+                f"<b>— Сухой / deadpan юмор:</b> {format_value(schema.dry_deadpan, 'dry_deadpan', previous)}" if schema.dry_deadpan is not None else "",
+            )
+        else:
+            fields = (
+                f"<b>— Аффилиативный юмор:</b> {format_value(schema.affiliative_humor, 'affiliative_humor', previous)}" if schema.affiliative_humor is not None else "",
+                f"<b>— Игры слов / каламбуры:</b> {format_value(schema.puns_wordplay, 'puns_wordplay', previous)}" if schema.puns_wordplay is not None else "",
+                f"<b>— ...</b>",
+                f"<i>для просмотра ещё 12 полей необходим полный доступ</i>",
+            )
+
+        characteristic: str = "😂 <b>Чувство юмора</b>\n" + "<blockquote>" + '\n'.join(
+            [field for field in fields if field]) + "</blockquote>\n\n"
+
+        return CharacteristicInfo(
+            accuracy_percent=schema.accuracy_percent,
+            characteristic_text=characteristic,
+            last_update=schema.updated_at
+        )
+
+    @staticmethod
+    def format_bipolar_profile(schemas: list[BipolarDisorderSchema], full_access: bool) -> CharacteristicInfo:
+        fields: tuple
+
+        schema: BipolarDisorderSchema = schemas[0]
+        previous: BipolarDisorderSchema = schemas[1]
+
+        if full_access:
+            fields = (
+                f"<b>— Уровень биполярного расстройства:</b> {format_value(schema.bipolar_score, 'bipolar_score', previous)}" if schema.bipolar_score is not None else "",
+                f"<b>— Маниакальные эпизоды:</b> {format_value(schema.bipolar_mania, 'bipolar_mania', previous)}" if schema.bipolar_mania is not None else "",
+                f"<b>— Гипоманиакальные эпизоды:</b> {format_value(schema.bipolar_hypomania, 'bipolar_hypomania', previous)}" if schema.bipolar_hypomania is not None else "",
+                f"<b>— Депрессивные эпизоды:</b> {format_value(schema.bipolar_depression, 'bipolar_depression', previous)}" if schema.bipolar_depression is not None else "",
+                f"<b>— Быстрая смена фаз:</b> {format_value(schema.bipolar_rapid, 'bipolar_rapid', previous)}" if schema.bipolar_rapid is not None else "",
+                f"<b>— Психотические черты:</b> {format_value(schema.bipolar_psychotic, 'bipolar_psychotic', previous)}" if schema.bipolar_psychotic is not None else "",
+            )
+        else:
+            fields = (
+                f"<b>— Уровень биполярного расстройства:</b> {format_value(schema.bipolar_score, 'bipolar_score', previous)}" if schema.bipolar_score is not None else "",
+                f"<b>— Маниакальные эпизоды:</b> {format_value(schema.bipolar_mania, 'bipolar_mania', previous)}" if schema.bipolar_mania is not None else "",
+                f"<b>— ...</b>",
+                f"<i>для просмотра ещё 4 полей необходим полный доступ</i>",
+            )
+
+        characteristic: str = "🌊 <b>Биполярное расстройство</b>\n" + "<blockquote>" + '\n'.join(
+            [field for field in fields if field]) + "</blockquote>\n\n"
+
+        return CharacteristicInfo(
+            accuracy_percent=schema.accuracy_percent,
+            characteristic_text=characteristic,
+            last_update=schema.updated_at
+        )
+
+    @staticmethod
+    def format_depression_profile(schemas: list[DepressionDisorderSchema], full_access: bool) -> CharacteristicInfo:
+        fields: tuple
+
+        schema: DepressionDisorderSchema = schemas[0]
+        previous: DepressionDisorderSchema = schemas[1]
+
+        if full_access:
+            fields = (
+                f"<b>— Уровень депрессии:</b> {format_value(schema.depression_score, 'depression_score', previous)}" if schema.depression_score is not None else "",
+                f"<b>— Ангедония (потеря удовольствия):</b> {format_value(schema.anhedonia, 'anhedonia', previous)}" if schema.anhedonia is not None else "",
+                f"<b>— Усталость / истощение:</b> {format_value(schema.fatigue, 'fatigue', previous)}" if schema.fatigue is not None else "",
+                f"<b>— Нарушения сна:</b> {format_value(schema.sleep_disturbance, 'sleep_disturbance', previous)}" if schema.sleep_disturbance is not None else "",
+                f"<b>— Чувство никчёмности / вины:</b> {format_value(schema.worthlessness, 'worthlessness', previous)}" if schema.worthlessness is not None else "",
+                f"<b>— Суицидальные мысли:</b> {format_value(schema.suicidal, 'suicidal', previous)}" if schema.suicidal is not None else "",
+            )
+        else:
+            fields = (
+                f"<b>— Уровень депрессии:</b> {format_value(schema.depression_score, 'depression_score', previous)}" if schema.depression_score is not None else "",
+                f"<b>— Ангедония (потеря удовольствия):</b> {format_value(schema.anhedonia, 'anhedonia', previous)}" if schema.anhedonia is not None else "",
+                f"<b>— ...</b>",
+                f"<i>для просмотра ещё 4 полей необходим полный доступ</i>",
+            )
+
+        characteristic: str = "😔 <b>Депрессия</b>\n" + "<blockquote>" + '\n'.join(
+            [field for field in fields if field]) + "</blockquote>\n\n"
+
+        return CharacteristicInfo(
+            accuracy_percent=schema.accuracy_percent,
+            characteristic_text=characteristic,
+            last_update=schema.updated_at
+        )
+
+    @staticmethod
+    def format_panic_profile(schemas: list[PanicSchema], full_access: bool) -> CharacteristicInfo:
+        fields: tuple
+
+        schema: PanicSchema = schemas[0]
+        previous: PanicSchema = schemas[1]
+
+        if full_access:
+            fields = (
+                f"<b>— Частота панических атак:</b> {format_value(schema.attack_frequency, 'attack_frequency', previous)}" if schema.attack_frequency is not None else "",
+                f"<b>— Избегание ситуаций:</b> {format_value(schema.situational_avoid, 'situational_avoid', previous)}" if schema.situational_avoid is not None else "",
+                f"<b>— Тревога ожидания атаки:</b> {format_value(schema.anticipatory, 'anticipatory', previous)}" if schema.anticipatory is not None else "",
+                f"<b>— Страх катастрофы:</b> {format_value(schema.fear_catastrophe, 'fear_catastrophe', previous)}" if schema.fear_catastrophe is not None else "",
+                f"<b>— Нарушение жизни:</b> {format_value(schema.life_impairment, 'life_impairment', previous)}" if schema.life_impairment is not None else "",
+            )
+        else:
+            fields = (
+                f"<b>— Частота панических атак:</b> {format_value(schema.attack_frequency, 'attack_frequency', previous)}" if schema.attack_frequency is not None else "",
+                f"<b>— Избегание ситуаций:</b> {format_value(schema.situational_avoid, 'situational_avoid', previous)}" if schema.situational_avoid is not None else "",
+                f"<b>— ...</b>",
+                f"<i>для просмотра ещё 3 полей необходим полный доступ</i>",
+            )
+
+        characteristic: str = "😱 <b>Паническое расстройство</b>\n" + "<blockquote>" + '\n'.join(
+            [field for field in fields if field]) + "</blockquote>\n\n"
+
+        return CharacteristicInfo(
+            accuracy_percent=schema.accuracy_percent,
+            characteristic_text=characteristic,
+            last_update=schema.updated_at
+        )
+
+    @staticmethod
+    def format_gdr_profile(schemas: list[GDRSchema], full_access: bool) -> CharacteristicInfo:
+        fields: tuple
+
+        schema: GDRSchema = schemas[0]
+        previous: GDRSchema = schemas[1]
+
+        if full_access:
+            fields = (
+                f"<b>— Чрезмерное беспокойство:</b> {format_value(schema.gad_worry, 'gad_worry', previous)}" if schema.gad_worry is not None else "",
+                f"<b>— Трудности с контролем тревоги:</b> {format_value(schema.gad_uncontrollable, 'gad_uncontrollable', previous)}" if schema.gad_uncontrollable is not None else "",
+                f"<b>— Трудности с расслаблением:</b> {format_value(schema.gad_relaxation, 'gad_relaxation', previous)}" if schema.gad_relaxation is not None else "",
+                f"<b>— Мышечное напряжение:</b> {format_value(schema.gad_muscle_tension, 'gad_muscle_tension', previous)}" if schema.gad_muscle_tension is not None else "",
+                f"<b>— Предчувствие катастрофы:</b> {format_value(schema.gad_catastrophic, 'gad_catastrophic', previous)}" if schema.gad_catastrophic is not None else "",
+                f"<b>— Моторное беспокойство:</b> {format_value(schema.gad_restlessness, 'gad_restlessness', previous)}" if schema.gad_restlessness is not None else "",
+                f"<b>— Быстрая утомляемость:</b> {format_value(schema.gad_fatigue, 'gad_fatigue', previous)}" if schema.gad_fatigue is not None else "",
+                f"<b>— Проблемы с концентрацией:</b> {format_value(schema.gad_concentration, 'gad_concentration', previous)}" if schema.gad_concentration is not None else "",
+                f"<b>— Раздражительность:</b> {format_value(schema.gad_irritability, 'gad_irritability', previous)}" if schema.gad_irritability is not None else "",
+            )
+        else:
+            fields = (
+                f"<b>— Чрезмерное беспокойство:</b> {format_value(schema.gad_worry, 'gad_worry', previous)}" if schema.gad_worry is not None else "",
+                f"<b>— Трудности с контролем тревоги:</b> {format_value(schema.gad_uncontrollable, 'gad_uncontrollable', previous)}" if schema.gad_uncontrollable is not None else "",
+                f"<b>— ...</b>",
+                f"<i>для просмотра ещё 7 полей необходим полный доступ</i>",
+            )
+
+        characteristic: str = "😟 <b>Генерализованная тревога</b>\n" + "<blockquote>" + '\n'.join(
+            [field for field in fields if field]) + "</blockquote>\n\n"
+
+        return CharacteristicInfo(
+            accuracy_percent=schema.accuracy_percent,
+            characteristic_text=characteristic,
+            last_update=schema.updated_at
+        )
+
+    @staticmethod
+    def format_ptsd_profile(schemas: list[PTSDSchema], full_access: bool) -> CharacteristicInfo:
+        fields: tuple
+
+        schema: PTSDSchema = schemas[0]
+        previous: PTSDSchema = schemas[1]
+
+        if full_access:
+            fields = (
+                f"<b>— Уровень ПТСР:</b> {format_value(schema.ptsd, 'ptsd', previous)}" if schema.ptsd is not None else "",
+                f"<b>— Флэшбэки / интрузии:</b> {format_value(schema.ptsd_intrusions, 'ptsd_intrusions', previous)}" if schema.ptsd_intrusions is not None else "",
+                f"<b>— Негативные изменения в мышлении:</b> {format_value(schema.ptsd_cognition, 'ptsd_cognition', previous)}" if schema.ptsd_cognition is not None else "",
+                f"<b>— Гипервозбуждение:</b> {format_value(schema.ptsd_arousal, 'ptsd_arousal', previous)}" if schema.ptsd_arousal is not None else "",
+                f"<b>— Нарушения самооценки:</b> {format_value(schema.ptsd_self, 'ptsd_self', previous)}" if schema.ptsd_self is not None else "",
+                f"<b>— Избегание триггеров:</b> {format_value(schema.ptsd_avoidance, 'ptsd_avoidance', previous)}" if schema.ptsd_avoidance is not None else "",
+                f"<b>— Нарушения в отношениях:</b> {format_value(schema.ptsd_relations, 'ptsd_relations', previous)}" if schema.ptsd_relations is not None else "",
+            )
+        else:
+            fields = (
+                f"<b>— Уровень ПТСР:</b> {format_value(schema.ptsd, 'ptsd', previous)}" if schema.ptsd is not None else "",
+                f"<b>— Флэшбэки / интрузии:</b> {format_value(schema.ptsd_intrusions, 'ptsd_intrusions', previous)}" if schema.ptsd_intrusions is not None else "",
+                f"<b>— ...</b>",
+                f"<i>для просмотра ещё 5 полей необходим полный доступ</i>",
+            )
+
+        characteristic: str = "🪖 <b>ПТСР</b>\n" + "<blockquote>" + '\n'.join(
+            [field for field in fields if field]) + "</blockquote>\n\n"
+
+        return CharacteristicInfo(
+            accuracy_percent=schema.accuracy_percent,
+            characteristic_text=characteristic,
+            last_update=schema.updated_at
+        )
+
+    @staticmethod
+    def format_dissociative_profile(schemas: list[DissociativeSchema], full_access: bool) -> CharacteristicInfo:
+        fields: tuple
+
+        schema: DissociativeSchema = schemas[0]
+        previous: DissociativeSchema = schemas[1]
+
+        if full_access:
+            fields = (
+                f"<b>— Диссоциативные симптомы:</b> {format_value(schema.dissociative, 'dissociative', previous)}" if schema.dissociative is not None else "",
+                f"<b>— Деперсонализация / дереализация:</b> {format_value(schema.depersonalization, 'depersonalization', previous)}" if schema.depersonalization is not None else "",
+                f"<b>— Амнезия:</b> {format_value(schema.amnesia, 'amnesia', previous)}" if schema.amnesia is not None else "",
+                f"<b>— Диссоциативное расстройство идентичности:</b> {format_value(schema.did, 'did', previous)}" if schema.did is not None else "",
+            )
+        else:
+            fields = (
+                f"<b>— Диссоциативные симптомы:</b> {format_value(schema.dissociative, 'dissociative', previous)}" if schema.dissociative is not None else "",
+                f"<b>— ...</b>",
+                f"<i>для просмотра ещё 3 полей необходим полный доступ</i>",
+            )
+
+        characteristic: str = "🌫️ <b>Диссоциативные расстройства</b>\n" + "<blockquote>" + '\n'.join(
+            [field for field in fields if field]) + "</blockquote>\n\n"
+
+        return CharacteristicInfo(
+            accuracy_percent=schema.accuracy_percent,
+            characteristic_text=characteristic,
+            last_update=schema.updated_at
+        )
+
+    @staticmethod
+    def format_bpd_profile(schemas: list[BPDSchema], full_access: bool) -> CharacteristicInfo:
+        fields: tuple
+
+        schema: BPDSchema = schemas[0]
+        previous: BPDSchema = schemas[1]
+
+        if full_access:
+            fields = (
+                f"<b>— Уровень ПРЛ:</b> {format_value(schema.bpd_severity, 'bpd_severity', previous)}" if schema.bpd_severity is not None else "",
+                f"<b>— Страх брошенности:</b> {format_value(schema.bpd_abandonment, 'bpd_abandonment', previous)}" if schema.bpd_abandonment is not None else "",
+                f"<b>— Нестабильные отношения:</b> {format_value(schema.bpd_unstable_relations, 'bpd_unstable_relations', previous)}" if schema.bpd_unstable_relations is not None else "",
+                f"<b>— Нарушение идентичности:</b> {format_value(schema.bpd_identity, 'bpd_identity', previous)}" if schema.bpd_identity is not None else "",
+                f"<b>— Импульсивность:</b> {format_value(schema.bpd_impulsivity, 'bpd_impulsivity', previous)}" if schema.bpd_impulsivity is not None else "",
+                f"<b>— Перепады настроения:</b> {format_value(schema.bpd_mood_swings, 'bpd_mood_swings', previous)}" if schema.bpd_mood_swings is not None else "",
+                f"<b>— Чувство пустоты:</b> {format_value(schema.bpd_emptiness, 'bpd_emptiness', previous)}" if schema.bpd_emptiness is not None else "",
+                f"<b>— Неадекватный гнев:</b> {format_value(schema.bpd_anger, 'bpd_anger', previous)}" if schema.bpd_anger is not None else "",
+                f"<b>— Параноидные идеи:</b> {format_value(schema.bpd_paranoia, 'bpd_paranoia', previous)}" if schema.bpd_paranoia is not None else "",
+                f"<b>— Суицидальное поведение / самоповреждения:</b> {format_value(schema.bpd_suicidal, 'bpd_suicidal', previous)}" if schema.bpd_suicidal is not None else "",
+            )
+        else:
+            fields = (
+                f"<b>— Уровень ПРЛ:</b> {format_value(schema.bpd_severity, 'bpd_severity', previous)}" if schema.bpd_severity is not None else "",
+                f"<b>— Страх брошенности:</b> {format_value(schema.bpd_abandonment, 'bpd_abandonment', previous)}" if schema.bpd_abandonment is not None else "",
+                f"<b>— ...</b>",
+                f"<i>для просмотра ещё 8 полей необходим полный доступ</i>",
+            )
+
+        characteristic: str = "🎭 <b>Пограничное расстройство личности</b>\n" + "<blockquote>" + '\n'.join(
+            [field for field in fields if field]) + "</blockquote>\n\n"
+
+        return CharacteristicInfo(
+            accuracy_percent=schema.accuracy_percent,
+            characteristic_text=characteristic,
+            last_update=schema.updated_at
+        )
+
+    @staticmethod
+    def format_looks_profile(schemas: list[LooksSchema], full_access: bool) -> CharacteristicInfo:
+        fields: tuple
+
+        schema: LooksSchema = schemas[0]
+        previous: LooksSchema = schemas[1]
+
+        if full_access:
+            fields = (
+                f"<b>— Уровень дисморфофобии:</b> {format_value(schema.bdd_general, 'bdd_general', previous)}" if schema.bdd_general is not None else "",
+                f"<b>— Мышечная дисморфия:</b> {format_value(schema.muscle_dysmorphia, 'muscle_dysmorphia', previous)}" if schema.muscle_dysmorphia is not None else "",
+                f"<b>— Озабоченность кожей / акне:</b> {format_value(schema.skin_hair_focus, 'skin_hair_focus', previous)}" if schema.skin_hair_focus is not None else "",
+                f"<b>— Облысение / волосы:</b> {format_value(schema.hair_focus, 'hair_focus', previous)}" if schema.hair_focus is not None else "",
+                f"<b>— Черты лица:</b> {format_value(schema.facial_features, 'facial_features', previous)}" if schema.facial_features is not None else "",
+                f"<b>— Жир / вес тела:</b> {format_value(schema.body_fat, 'body_fat', previous)}" if schema.body_fat is not None else "",
+                f"<b>— Гениталии / размер:</b> {format_value(schema.genitals_size, 'genitals_size', previous)}" if schema.genitals_size is not None else "",
+                f"<b>— Рост / пропорции:</b> {format_value(schema.height_stature, 'height_stature', previous)}" if schema.height_stature is not None else "",
+                f"<b>— Старение:</b> {format_value(schema.aging, 'aging', previous)}" if schema.aging is not None else "",
+                f"<b>— Поиск подтверждения:</b> {format_value(schema.reassurance, 'reassurance', previous)}" if schema.reassurance is not None else "",
+                f"<b>— Нарушение жизни:</b> {format_value(schema.impairment, 'impairment', previous)}" if schema.impairment is not None else "",
+            )
+        else:
+            fields = (
+                f"<b>— Уровень дисморфофобии:</b> {format_value(schema.bdd_general, 'bdd_general', previous)}" if schema.bdd_general is not None else "",
+                f"<b>— Мышечная дисморфия:</b> {format_value(schema.muscle_dysmorphia, 'muscle_dysmorphia', previous)}" if schema.muscle_dysmorphia is not None else "",
+                f"<b>— ...</b>",
+                f"<i>для просмотра ещё 9 полей необходим полный доступ</i>",
+            )
+
+        characteristic: str = "🪞 <b>Дисморфофобия</b>\n" + "<blockquote>" + '\n'.join(
+            [field for field in fields if field]) + "</blockquote>\n\n"
+
+        return CharacteristicInfo(
+            accuracy_percent=schema.accuracy_percent,
+            characteristic_text=characteristic,
+            last_update=schema.updated_at
+        )
+
+    @staticmethod
+    def format_eating_profile(schemas: list[EatingSchema], full_access: bool) -> CharacteristicInfo:
+        fields: tuple
+
+        schema: EatingSchema = schemas[0]
+        previous: EatingSchema = schemas[1]
+
+        if full_access:
+            fields = (
+                f"<b>— Общий уровень РПП:</b> {format_value(schema.eating, 'eating', previous)}" if schema.eating is not None else "",
+                f"<b>— Анорексия / потеря аппетита:</b> {format_value(schema.anorexia, 'anorexia', previous)}" if schema.anorexia is not None else "",
+                f"<b>— Булимия:</b> {format_value(schema.bulimia, 'bulimia', previous)}" if schema.bulimia is not None else "",
+                f"<b>— Компульсивное переедание:</b> {format_value(schema.binge, 'binge', previous)}" if schema.binge is not None else "",
+                f"<b>— Дистресс от образа тела:</b> {format_value(schema.body_image_distress, 'body_image_distress', previous)}" if schema.body_image_distress is not None else "",
+                f"<b>— Компенсаторное поведение:</b> {format_value(schema.compensatory_behaviors, 'compensatory_behaviors', previous)}" if schema.compensatory_behaviors is not None else "",
+            )
+        else:
+            fields = (
+                f"<b>— Общий уровень РПП:</b> {format_value(schema.eating, 'eating', previous)}" if schema.eating is not None else "",
+                f"<b>— Анорексия / потеря аппетита:</b> {format_value(schema.anorexia, 'anorexia', previous)}" if schema.anorexia is not None else "",
+                f"<b>— ...</b>",
+                f"<i>для просмотра ещё 4 полей необходим полный доступ</i>",
+            )
+
+        characteristic: str = "🍽️ <b>Пищевое поведение</b>\n" + "<blockquote>" + '\n'.join(
+            [field for field in fields if field]) + "</blockquote>\n\n"
+
+        return CharacteristicInfo(
+            accuracy_percent=schema.accuracy_percent,
+            characteristic_text=characteristic,
+            last_update=schema.updated_at
+        )
+
+    @staticmethod
+    def format_dark_triad_profile(schemas: list[DarkTriadsSchema], full_access: bool) -> CharacteristicInfo:
+        fields: tuple
+
+        schema: DarkTriadsSchema = schemas[0]
+        previous: DarkTriadsSchema = schemas[1]
+
+        if full_access:
+            fields = (
+                f"<b>— Цинизм:</b> {format_value(schema.cynicism, 'cynicism', previous)}" if schema.cynicism is not None else "",
+                f"<b>— Нарциссизм:</b> {format_value(schema.narcissism, 'narcissism', previous)}" if schema.narcissism is not None else "",
+                f"<b>— Макиавеллизм:</b> {format_value(schema.machiavellianism, 'machiavellianism', previous)}" if schema.machiavellianism is not None else "",
+                f"<b>— Психотизм:</b> {format_value(schema.psychoticism, 'psychoticism', previous)}" if schema.psychoticism is not None else "",
+            )
+        else:
+            fields = (
+                f"<b>— Цинизм:</b> {format_value(schema.cynicism, 'cynicism', previous)}" if schema.cynicism is not None else "",
+                f"<b>— Нарциссизм:</b> {format_value(schema.narcissism, 'narcissism', previous)}" if schema.narcissism is not None else "",
+                f"<b>— ...</b>",
+                f"<i>для просмотра ещё 2 полей необходим полный доступ</i>",
+            )
+
+        characteristic: str = "🖤 <b>Тёмная триада</b>\n" + "<blockquote>" + '\n'.join(
+            [field for field in fields if field]) + "</blockquote>\n\n"
+
+        return CharacteristicInfo(
+            accuracy_percent=schema.accuracy_percent,
+            characteristic_text=characteristic,
+            last_update=schema.updated_at
+        )
+
+    @staticmethod
+    def format_light_triad_profile(schemas: list[LightTriadsSchema], full_access: bool) -> CharacteristicInfo:
+        fields: tuple
+
+        schema: LightTriadsSchema = schemas[0]
+        previous: LightTriadsSchema = schemas[1]
+
+        if full_access:
+            fields = (
+                f"<b>— Вера в человечность:</b> {format_value(schema.faith_in_humanity, 'faith_in_humanity', previous)}" if schema.faith_in_humanity is not None else "",
+                f"<b>— Гуманизм:</b> {format_value(schema.humanism, 'humanism', previous)}" if schema.humanism is not None else "",
+                f"<b>— Кантианство (уважение к другим):</b> {format_value(schema.kantianism, 'kantianism', previous)}" if schema.kantianism is not None else "",
+                f"<b>— Скромность:</b> {format_value(schema.humility, 'humility', previous)}" if schema.humility is not None else "",
+            )
+        else:
+            fields = (
+                f"<b>— Вера в человечность:</b> {format_value(schema.faith_in_humanity, 'faith_in_humanity', previous)}" if schema.faith_in_humanity is not None else "",
+                f"<b>— Гуманизм:</b> {format_value(schema.humanism, 'humanism', previous)}" if schema.humanism is not None else "",
+                f"<b>— ...</b>",
+                f"<i>для просмотра ещё 2 полей необходим полный доступ</i>",
+            )
+
+        characteristic: str = "🌟 <b>Светлая триада</b>\n" + "<blockquote>" + '\n'.join(
+            [field for field in fields if field]) + "</blockquote>\n\n"
+
+        return CharacteristicInfo(
+            accuracy_percent=schema.accuracy_percent,
+            characteristic_text=characteristic,
+            last_update=schema.updated_at
         )
 
     class characteristic_formatter:
@@ -331,25 +1240,42 @@ class CharacteristicMessageFormatter:
 
         @staticmethod
         def get_characteristic_text_by_schema(
-                formatter_name: str,
-                # ... accesses for profiles
+                formatter_name: str
         ):
             # [ base ]
             TRAITS_CORE = CharacteristicMessageFormatter.format_traits_core
 
-            DARK_TRIADS = CharacteristicMessageFormatter.format_dark_triads
-            HUMOR_PROFILE = CharacteristicMessageFormatter.format_humor_profile
+            TRIADS = CharacteristicMessageFormatter.format_triads
+
+            HUMOR_PROFILE = CharacteristicMessageFormatter.format_humor
 
             # [ clinical ]
-            # MOOD_DISORDERS = PersonalityMessageFormatter.format_mood_disorders
-            # ...
+            NEURO_DIVERGENCE = CharacteristicMessageFormatter.format_neurodivergence
+            MOOD_DISORDERS = CharacteristicMessageFormatter.format_mood_disorders
+            BPD_DISORDER = CharacteristicMessageFormatter.format_bpd
+            DISSOCIATIVE_DISORDER = CharacteristicMessageFormatter.format_dissociative
+            ANXIETY_DISORDERS = CharacteristicMessageFormatter.format_anxiety_stress
+            LOOKS_DISORDER = CharacteristicMessageFormatter.format_body_image_eating
 
             match formatter_name:
-                case "basic":
+                case CharacteristicGroups.BASIC:
                     return TRAITS_CORE
 
-                case DarkTriadsSchema.__name__:
-                    return DARK_TRIADS
+                case CharacteristicGroups.TRIADS:
+                    return TRIADS
 
-                case HumorProfileSchema.__name__:
+                case CharacteristicGroups.HUMOR:
                     return HUMOR_PROFILE
+
+                case CharacteristicGroups.NEURO:
+                    return NEURO_DIVERGENCE
+                case CharacteristicGroups.MOOD_DISORDERS:
+                    return MOOD_DISORDERS
+                case CharacteristicGroups.BPD:
+                    return BPD_DISORDER
+                case CharacteristicGroups.DISSOCIATIVE_DISORDER:
+                    return DISSOCIATIVE_DISORDER
+                case CharacteristicGroups.ANXIETY:
+                    return ANXIETY_DISORDERS
+                case CharacteristicGroups.LOOKS:
+                    return LOOKS_DISORDER

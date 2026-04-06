@@ -1,6 +1,7 @@
 from aiogram.filters.callback_data import CallbackData
 
 from src.core.enums.user import GENDER
+from src.core.lexicon.typifications import TypificationPack
 
 
 # [ START ]
@@ -18,6 +19,10 @@ class SurveyAnswerCallback(CallbackData, prefix="surv_ans"):
 class GetCharacteristicCallback(CallbackData, prefix="get_char"):
     characteristic_name: str | None = None
     characteristic_group: str | None = None
+
+
+class GetClinicalListingCallback(CallbackData, prefix="get_clinical"):
+    pass
 
 
 class GetPersonalityCallback(CallbackData, prefix="get_persn"):
@@ -55,3 +60,37 @@ class DiaryGetCallback(CallbackData, prefix="diary_get"):
     page: int | None
     diaries_count: int  # количество записей
     current_diary: int | None = None  # текущая запись в нумерации
+
+
+# [ ТИПИРОВАНИЕ ]
+
+class TypificationListingCallback(CallbackData, prefix="typification_listing"):
+    """Листинг типирований"""
+    pass
+
+
+class ReturnToCharacteristicListingAfterTypificationPassedCallback(CallbackData, prefix="listing_after_typif"):
+    """Возврат к листингу полученных характеристик после типирования"""
+    typification_name: TypificationPack
+
+
+class TypificationCallback(CallbackData, prefix="typification_start"):
+    """После кнопки с выбором типирования"""
+    question_index: str | None = None  # индекс вопроса
+    question_pack: TypificationPack
+    is_passed: bool
+
+
+class TypificationAlreadyPassedCallback(CallbackData, prefix="typification_passed"):
+    """типификация уже пройдена"""
+    pass
+
+
+class TypificationEndOnMidCallback(CallbackData, prefix="typification_end_on_mid"):
+    """закончить на середине тест"""
+    pass
+
+
+class DeleteTypificationCallback(CallbackData, prefix="typification_delete_progress"):
+    """удалить прогресс типификации"""
+    pass

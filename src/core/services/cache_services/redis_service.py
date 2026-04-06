@@ -52,6 +52,24 @@ class RedisService:
         await self.redis.lpush(key, json.dumps(msg))  # добавляем слева
         await self.redis.ltrim(key, 0, 49)  # храним максимум 50 сообщений
 
+    # [ TYPIFICATION MESSAGES ]
+    async def get_typification_answers(self, tg_id: str, typification_key: str) -> list[str]:
+        """Возвращает список ответов"""
+        key = f"typification:{tg_id}:{typification_key}"
+        answers = await self.redis.lrange(key, 0, -1)
+        return [answer.decode() if isinstance(answer, bytes) else answer for answer in answers]
+
+    async def add_typification_answer(self, tg_id: str, typification_key: str, answer: str):
+        """Добавляет ответ пользователя"""
+        key = f"typification:{tg_id}:{typification_key}"
+        answer = answer[:1000]
+        await self.redis.rpush(key, answer)  # добавляем в конец (чтобы порядок сохранялся)
+
+    async def clear_typification_answers(self, tg_id: str, typification_key: str):
+        """Очищает ответы"""
+        key = f"typification:{tg_id}:{typification_key}"
+        await self.redis.delete(key)
+
     # [ GETTERS ]
     async def get_diary(self, telegram_id: str) -> list[DiarySchema] | None:
         redis_key = self._get_diary_key(telegram_id)

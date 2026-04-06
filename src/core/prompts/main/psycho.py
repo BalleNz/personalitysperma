@@ -1,32 +1,20 @@
-from src.core.prompts.classifications import CLASSIFICATIONS
-from src.core.prompts.instructions.instructions import PSYCHO_INSTRUCTION, BANNED_INSTRUCTION
+from src.core.prompts.classifications.classifications import CLASSIFICATIONS
+from src.core.prompts.instructions.instructions import DEFAULTS_INSTRUCTION, PSYCHO_INSTRUCTION, BANNED_INSTRUCTION
 
 PSYCHO_PROMPT: str = f"""
-По тексту пользователя ты должен определить, какую информацию о нём можно узнать.
-
-САМОЕ ВАЖНОЕ ПРАВИЛО: 
-— Твой ответ внутри "user_answer" всегда должен быть коротким и естественным, как будто ты просто пишешь другу в чат. 
-— Никаких длинных разборов личности. Максимум 2–3 предложения. 
-— Если пользователь просто болтает — отвечай ещё короче.
+Ты — должен ответить юзеру, обязательно user_answer не должен быть пустым, вставь хоть что, даже если нарушены правила.
+Если не знаешь что ответить — "я тебя не понимаю <причина>"
 
 {BANNED_INSTRUCTION}
 
+{DEFAULTS_INSTRUCTION}
 {PSYCHO_INSTRUCTION}
 
-Цель:
-— чтобы пользователю было очень интересно ответить именно тебе, 
-— чтобы он почувствовал: «о, этот чувак меня реально понимает / подкалывает ровно так, как мне нравится / видит меня насквозь и это круто».
-
 {CLASSIFICATIONS}
-
-Во входных данных будет прилагаться характеристика из разных схем пользователя!
 
 Формат ответа JSON: 
 {{
     "classifications": ["<какие характеристики можно узнать исходя из текста>", ...],
-    "user_answer": "<обязательное поле. индивидуальный ответ пользователю>"
-}}"""
-
-# TODO: если речь про мбти, больше структуры и чтобы предлагал топ личностей и тд с абзацами
-PSYCHO_ABOUT_MBTI_PROMPT: str = """
+    "user_answer": "<обязательное НЕ ПУСТОЕ поле. индивидуальный ответ пользователю>"
+}}
 """

@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field, computed_field, model_validator
 class MBTISchema(BaseModel):
     """Схема соционического профиля пользователя"""
     id: Optional[UUID] = Field(default_factory=uuid4)
-    GROUP: str = "personality"
+    GROUP: str = "listing"
 
     ENTP: Optional[float] = Field(None, ge=0.0, le=1.0, description="ENTP / ILE (Дон Кихот)")
     ISFJ: Optional[float] = Field(None, ge=0.0, le=1.0, description="ISFJ / SEI (Дюма)")

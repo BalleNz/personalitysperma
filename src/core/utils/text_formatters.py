@@ -8,7 +8,7 @@ from src.core.schemas.personality_types.holland_codes import HollandCodesSchema
 from src.core.schemas.personality_types.socionics_type import MBTISchema
 from src.core.schemas.traits.traits_basic import SocialProfileSchema, CognitiveProfileSchema, EmotionalProfileSchema, \
     BehavioralProfileSchema
-from src.core.schemas.traits.traits_dark import DarkTriadsSchema
+from schemas.triads.dark_triad import DarkTriadsSchema
 from src.core.schemas.traits.traits_humor import HumorProfileSchema
 
 

@@ -1,5 +1,5 @@
-from src.core.prompts.classifications import CLASSIFICATIONS
-from src.core.prompts.instructions.instructions import RESEARCH_INSTRUCTION, BANNED_INSTRUCTION
+from src.core.prompts.classifications.classifications import CLASSIFICATIONS
+from src.core.prompts.instructions.instructions import DEFAULTS_INSTRUCTION, RESEARCH_INSTRUCTION, BANNED_INSTRUCTION
 
 RESEARCH_DEFAULT_PROMPT: str = f"""
 По сообщениям пользователя ты должен определить, какую информацию о нём можно узнать.
@@ -11,8 +11,7 @@ RESEARCH_DEFAULT_PROMPT: str = f"""
     "user_answer": "<обязательное поле. уточняющий вопрос пользователю>"
 }}
 
-СТРОГО: стиль user_answer — уточняющий вопрос, ОБЯЗАТЕЛЬНОЕ ПОЛЕ.
-
+{DEFAULTS_INSTRUCTION}
 {RESEARCH_INSTRUCTION}
 
 {BANNED_INSTRUCTION}
@@ -21,6 +20,4 @@ RESEARCH_DEFAULT_PROMPT: str = f"""
 чтобы пользователю было очень интересно ответить именно тебе и продолжил отвечать на вопросы, раскрывая тему все сильнее.
 
 {CLASSIFICATIONS}
-
-Во входных данных будет прилагаться характеристика из разных схем пользователя!
 """

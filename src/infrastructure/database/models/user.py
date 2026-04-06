@@ -9,7 +9,7 @@ from src.infrastructure.database.models.base import IDMixin, TimestampsMixin, S
 from src.infrastructure.database.models.basic_profiles.traits_basic import SocialProfile, BehavioralProfile, \
     EmotionalProfile, \
     CognitiveProfile
-from src.infrastructure.database.models.basic_profiles.traits_dark import DarkTriads
+from database.models.triads.dark_triad import DarkTriads
 from src.infrastructure.database.models.basic_profiles.traits_humor import HumorProfile
 from src.infrastructure.database.models.clinical_disorders.anxiety.gdr import GDRDisorder
 from src.infrastructure.database.models.clinical_disorders.anxiety.panic import PanicDisorder
@@ -18,15 +18,20 @@ from src.infrastructure.database.models.clinical_disorders.mood_disorders.bipola
 from src.infrastructure.database.models.clinical_disorders.mood_disorders.depression import DepressionDisorder
 from src.infrastructure.database.models.clinical_disorders.neuro_disorders.adhd import ADHDDisorder
 from src.infrastructure.database.models.clinical_disorders.neuro_disorders.autism import AutismDisorder
-from src.infrastructure.database.models.clinical_disorders.neuro_disorders.dissociative import DissociativeDisorder
+from database.models.clinical_disorders.personality_disorders.dissociative import DissociativeDisorder
 from src.infrastructure.database.models.clinical_disorders.neuro_disorders.eating_disorders import EatingDisorder
 from src.infrastructure.database.models.clinical_disorders.neuro_disorders.looks_disorder import LooksDisorder
-from src.infrastructure.database.models.clinical_disorders.personality_disorders.bpd import BPDDisorder
+from database.models.clinical_disorders.mood_disorders.bpd import BPDDisorder
 from src.infrastructure.database.models.diary import UserDiary
 from src.infrastructure.database.models.personality_types.hexaco import UserHexaco
 from src.infrastructure.database.models.personality_types.holland_codes import UserHollandCodes
 from src.infrastructure.database.models.personality_types.socionics import UserSocionics
 
+TALKING_MODES_SQL = Enum(
+    TALKING_MODES,
+    name="talking_modes",
+    values_callable=lambda obj: [e.value for e in obj]
+)
 
 GENDER_SQL = Enum(
     GENDER,
@@ -43,7 +48,14 @@ class User(IDMixin, TimestampsMixin):
     first_name: Mapped[str | None] = mapped_column(String, comment="first name")
     last_name: Mapped[str | None] = mapped_column(String, comment="last name")
 
+    # [ SETTINGS ]
+
     real_name: Mapped[str | None] = mapped_column(String, comment="реальное имя")
+    talk_mode: Mapped[str] = mapped_column(
+        TALKING_MODES_SQL,
+        comment="режим общения",
+        server_default=TALKING_MODES.RESEARCH.value
+    )
 
     # [ ACCESSES ]
     used_voice_messages: Mapped[int] = mapped_column(
@@ -220,7 +232,7 @@ class User(IDMixin, TimestampsMixin):
         passive_deletes=True,
     )
 
-    # [ personality ]
+    # [ listing ]
     bpd_disorder: Mapped["BPDDisorder | None"] = relationship(
         BPDDisorder, back_populates="user", uselist=False,
         cascade="all, delete-orphan",

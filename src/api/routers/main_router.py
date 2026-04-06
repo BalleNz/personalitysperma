@@ -1,21 +1,21 @@
 import logging
-import random
 from typing import Annotated, Any, Type
 
 from fastapi import APIRouter, Depends, Header, BackgroundTasks, HTTPException
 from starlette import status
 
-from lexicon import MBTI_PROMPT, get_humor_profile_instruction, get_dark_triads_instruction
-from prompts.main.main.psycho import PSYCHO_PROMPT
-from prompts.main.main.research.default import RESEARCH_DEFAULT_PROMPT
-from prompts.main.main.research.survey import SURVEY_PROMPT, TO_LEARN_SURVEY_FINISH
 from src.api.request_schemas.check_in import CheckInRequest
 from src.api.request_schemas.survey import ResearchSurveyFinishRequest
 from src.api.response_schemas.characteristic import CharacteristicResponseRaw
 from src.api.response_schemas.check_in import CheckInResponse, AssistantResponse
 from src.api.response_schemas.survey import ResearchSurveyFinishResponse
 from src.api.utils.auth import get_auth_user
-from src.core.enums.user import TALKING_MODES
+from src.core.enums.user import GENDER, TALKING_MODES_CHECK_IN, TALKING_MODES
+from src.core.lexicon.instructions_prompt import get_dark_triads_instruction, get_humor_profile_instruction, MBTI_PROMPT
+from src.core.prompts.generation.survey import SURVEY_PROMPT, TO_LEARN_SURVEY_FINISH
+from src.core.prompts.main.long import LONG_PROMPT
+from src.core.prompts.main.psycho import PSYCHO_PROMPT
+from src.core.prompts.main.research import RESEARCH_DEFAULT_PROMPT
 from src.core.schemas.user_schemas import UserSchema
 from src.core.services.assistant_service import AssistantService
 from src.core.services.cache_services.cache_service import CacheService
@@ -67,19 +67,20 @@ async def check_in(
     critical_profiles, mbti_prompt = await get_critical_profiles_to_assistant(
         all_chars=all_chars,
         characteristics_name=check_in_response.characteristics_list,
-        real_name=user.real_name
+        real_name=user.real_name,
+        gender=user.gender
     )
 
     prompt: str = ""
     match check_in_response.talk_mode:
-        case TALKING_MODES.RESEARCH:
-            i = random.randint(0, 3)
-            if i > 2:
-                prompt = mbti_prompt + SURVEY_PROMPT
-            else:
-                prompt = mbti_prompt + RESEARCH_DEFAULT_PROMPT
-        case TALKING_MODES.INDIVIDUAL_PSYCHO:
+        case TALKING_MODES_CHECK_IN.RESEARCH:
+            prompt = mbti_prompt + RESEARCH_DEFAULT_PROMPT
+        case TALKING_MODES_CHECK_IN.SURVEY:
+            prompt = mbti_prompt + SURVEY_PROMPT
+        case TALKING_MODES_CHECK_IN.INDIVIDUAL_PSYCHO:
             prompt = mbti_prompt + PSYCHO_PROMPT
+        case TALKING_MODES_CHECK_IN.LONG:
+            prompt = mbti_prompt + LONG_PROMPT
 
     response: AssistantResponse | None = await assistant_service.get_shiza_response(
         user_message=request.message,
@@ -109,7 +110,7 @@ async def check_in(
             telegram_service=telegram_service,
             access_token=access_token,
             assistant_service=assistant_service,
-            talk_mode=check_in_response.talk_mode,
+            talk_mode=user.talk_mode,
             user_service=user_service
         )
 
@@ -156,7 +157,8 @@ async def research_survey_finish(
 async def get_critical_profiles_to_assistant(
         all_chars: list[CharacteristicResponseRaw],
         characteristics_name: list[str],
-        real_name: str | None = None
+        real_name: str | None = None,
+        gender: GENDER | None = None
 ) -> tuple[str, str]:
     """
         Возвращает:
@@ -171,7 +173,7 @@ async def get_critical_profiles_to_assistant(
         critical_schemas.add(name)
 
     critical_characteristics: dict[str, dict[str, Any]] = {}
-    mbti_prompt_parts: list[str] = []
+    prompt_parts: list[str] = []
 
     if not all_chars:
         return "", ""
@@ -181,13 +183,20 @@ async def get_critical_profiles_to_assistant(
         for schema in all_chars
     }
 
-    # [ о юзере ]
+    # [ ОПИСАНИЕ ЮЗЕРА ]
+    # TODO: вынести в отдельную функцию get_prompt_parts(dark_triads, humor_profile, real_name, gender)
     if "MBTISchema" in all_chars_dict:
         schema_instance = all_chars_dict["MBTISchema"]
-        mbti_prompt_parts.append("О пользователе:\n")
-        mbti_prompt_parts.append(MBTI_PROMPT[schema_instance.primary_type])
+
+        prompt_parts.append("О пользователе:\n")
+        prompt_parts.append(MBTI_PROMPT[schema_instance.primary_type])
+
         if real_name:
-            mbti_prompt_parts.append(f"Пользователя зовут: {real_name}")
+            prompt_parts.append(f"Пользователя зовут: {real_name}")
+
+        if gender:
+            # TODO: get_gender_text(gender)
+            ...
 
     # [ стиль общения ]
     style_instructions: list[str] = []
@@ -200,8 +209,8 @@ async def get_critical_profiles_to_assistant(
         if dark_text:
             style_instructions.append(dark_text)
     if style_instructions:
-        mbti_prompt_parts.append("\nКак нужно разговаривать с пользователем:\n")
-        mbti_prompt_parts.extend(style_instructions)
+        prompt_parts.append("\nКак нужно разговаривать с пользователем:\n")
+        prompt_parts.extend(style_instructions)
 
     for schema_name in critical_schemas:
         if schema_name in all_chars_dict and schema_name not in ["MBTISchema", "HumorProfileSchema",
@@ -213,7 +222,7 @@ async def get_critical_profiles_to_assistant(
 
     text: str = clean_characteristics_json(critical_characteristics)
 
-    mbti_prompt = "".join(mbti_prompt_parts).strip()
+    mbti_prompt = "".join(prompt_parts).strip()
     return text, mbti_prompt
 
 

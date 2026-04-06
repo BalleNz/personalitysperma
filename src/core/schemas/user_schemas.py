@@ -4,7 +4,7 @@ from uuid import UUID
 
 from pydantic import Field, BaseModel
 
-from src.core.enums.user import GENDER
+from src.core.enums.user import GENDER, TALKING_MODES
 from src.core.schemas.clinical_disorders.anxiety.gdr import GDRSchema
 from src.core.schemas.clinical_disorders.anxiety.panic import PanicSchema
 from src.core.schemas.clinical_disorders.anxiety.ptsd import PTSDSchema
@@ -23,7 +23,7 @@ from src.core.schemas.personality_types.socionics_type import MBTISchema
 from src.core.schemas.traits.traits_basic import BehavioralProfileSchema, EmotionalProfileSchema, \
     CognitiveProfileSchema, \
     SocialProfileSchema
-from src.core.schemas.traits.traits_dark import DarkTriadsSchema
+from schemas.triads.dark_triad import DarkTriadsSchema
 from src.core.schemas.traits.traits_humor import HumorProfileSchema
 
 
@@ -47,13 +47,39 @@ class UserSchema(BaseModel):
     last_name: Optional[str] = Field(None, description="Фамилия пользователя")
     age: int | None = Field(None, description="приблизительный возраст пользователя")
 
+    # [ settings ]
+    talk_mode: TALKING_MODES = Field(..., description="режим общения")
     real_name: Optional[str] = Field(None, description="Имя пользователя")
 
     gender: GENDER = Field(..., description="пол")
-    passed_typing: bool = Field(..., description="прошел типирование или не")
+
+    # [ typifications ]
+    passed_personality_core: bool = Field(
+        default=False,
+        description="Прошёл ли Личность (HEXACO + Basic Traits + Dark Triads + Humor + Socionics)"
+    )
+    passed_holland: bool = Field(
+        default=False,
+        description="Прошёл ли Карьера (Holland Codes)"
+    )
+    passed_neurodiversity: bool = Field(
+        default=False,
+        description="Прошёл ли Нейроразнообразие (аутизм + СДВГ + диссоциативные черты)"
+    )
+    passed_mood_anxiety: bool = Field(
+        default=False,
+        description="Прошёл ли Беспокойство (депрессия, биполярка, ГТР, паника, ПТСР, ПРЛ)"
+    )
+    passed_body_image_eating: bool = Field(
+        default=False,
+        description="Прошёл ли Недовольство внешностью (дисморфофобия + пищевое поведение)"
+    )
+    passed_sex_romance: bool = Field(
+        default=False,
+        description="Прошёл ли Предпочтения в сексе"
+    )
 
     # [ charges ]
-
     used_voice_messages: int = Field(..., description="количество бесплатных голосовых")
     full_access: int | bool = Field(..., description="полный доступ")
 
@@ -80,7 +106,7 @@ class UserSchema(BaseModel):
     # [ traits humore ]
     humor_profile: Optional[HumorProfileSchema] = None
 
-    # [ personality types ]
+    # [ listing types ]
     socionics: Optional[MBTISchema] = None
     holland_codes: Optional[HollandCodesSchema] = None
     hexaco: Optional[HexacoSchema] = None
@@ -102,4 +128,5 @@ class UserSchema(BaseModel):
     # TODO:
     #   love_language: Optional[LoveLanguageSchema] = None
     #   sexual_preference: Optional[SexualPreferenceSchema] = None
+    #   ERO_ZONES !!!
     #   relationship_preference: Optional[RelationshipPreferenceSchema] = None
