@@ -9,23 +9,24 @@ from src.infrastructure.database.models.base import IDMixin, TimestampsMixin, S
 from src.infrastructure.database.models.basic_profiles.traits_basic import SocialProfile, BehavioralProfile, \
     EmotionalProfile, \
     CognitiveProfile
-from database.models.triads.dark_triad import DarkTriads
 from src.infrastructure.database.models.basic_profiles.traits_humor import HumorProfile
 from src.infrastructure.database.models.clinical_disorders.anxiety.gdr import GDRDisorder
 from src.infrastructure.database.models.clinical_disorders.anxiety.panic import PanicDisorder
 from src.infrastructure.database.models.clinical_disorders.anxiety.ptsd import PTSDDisorder
 from src.infrastructure.database.models.clinical_disorders.mood_disorders.bipolar import BipolarDisorder
+from src.infrastructure.database.models.clinical_disorders.mood_disorders.bpd import BPDDisorder
 from src.infrastructure.database.models.clinical_disorders.mood_disorders.depression import DepressionDisorder
 from src.infrastructure.database.models.clinical_disorders.neuro_disorders.adhd import ADHDDisorder
 from src.infrastructure.database.models.clinical_disorders.neuro_disorders.autism import AutismDisorder
-from database.models.clinical_disorders.personality_disorders.dissociative import DissociativeDisorder
 from src.infrastructure.database.models.clinical_disorders.neuro_disorders.eating_disorders import EatingDisorder
 from src.infrastructure.database.models.clinical_disorders.neuro_disorders.looks_disorder import LooksDisorder
-from database.models.clinical_disorders.mood_disorders.bpd import BPDDisorder
+from src.infrastructure.database.models.clinical_disorders.personality_disorders.dissociative import \
+    DissociativeDisorder
 from src.infrastructure.database.models.diary import UserDiary
 from src.infrastructure.database.models.personality_types.hexaco import UserHexaco
 from src.infrastructure.database.models.personality_types.holland_codes import UserHollandCodes
 from src.infrastructure.database.models.personality_types.socionics import UserSocionics
+from src.infrastructure.database.models.triads.dark_triad import DarkTriads
 
 TALKING_MODES_SQL = Enum(
     TALKING_MODES,
@@ -72,50 +73,55 @@ class User(IDMixin, TimestampsMixin):
         comment="полный доступ: безлимит гс, базовая характеристика"
     )
 
-    # [ Quizzes, tests ]
-
-    passed_typing: Mapped[bool] = mapped_column(
+    # [ TYPIFICATION ]
+    passed_personality_core: Mapped[bool] = mapped_column(
         Boolean,
         default=False,
         nullable=False,
         server_default=text("false"),
-        comment="типирование пройдено"
+        comment="типирование personality_core пройдено"
     )
-
-    dark_triads_full: Mapped[bool] = mapped_column(
+    passed_holland: Mapped[bool] = mapped_column(
         Boolean,
         default=False,
         nullable=False,
         server_default=text("false"),
-        comment="тёмная триада"
-    )  # TODO: сделать туда еще светлую триаду
-    humor_access: Mapped[bool] = mapped_column(
-        Boolean,
-        default=False,
-        nullable=False,
-        server_default=text("false"),
-        comment="базовая характеристика доступ"
+        comment="типирование holland пройдено"
     )
-    clinical_access: Mapped[bool] = mapped_column(
+    passed_neurodiversity: Mapped[bool] = mapped_column(
         Boolean,
         default=False,
         nullable=False,
         server_default=text("false"),
-        comment="клиническая характеристика доступ"
+        comment="типирование neurodiversity пройдено"
     )
-    love_access: Mapped[bool] = mapped_column(
+    passed_mood_anxiety: Mapped[bool] = mapped_column(
         Boolean,
         default=False,
         nullable=False,
         server_default=text("false"),
-        comment="романтические предпочтения доступ"
+        comment="типирование mood_anxiety пройдено"
+    )
+    passed_body_image_eating: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        nullable=False,
+        server_default=text("false"),
+        comment="типирование body_image_eating пройдено"
+    )
+    passed_sex_romance: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        nullable=False,
+        server_default=text("false"),
+        comment="типирование sex_romance пройдено"
     )
 
     # [ INFO ]
     gender: Mapped[str] = mapped_column(
         GENDER_SQL,
-        comment="gender",
-        server_default=GENDER.MALE.value
+        comment="гендер",
+        server_default=GENDER.NON_BINARY.value
     )
     age: Mapped[int | None] = mapped_column(Integer, comment="возраст (предугадывает нейронка)")
 

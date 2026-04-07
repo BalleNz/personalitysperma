@@ -1,22 +1,37 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-from lexicon.button_text import ButtonText
-from src.bot.callbacks.callbacks import GetPersonalityCallback, GetCharacteristicCallback, DeleteTypificationCallback, \
-    TypificationEndOnMidCallback, TypificationCallback
-from src.bot.message_formatters.characteristic_formatters import CharacteristicGroups, CharacteristicGroup_To_ButtonText
+from src.bot.callbacks.callbacks import TypificationPreRollCallback, \
+    ReturnToCharacteristicListingAfterTypificationPassedCallback, GetPersonalityCallback, GetCharacteristicCallback, \
+    DeleteTypificationCallback, TypificationEndOnMidCallback, TypificationCallback
+from src.bot.lexicon.button_text import ButtonText
+from src.bot.message_formatters.characteristic_formatters import CharacteristicGroup_To_ButtonText
 from src.core.lexicon.typifications import TypificationPack
 from src.core.schemas.user_schemas import UserSchema
 
 
-def get_typification_start_keyboard(user: UserSchema) -> InlineKeyboardMarkup | None:
+def get_return_to_listing_after_typification_keyboard(typification_name: TypificationPack) -> InlineKeyboardMarkup:
+    """возврат в листинг характеристик после типирования"""
+    return InlineKeyboardMarkup(
+        inline_keyboard=[[
+            InlineKeyboardButton(
+                text=ButtonText.ARROW_LEFT,
+                callback_data=ReturnToCharacteristicListingAfterTypificationPassedCallback(
+                    typification_name=typification_name
+                ).pack()
+            )
+        ]]
+    )
+
+
+def get_typification_PERSONALITY_CORE_preroll_keyboard(user: UserSchema) -> InlineKeyboardMarkup | None:
     """Пройти первое типирование"""
     if not user.passed_personality_core:
         return InlineKeyboardMarkup(
             inline_keyboard=[[
                 InlineKeyboardButton(
                     text="пройти базовое типирование",
-                    callback_data=TypificationCallback(
-                        question_pack=TypificationPack.PERSONALITY_CORE,
+                    callback_data=TypificationPreRollCallback(
+                        typification_name=TypificationPack.PERSONALITY_CORE,
                         is_passed=False
                     ).pack()
                 )
@@ -25,9 +40,25 @@ def get_typification_start_keyboard(user: UserSchema) -> InlineKeyboardMarkup | 
     return None
 
 
+def get_typification_start_keyboard(
+        typification_name: TypificationPack
+) -> InlineKeyboardMarkup:
+    """ВО ВРЕМЯ ПРЕРОЛЛА"""
+    return InlineKeyboardMarkup(
+        inline_keyboard=[[
+            InlineKeyboardButton(
+                text="начать типирование",
+                callback_data=TypificationCallback(
+                    typification_name=typification_name,
+                    is_passed=False
+                ).pack()
+            )
+        ]]
+    )
+
+
 def get_typification_listing_keyboard(user: UserSchema) -> InlineKeyboardMarkup:
     """Генерирует кнопки с актуальным статусом и стилем"""
-
     passed = {
         TypificationPack.PERSONALITY_CORE: user.passed_personality_core,
         TypificationPack.CAREER_HOLLAND: user.passed_holland,
@@ -52,29 +83,35 @@ def get_typification_listing_keyboard(user: UserSchema) -> InlineKeyboardMarkup:
         style = "success" if is_passed else "danger"
 
         buttons.append(
-            InlineKeyboardButton(
-                text=text,
-                callback_data=TypificationCallback(
-                    question_pack=pack,
-                    is_passed=is_passed
-                ).pack(),
-                style=style,
-                icon_custom_emoji_id="5213134259098761044" if pack == TypificationPack.SEX else None
-            )
+            [
+                InlineKeyboardButton(
+                    text=text,
+                    callback_data=TypificationPreRollCallback(
+                        typification_name=pack,
+                        is_passed=is_passed
+                    ).pack(),
+                    style=style,
+                    icon_custom_emoji_id="5213134259098761044" if pack == TypificationPack.SEX else None
+                )
+            ]
         )
 
     return InlineKeyboardMarkup(
-        inline_keyboard=[buttons]
+        inline_keyboard=buttons
     )
 
 
-def get_typification_delete_progress_keyboard() -> InlineKeyboardMarkup:
+def get_typification_delete_progress_keyboard(
+        typification_pack_name: TypificationPack
+) -> InlineKeyboardMarkup:
     """Удалить прогресс типирования"""
     return InlineKeyboardMarkup(
         inline_keyboard=[[
             InlineKeyboardButton(
                 text="удалить прогресс :#",
-                callback_data=DeleteTypificationCallback().pack()
+                callback_data=DeleteTypificationCallback(
+                    typification_name=typification_pack_name
+                ).pack()
             )
         ]]
     )
@@ -118,8 +155,7 @@ def get_characteristics_list_after_typification_end_keyboard(
             InlineKeyboardButton(
                 text=text,
                 callback_data=GetCharacteristicCallback(
-                    characteristic_name=characteristic_group if characteristic_group not in CharacteristicGroups else None,
-                    characteristic_group=characteristic_group if characteristic_group in CharacteristicGroups else None
+                    characteristic_group=characteristic_group
                 ).pack()
             )
         )

@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional
 from uuid import UUID, uuid4
 
@@ -148,6 +149,9 @@ class HumorProfileSchema(BaseModel):
         description="Количество записей"
     )
 
+    created_at: datetime | None = Field(...)
+    updated_at: datetime | None = Field(...)
+
     @computed_field
     @property
     def accuracy_percent(self) -> float:
@@ -166,7 +170,6 @@ class HumorProfileSchema(BaseModel):
             # при 50 записях: 78%
             margin = 1.5081 / (records_count ** 0.5)
             return 1 - margin
-
 
     @computed_field
     @property

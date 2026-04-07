@@ -44,7 +44,6 @@ class SexualPreference(IDMixin):
 
     ...
 
-    gender: Mapped[str] = mapped_column(Enum(...))  # TODO: Enum
     orientation: Mapped[str] = mapped_column(Enum(...))
 
     # TODO: подумать об объединении с UserLoveLanguage

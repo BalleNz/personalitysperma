@@ -23,8 +23,8 @@ from src.core.schemas.personality_types.socionics_type import MBTISchema
 from src.core.schemas.traits.traits_basic import BehavioralProfileSchema, EmotionalProfileSchema, \
     CognitiveProfileSchema, \
     SocialProfileSchema
-from schemas.triads.dark_triad import DarkTriadsSchema
 from src.core.schemas.traits.traits_humor import HumorProfileSchema
+from src.core.schemas.triads.dark_triad import DarkTriadsSchema
 
 
 class UserTelegramDataSchema(BaseModel):

@@ -2,11 +2,27 @@ import logging
 from typing import Optional, Any
 
 from src.api.response_schemas.characteristic import GetAllCharacteristicResponse
+from src.core.schemas.clinical_disorders.anxiety.gdr import GDRSchema
+from src.core.schemas.clinical_disorders.anxiety.panic import PanicSchema
+from src.core.schemas.clinical_disorders.anxiety.ptsd import PTSDSchema
+from src.core.schemas.clinical_disorders.mood_disorders.bipolar import BipolarDisorderSchema
+from src.core.schemas.clinical_disorders.mood_disorders.depression import DepressionDisorderSchema
+from src.core.schemas.clinical_disorders.neuro_disorders.adhd import ADHDSchema
+from src.core.schemas.clinical_disorders.neuro_disorders.autism import AutismSchema
+from src.core.schemas.clinical_disorders.neuro_disorders.dissociative import DissociativeSchema
+from src.core.schemas.clinical_disorders.neuro_disorders.eating import EatingSchema
+from src.core.schemas.clinical_disorders.neuro_disorders.looks_disorder import LooksSchema
+from src.core.schemas.clinical_disorders.personality_disorders.bpd import BPDSchema
 from src.core.schemas.diary_schema import DiarySchema
+from src.core.schemas.personality_types.hexaco import HexacoSchema
+from src.core.schemas.personality_types.holland_codes import HollandCodesSchema
 from src.core.schemas.personality_types.socionics_type import MBTISchema
 from src.core.schemas.traits.traits_basic import EmotionalProfileSchema, BehavioralProfileSchema, \
     CognitiveProfileSchema, \
     SocialProfileSchema
+from src.core.schemas.traits.traits_humor import HumorProfileSchema
+from src.core.schemas.triads.dark_triad import DarkTriadsSchema
+from src.core.schemas.triads.light_triad import LightTriadsSchema
 from src.core.schemas.user_schemas import UserSchema, UserTelegramDataSchema
 from src.core.services.api_client.personalityGPT_api import PersonalityGPT_APIClient
 from src.core.services.cache_services.redis_service import RedisService
@@ -21,7 +37,36 @@ GROUP_REGISTRY: dict[str, list[type[S]]] = {
         EmotionalProfileSchema,
         BehavioralProfileSchema,
     ],
-    # ...
+    "humor": [
+        HumorProfileSchema
+    ],
+    "triads": [
+        DarkTriadsSchema,
+        LightTriadsSchema
+    ],
+    "neuro": [
+        AutismSchema,
+        ADHDSchema
+    ],
+    "mood_disorders": [
+        DepressionDisorderSchema,
+        BipolarDisorderSchema
+    ],
+    "bpd": [
+        BPDSchema
+    ],
+    "dissociative": [
+        DissociativeSchema
+    ],
+    "anxiety": [
+        PTSDSchema,
+        PanicSchema,
+        GDRSchema
+    ],
+    "looks": [
+        LooksSchema,
+        EatingSchema
+    ]
 }
 
 SCHEMA_REGISTRY = {
@@ -31,7 +76,24 @@ SCHEMA_REGISTRY = {
     "BehavioralProfileSchema": BehavioralProfileSchema,
 
     "MBTISchema": MBTISchema,
-    # TODO
+    "HollandCodesSchema": HollandCodesSchema,
+    "HexacoSchema": HexacoSchema,
+
+    "HumorProfileSchema": HumorProfileSchema,
+    "DarkTriadsSchema": DarkTriadsSchema,
+    "LightTriadsSchema": LightTriadsSchema,
+
+    "AutismSchema": AutismSchema,
+    "ADHDSchema": ADHDSchema,
+    "DepressionDisorderSchema": DepressionDisorderSchema,
+    "BipolarDisorderSchema": BipolarDisorderSchema,
+    "BPDSchema": BPDSchema,
+    "DissociativeSchema": DissociativeSchema,
+    "PTSDSchema": PTSDSchema,
+    "PanicSchema": PanicSchema,
+    "GDRSchema": GDRSchema,
+    "LooksSchema": LooksSchema,
+    "EatingSchema": EatingSchema,
 }
 
 
@@ -129,20 +191,20 @@ class CacheService:
             self,
             access_token: str,
             telegram_id: str,
-            characteristic_name: str,
-            group: str | None = None,
+            characteristic_name: str | None = None,
+            characteristic_group: str | None = None,
             expiry: int = 86400 * 7
-    ) -> list[S] | None:
+    ) -> list[S] | list[list[S]] | None:
         """
         Получить две последние характеристики.
         """
-        logger.info(f"Получение профиля типа {characteristic_name} для {telegram_id}")
+        logger.info(f"Получение профиля типа {characteristic_group} для {telegram_id}")
         all_chars = await self.get_all_characteristics(access_token, telegram_id, expiry)
 
-        if group:
-            schemas = GROUP_REGISTRY.get(group, [])
+        if characteristic_group:
+            schemas = GROUP_REGISTRY.get(characteristic_group, [])
             if not schemas:
-                raise ValueError(f"Unknown group: {group}")
+                raise ValueError(f"Unknown group: {characteristic_group}")
             result = []
             for sch_cls in schemas:
                 raw = all_chars.get(sch_cls.__name__)  # две характеристики dict
@@ -191,6 +253,6 @@ class CacheService:
             await self.redis_service.set_diary(telegram_id, entries, expiry)
             return entries
 
-        except Exception as e:
+        except Exception:
             logger.error(f"Ошибка получения дневника {telegram_id}", exc_info=True)
             return None

@@ -17,7 +17,6 @@ class SurveyAnswerCallback(CallbackData, prefix="surv_ans"):
 
 # [ CHARACTERISTICS ]
 class GetCharacteristicCallback(CallbackData, prefix="get_char"):
-    characteristic_name: str | None = None
     characteristic_group: str | None = None
 
 
@@ -63,7 +62,6 @@ class DiaryGetCallback(CallbackData, prefix="diary_get"):
 
 
 # [ ТИПИРОВАНИЕ ]
-
 class TypificationListingCallback(CallbackData, prefix="typification_listing"):
     """Листинг типирований"""
     pass
@@ -74,16 +72,34 @@ class ReturnToCharacteristicListingAfterTypificationPassedCallback(CallbackData,
     typification_name: TypificationPack
 
 
+# [ показывает после типирования ]
+class GetCharacteristicAfterTypificationPassedCallback(CallbackData, prefix="char_after_typif"):
+    characteristic_group: str | None = None
+    typification_name: TypificationPack
+
+
+class GetPersonalityAfterTypificationPassedCallback(CallbackData, prefix="char_after_typif"):
+    characteristic_name: str | None = None
+    typification_name: TypificationPack
+
+
+# [ TYPIFICATION ]
+class TypificationPreRollCallback(CallbackData, prefix="typification_preroll"):
+    typification_name: TypificationPack
+    is_passed: bool
+    from_message: bool = False  # кнопка во время диалога
+
+
 class TypificationCallback(CallbackData, prefix="typification_start"):
     """После кнопки с выбором типирования"""
     question_index: str | None = None  # индекс вопроса
-    question_pack: TypificationPack
+    typification_name: TypificationPack
     is_passed: bool
 
 
 class TypificationAlreadyPassedCallback(CallbackData, prefix="typification_passed"):
     """типификация уже пройдена"""
-    pass
+    typification_name: TypificationPack
 
 
 class TypificationEndOnMidCallback(CallbackData, prefix="typification_end_on_mid"):
@@ -93,4 +109,4 @@ class TypificationEndOnMidCallback(CallbackData, prefix="typification_end_on_mid
 
 class DeleteTypificationCallback(CallbackData, prefix="typification_delete_progress"):
     """удалить прогресс типификации"""
-    pass
+    typification_name: TypificationPack

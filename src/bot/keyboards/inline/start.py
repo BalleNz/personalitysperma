@@ -1,9 +1,7 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-from callbacks.callbacks import GetFullAccessCallback
-from lexicon.mbti import ButtonText
-
-from src.bot.callbacks.callbacks import SelectGenderCallback
+from src.bot.callbacks.callbacks import GetFullAccessCallback, SelectGenderCallback
+from src.bot.lexicon.button_text import ButtonText
 from src.core.enums.user import GENDER
 
 gender_select_keyboard = InlineKeyboardMarkup(

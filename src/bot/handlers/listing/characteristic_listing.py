@@ -3,16 +3,18 @@ from typing import Callable, Any
 from aiogram import Router, F
 from aiogram.types import Message, InlineKeyboardMarkup, CallbackQuery
 
-from src.bot.callbacks.callbacks import GetCharacteristicCallback, BackToListingCharacteristicCallback
+from src.bot.callbacks.callbacks import GetCharacteristicAfterTypificationPassedCallback, GetCharacteristicCallback, \
+    BackToListingCharacteristicCallback
 from src.bot.keyboards.inline.characteristics import get_characteristic_listing_keyboard, \
     back_to_characteristic_listing_keyboard
+from src.bot.keyboards.inline.typification import get_return_to_listing_after_typification_keyboard
 from src.bot.lexicon.button_text import ButtonText
 from src.bot.lexicon.message_text import MessageText
 from src.bot.message_formatters.characteristic_formatters import CharacteristicMessageFormatter
+from src.core.lexicon.typifications import TypificationPack
 from src.core.schemas.user_schemas import UserSchema
 from src.core.services.cache_services.cache_service import CacheService
 from src.infrastructure.database.models.base import S
-from src.infrastructure.database.repository.characteristic_repo import CharacteristicFormat
 
 router = Router()
 
@@ -20,7 +22,7 @@ router = Router()
 async def show_listing(
         message: Message | CallbackQuery,
         user_characteristics: dict[str, dict[str, Any]]
-):
+) -> None:
     keyboard: InlineKeyboardMarkup = get_characteristic_listing_keyboard(
         user_characteristics
     )
@@ -77,43 +79,60 @@ async def characteristic_listing_menu(
 
 
 @router.callback_query(GetCharacteristicCallback.filter())
-async def show_characteristic(
+async def show_characteristic_from_listing(
         callback_query: CallbackQuery,
         callback_data: GetCharacteristicCallback,
         access_token: str,
         cache_service: CacheService
+):
+    """показывает характеристику после обычного листинга"""
+
+    await show_characteristic(
+        callback_query,
+        callback_data,
+        access_token,
+        cache_service
+    )
+
+
+async def show_characteristic(
+        callback_query: CallbackQuery,
+        callback_data: GetCharacteristicCallback | GetCharacteristicAfterTypificationPassedCallback,
+        access_token: str,
+        cache_service: CacheService,
+        from_typification_end_name: TypificationPack = ""
 ):
     """Показывает характеристику"""
     await callback_query.answer()
 
     telegram_id: str = str(callback_query.from_user.id)
 
-    characteristic_name: str | None = callback_data.characteristic_name
-    characteristic_type: type[S] = CharacteristicFormat.get_cls_from_schema_name(characteristic_name)
-
-    # [ if group ]
     characteristic_group: str | None = callback_data.characteristic_group
 
     user: UserSchema = await cache_service.get_user_profile(access_token, telegram_id)
 
-    characteristic: list[S] = await cache_service.get_characteristic_row(
+    characteristics: list[S] | list[list[S]] | None = await cache_service.get_characteristic_row(
         access_token=access_token,
         telegram_id=telegram_id,
-        characteristic_name=characteristic_type,
-        group=characteristic_group
+        characteristic_group=characteristic_group
     )
 
-    characteristic_formatter: Callable[[S], str] = (
+    characteristic_formatter: Callable[[list[list[S]], bool], str] = (
         CharacteristicMessageFormatter.characteristic_formatter.get_characteristic_text_by_schema(
-            formatter_name=characteristic_group or characteristic_type.__name__
+            formatter_name=characteristic_group
         )
     )
 
     full_access: bool = user.full_access
+    text: str = characteristic_formatter(characteristics, full_access)  # сделать чище
 
-    text: str = characteristic_formatter(characteristic, full_access)  # сделать чище
-
-    keyboard: InlineKeyboardMarkup = back_to_characteristic_listing_keyboard
+    keyboard: InlineKeyboardMarkup
+    if not from_typification_end_name:
+        keyboard = back_to_characteristic_listing_keyboard
+    else:
+        keyboard = get_return_to_listing_after_typification_keyboard(
+            typification_name=from_typification_end_name
+        )
 
     await callback_query.message.edit_text(
         text=text,

@@ -6,7 +6,6 @@ from src.bot.lexicon.button_text import ButtonText
 from src.bot.lexicon.message_text import MessageText
 from src.core.enums.user import TALKING_MODES
 from src.core.services.api_client.personalityGPT_api import PersonalityGPT_APIClient
-from src.core.services.cache_services.cache_service import CacheService
 
 router = Router()
 
@@ -15,7 +14,6 @@ router = Router()
 async def select_mode_from_reply(
         message: Message,
         access_token: str,
-        cache_service: CacheService,
         api_client: PersonalityGPT_APIClient
 ):
     """ВЫБОР РЕЖИМА

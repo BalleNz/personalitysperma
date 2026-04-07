@@ -10,16 +10,14 @@ from openai import AsyncOpenAI, NOT_GIVEN, NotGiven
 from pydantic import ValidationError
 from starlette import status
 
-from lexicon.typifications import TypificationPack
-from request_schemas.typification import TypificationAssistantRequest
 from src.api.response_schemas.check_in import CheckInResponse, AssistantResponse
 from src.api.response_schemas.survey import ResearchSurveyFinishResponse
 from src.core.prompts.check_in import CHECK_IN_PROMPT
 from src.core.prompts.funcs.diary import GET_SUMMARY_LOG_FROM_DAILY_LOGS
 from src.core.prompts.funcs.extract_name import EXTRACT_NAME_PROMPT
-from prompts.generation.generation import GENERATE_CHARACTERISTIC_PROMPT
 from src.core.prompts.funcs.telegram import TELEGRAM_CHARACTERISTIC_DIFF
-from prompts.main.psycho import PSYCHO_PROMPT
+from src.core.prompts.generation.generation import GENERATE_CHARACTERISTIC_PROMPT
+from src.core.prompts.main.psycho import PSYCHO_PROMPT
 from src.core.schemas.assistant_response import SummaryResponseSchema
 from src.core.services.cache_services.redis_service import RedisService
 from src.infrastructure.config.config import config

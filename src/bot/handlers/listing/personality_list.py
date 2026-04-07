@@ -1,13 +1,14 @@
 from aiogram import Router, F
 from aiogram.types import Message, InlineKeyboardMarkup, CallbackQuery
 
-from src.bot.callbacks.callbacks import GetPersonalityCallback, \
+from src.bot.callbacks.callbacks import GetPersonalityAfterTypificationPassedCallback, GetPersonalityCallback, \
     BackToListingPersonalityCallback
 from src.bot.keyboards.inline.personality import get_personality_types_keyboard, back_to_personality_listing_keyboard, \
     get_mbti_keyboard
 from src.bot.lexicon.button_text import ButtonText
 from src.bot.lexicon.message_text import MessageText
 from src.bot.message_formatters.personality_formatters import PersonalityMessageFormatter
+from src.core.lexicon.typifications import TypificationPack
 from src.core.services.cache_services.cache_service import CacheService
 from src.infrastructure.database.models.base import S
 from src.infrastructure.database.repository.characteristic_repo import CharacteristicFormat
@@ -58,11 +59,27 @@ async def personality_listing_menu(
 
 
 @router.callback_query(GetPersonalityCallback.filter())
-async def show_personality(
+async def show_personality_from_callback(
         callback: CallbackQuery,
         callback_data: GetPersonalityCallback,
         access_token: str,
         cache_service: CacheService
+):
+    """Показывает тип личности с обычного колбека"""
+    await show_personality(
+        callback,
+        callback_data,
+        access_token,
+        cache_service
+    )
+
+
+async def show_personality(
+        callback: CallbackQuery,
+        callback_data: GetPersonalityCallback | GetPersonalityAfterTypificationPassedCallback,
+        access_token: str,
+        cache_service: CacheService,
+        typification_name: TypificationPack | None = None
 ):
     await callback.answer()
 
@@ -87,9 +104,10 @@ async def show_personality(
     match characteristic_name:
         case "MBTISchema":
             keyboard = get_mbti_keyboard(
-                personality.primary_type
+                personality.primary_type,
+                typification_name=typification_name
             )
-        case _:
+        case _:  # TODO: other personalities
             keyboard = back_to_personality_listing_keyboard
 
     await callback.message.edit_text(

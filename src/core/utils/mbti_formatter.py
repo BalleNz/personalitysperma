@@ -1,4 +1,4 @@
-from lexicon.mbti import mbti_relationships_briefly, SOCIONICS_RELATIONSHIPS
+from src.core.lexicon.mbti import mbti_relationships_briefly, SOCIONICS_RELATIONSHIPS
 from src.core.schemas.personality_types.socionics_type import MBTISchema
 
 

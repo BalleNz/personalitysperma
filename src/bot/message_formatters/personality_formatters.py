@@ -26,7 +26,7 @@ class PersonalityMessageFormatter:
         characteristic_text = '\n'.join([field for field in fields if field])
         last_update: str = get_date_word_from_iso(schema.updated_at)
 
-        return MessageText.CHARACTERISTIC_LISTING.format(
+        return MessageText.CHARACTERISTIC_LISTING_GROUP.format(
             characteristic_name=characteristic_name,
             characteristic=characteristic_text,
             accuracy_percent=math.ceil(schema.accuracy_percent * 100),

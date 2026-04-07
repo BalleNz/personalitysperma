@@ -165,7 +165,6 @@ class EmotionalProfile(IDMixin, TimestampsMixin):
         default=None,
         comment="Самооценка. 0=низкая самооценка, 1=высокая самооценка"
     )
-    # TODO: удалить?
     self_irony: Mapped[float | None] = mapped_column(Float, default=None, comment="Способность к самоиронии")
 
     # [ эмоциональность ]

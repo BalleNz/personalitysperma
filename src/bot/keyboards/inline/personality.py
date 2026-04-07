@@ -1,10 +1,11 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-from src.bot.callbacks.callbacks import (
-    SocionicsRelationshipsWaitingCallback, BackToListingPersonalityCallback, GetPersonalityCallback,
+from callbacks.callbacks import TypificationPreRollCallback
+from src.bot.callbacks.callbacks import ReturnToCharacteristicListingAfterTypificationPassedCallback, \
+    SocionicsRelationshipsWaitingCallback, BackToListingPersonalityCallback, GetPersonalityCallback, \
     SocionicsReininCallback
-)
 from src.bot.lexicon.button_text import ButtonText
+from src.core.lexicon.typifications import TypificationPack
 
 back_to_personality_listing_keyboard = InlineKeyboardMarkup(
     inline_keyboard=[
@@ -60,7 +61,8 @@ def get_personality_types_keyboard() -> InlineKeyboardMarkup:
 
 
 def get_mbti_keyboard(
-        mbti_type: str
+        mbti_type: str,
+        typification_name: TypificationPack | None
 ) -> InlineKeyboardMarkup:
     """клавиатуры для Соционики"""
     buttons: list = list()
@@ -81,12 +83,22 @@ def get_mbti_keyboard(
         )]
     )
 
-    buttons.append(
-        [InlineKeyboardButton(
-            text=ButtonText.ARROW_LEFT,
-            callback_data=BackToListingPersonalityCallback().pack()
-        )]
-    )
+    if typification_name:
+        buttons.append(
+            InlineKeyboardButton(
+                text=ButtonText.ARROW_LEFT,
+                callback_data=ReturnToCharacteristicListingAfterTypificationPassedCallback(
+                    typification_name=typification_name
+                ).pack()
+            )
+        )
+    else:
+        buttons.append(
+            [InlineKeyboardButton(
+                text=ButtonText.ARROW_LEFT,
+                callback_data=BackToListingPersonalityCallback().pack()
+            )]
+        )
 
     return InlineKeyboardMarkup(
         inline_keyboard=buttons
@@ -94,15 +106,19 @@ def get_mbti_keyboard(
 
 
 def get_about_mbti(
-    passed_typing: bool
+    passed_first_typification: bool
 ) -> InlineKeyboardMarkup:
     """Возвращает клавиатуру с кнопкой 'Пройти типирование' или 'MBTI тип'"""
     button: InlineKeyboardButton
 
-    if not passed_typing:
+    if not passed_first_typification:
         button = InlineKeyboardButton(
             text=ButtonText.MBTI_GET_TEST,
-            callback_data=...  # TODO
+            callback_data=TypificationPreRollCallback(
+                typification_name=TypificationPack.PERSONALITY_CORE,
+                is_passed=passed_first_typification,
+                from_message=True
+            ).pack()
         )
     else:
         button = InlineKeyboardButton(

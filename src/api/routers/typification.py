@@ -8,7 +8,8 @@ from src.api.request_schemas.typification import TypificationRequest, Typificati
 from src.api.utils.auth import get_auth_user
 from src.core.lexicon.typifications import TypificationPack
 from src.core.prompts.typifications.get_next_question import GET_NEXT_QUESTION
-from src.core.prompts.typifications.mid_stats import PERSONALITY_CORE_MID_PROMPT
+from src.core.prompts.typifications.mid_stats import CAREER_HOLLAND_MID_PROMPT, NEURO_DIVERSITY_MID_PROMPT, \
+    MOOD_ANXIETY_MID_PROMPT, LOOKS_DISORDERS_MID_PROMPT, PERSONALITY_CORE_MID_PROMPT
 from src.core.schemas.user_schemas import UserSchema
 from src.core.services.assistant_service import AssistantService
 from src.core.services.characteristic_service import CharacteristicService
@@ -17,8 +18,34 @@ from src.core.services.dependencies.characteristic_service_dep import get_charac
 from src.core.services.dependencies.user_service_dep import get_user_service
 from src.core.services.user_service import UserService
 
-router = APIRouter(prefix="/typifications")
+router = APIRouter(prefix="/typification")
 logger = logging.getLogger(__name__)
+
+
+async def delete_progress(
+        typification_name: TypificationPack,
+        user: Annotated[UserSchema, Depends(get_auth_user)],
+        user_service: Annotated[UserService, Depends(get_user_service)],
+):
+    """Удалить прогресс типирования"""
+    typification_to_field_name: dict = {
+        TypificationPack.PERSONALITY_CORE: "passed_personality_core",
+        TypificationPack.CAREER_HOLLAND: "passed_holland",
+        TypificationPack.NEURO_DIVERSITY: "passed_neurodiversity",
+        TypificationPack.MOOD_ANXIETY: "passed_mood_anxiety",
+        TypificationPack.LOOKS_DISORDERS: "passed_body_image_eating",
+        TypificationPack.SEX: "passed_sex_romance",
+    }
+    field_name: str = typification_to_field_name[typification_name]
+
+    if field_name not in user.model_fields:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Ошибка конфигурации: поле {field_name} отсутствует в UserSchema"
+        )
+    update_data = {field_name: False}
+
+    await user_service.repo.update(user.id, **update_data)
 
 
 @router.get(path="/get_stats_on_middle_of_test")
@@ -33,7 +60,15 @@ async def get_stats_on_middle_of_test(
         case TypificationPack.PERSONALITY_CORE:
             prompt = PERSONALITY_CORE_MID_PROMPT
         case TypificationPack.CAREER_HOLLAND:
-            ...  # TODO
+            prompt = CAREER_HOLLAND_MID_PROMPT
+        case TypificationPack.NEURO_DIVERSITY:
+            prompt = NEURO_DIVERSITY_MID_PROMPT
+        case TypificationPack.MOOD_ANXIETY:
+            prompt = MOOD_ANXIETY_MID_PROMPT
+        case TypificationPack.LOOKS_DISORDERS:
+            prompt = LOOKS_DISORDERS_MID_PROMPT
+        case TypificationPack.SEX:
+            prompt = ...  # TODO
 
     if not prompt:
         return HTTPException(404, detail="не найден тип типификации")
@@ -66,6 +101,7 @@ async def get_question(
 async def end_typification(
         request: TypificationRequest,
         characteristic_service: Annotated[CharacteristicService, Depends(get_characteristic_service)],
+        user_service: Annotated[UserService, Depends(get_user_service)],
         user: Annotated[UserSchema, Depends(get_auth_user)],
         authorization: Annotated[str | None, Header()] = None
 ):
@@ -73,6 +109,14 @@ async def end_typification(
 
     # [ vars ]
     access_token = authorization.split(" ")[1]
+    typification_name: TypificationPack = request.typification_name
+
+    #  [ обнуляет факт пройденности ]
+    await delete_progress(
+        typification_name,
+        user,
+        user_service
+    )
 
     # [ generation ]
     characteristics_to_generate: list[str] = request.characteristics
@@ -87,28 +131,13 @@ async def end_typification(
 
 
 @router.put(path="/delete_progress")
-async def delete_progress(
+async def delete_progress_from_request(
         request: DeleteTypificationRequest,
         user: Annotated[UserSchema, Depends(get_auth_user)],
         user_service: Annotated[UserService, Depends(get_user_service)],
 ):
-    """Удалить прогресс типирования"""
-    typification_name: str = request.typification_name
-    typification_to_field_name: dict = {
-        TypificationPack.PERSONALITY_CORE: "passed_personality_core",
-        TypificationPack.CAREER_HOLLAND: "passed_holland",
-        TypificationPack.NEURO_DIVERSITY: "passed_neurodiversity",
-        TypificationPack.MOOD_ANXIETY: "passed_mood_anxiety",
-        TypificationPack.LOOKS_DISORDERS: "passed_body_image_eating",
-        TypificationPack.SEX: "passed_sex_romance",
-    }
-    field_name: str = typification_to_field_name[typification_name]
-
-    if field_name not in user.model_fields:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Ошибка конфигурации: поле {field_name} отсутствует в UserSchema"
-        )
-    update_data = {field_name: False}
-
-    await user_service.repo.update(user.id, **update_data)
+    await delete_progress(
+        request.typification_name,
+        user,
+        user_service
+    )

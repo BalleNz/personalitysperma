@@ -10,7 +10,8 @@ from src.bot.bot_instance import bot
 from src.bot.handlers.main.main_handlers import router as main_router
 from src.bot.handlers.start.start import router as start_router
 from src.bot.handlers.start.choose_talking_mode import router as choose_mode_router
-
+from src.bot.handlers.typifications.handlers import router as typification_main_router
+from src.bot.handlers.typifications.listing import router as typification_listing_router
 from src.bot.handlers.listing.mbti import router as socionics_router
 from src.bot.handlers.listing.personality_list import router as personality_router
 from src.bot.handlers.listing.characteristic_listing import router as characteristic_listing_router
@@ -27,6 +28,8 @@ def setup_auth(dp: Dispatcher):
     # Регистрация хендлеров (порядок важен)
     for router in [
         start_router,
+        typification_main_router,
+        typification_listing_router,
         characteristic_listing_router,
         personality_router,
         socionics_router,

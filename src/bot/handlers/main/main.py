@@ -27,20 +27,21 @@ async def main(
         — add to batches
     """
 
+    user: UserSchema = await cache_service.get_user_profile(access_token, telegram_id=str(message.from_user.id))
+
     # [ уведомляем пользователя об обработке сообщения ]
     if message.voice:
         message_obj = await message.reply(
-            MessageText.get_process_voice()
+            MessageText.get_process_voice(gender=user.gender)
         )
     else:
         message_obj = await message.reply(
-            MessageText.get_process_message()
+            MessageText.get_process_message(gender=user.gender)
         )
 
     user_text: str = message.text or voice_text
 
     # [ выбор режима ]
-    user: UserSchema = await cache_service.get_user_profile(access_token, telegram_id=str(message.from_user.id))
     response: AssistantResponse = await api_client.check_in(
         access_token,
         request=CheckInRequest(
@@ -59,14 +60,18 @@ async def main(
 
     logger.info(f"ABOUT MBTI: {response.about_mbti}")
 
+    text: str = response.user_answer
+    if not user.passed_personality_core:
+        text += "\n\n<i>после типирования шиза дневник будет отвечать лучше</i>"
+
     user: UserSchema = await cache_service.get_user_profile(
         access_token,
         str(message.from_user.id)
     )
     await message_obj.edit_text(
-        response.user_answer,
+        text,
         reply_markup=get_about_mbti(
-            passed_typing=user.passed_typing
+            passed_first_typification=user.passed_personality_core
         ) if response.about_mbti else None  # about mbti (можно потом дополнить другими клавами)
     )
 

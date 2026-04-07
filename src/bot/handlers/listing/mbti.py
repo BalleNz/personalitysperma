@@ -87,7 +87,7 @@ async def show_relationships(
 ):
     """взаимоотношения между двумя"""
     mbti_1: MBTISchema = (await cache_service.get_characteristic_row(
-        characteristic_name="UserSocionicsSchema",
+        characteristic_name="MBTISchema",
         telegram_id=str(message.from_user.id),
         access_token=access_token
     ))[0]

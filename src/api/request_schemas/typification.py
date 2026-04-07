@@ -6,6 +6,7 @@ from src.core.lexicon.typifications import TypificationPack
 class TypificationRequest(BaseModel):
     answers: list[str] = Field(...)
     characteristics: list[str] = Field(...)
+    typification_name: TypificationPack
 
 
 class TypificationGetStatisticsRequest(BaseModel):
@@ -21,6 +22,7 @@ class TypificationAssistantRequest(BaseModel):
 class TypificationGetQuestion(BaseModel):
     last_answer: str = Field(..., description="последний ответ юзера")
     this_question: str = Field(..., description="следующий вопрос")
+    gender: str = Field(..., description="пол пользователя")  # "female" | "male" | "non_binary"
 
 
 class DeleteTypificationRequest(BaseModel):

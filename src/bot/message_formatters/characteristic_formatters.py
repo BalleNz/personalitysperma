@@ -2,7 +2,7 @@ import datetime
 import logging
 import math
 from enum import Enum
-from typing import Optional, Any
+from typing import Optional, Any, Callable
 
 from pydantic import BaseModel, Field
 
@@ -127,8 +127,8 @@ def format_value(
 class CharacteristicMessageFormatter:
     """форматирование для характеристик"""
 
+    @staticmethod
     def format_traits_core(
-            self,
             schemas: list[list[S]],
             full_access: bool
     ) -> str:
@@ -139,22 +139,22 @@ class CharacteristicMessageFormatter:
         for schema_row in schemas:
             match schema_row[0].__class__.__name__:
                 case SocialProfileSchema.__name__:
-                    characteristic_info = self.format_social_profile(
+                    characteristic_info = CharacteristicMessageFormatter().format_social_profile(
                         schema_row,
                         full_access
                     )
                 case BehavioralProfileSchema.__name__:
-                    characteristic_info = self.format_behavioral_profile(
+                    characteristic_info = CharacteristicMessageFormatter().format_behavioral_profile(
                         schema_row,
                         full_access
                     )
                 case EmotionalProfileSchema.__name__:
-                    characteristic_info = self.format_emotional_profile(
+                    characteristic_info = CharacteristicMessageFormatter().format_emotional_profile(
                         schema_row,
                         full_access
                     )
                 case CognitiveProfileSchema.__name__:
-                    characteristic_info = self.format_cognitive_profile(
+                    characteristic_info = CharacteristicMessageFormatter().format_cognitive_profile(
                         schema_row,
                         full_access
                     )
@@ -180,7 +180,7 @@ class CharacteristicMessageFormatter:
         if accuracy_percent < 0.24:
             verdict = "Эта характеристика не окончательная! Продолжайте рассказывать о себе!\n\n"
 
-        return MessageText.CHARACTERISTIC_LISTING.format(
+        return MessageText.CHARACTERISTIC_LISTING_GROUP.format(
             characteristic_name=ButtonText.BASIC,
             characteristic=all_text,
             accuracy_percent=accuracy_percent,
@@ -188,8 +188,8 @@ class CharacteristicMessageFormatter:
             verdict=verdict
         )
 
+    @staticmethod
     def format_humor(
-            self,
             schemas: list[list[S]],
             full_access: bool
     ) -> str:
@@ -200,7 +200,7 @@ class CharacteristicMessageFormatter:
         for schema_row in schemas:
             match schema_row[0].__class__.__name__:
                 case HumorProfileSchema.__name__:
-                    characteristic_info = self.format_humor_profile(
+                    characteristic_info = CharacteristicMessageFormatter().format_humor_profile(
                         schema_row,
                         full_access
                     )
@@ -226,16 +226,15 @@ class CharacteristicMessageFormatter:
         if accuracy_percent < 0.24:
             verdict = "Эта характеристика не окончательная! Продолжайте рассказывать о себе!\n\n"
 
-        return MessageText.CHARACTERISTIC_LISTING.format(
-            characteristic_name="Чувство юмора",
+        return MessageText.CHARACTERISTIC_LISTING_SINGLE.format(
             characteristic=all_text,
             accuracy_percent=accuracy_percent,
             last_update=last_update_text,
             verdict=verdict
         )
 
+    @staticmethod
     def format_neurodivergence(
-            self,
             schemas: list[list[S]],
             full_access: bool
     ) -> str:
@@ -246,12 +245,12 @@ class CharacteristicMessageFormatter:
         for schema_row in schemas:
             match schema_row[0].__class__.__name__:
                 case AutismSchema.__name__:
-                    characteristic_info = self.format_autism_profile(
+                    characteristic_info = CharacteristicMessageFormatter().format_autism_profile(
                         schema_row,
                         full_access
                     )
                 case ADHDSchema.__name__:
-                    characteristic_info = self.format_adhd_profile(
+                    characteristic_info = CharacteristicMessageFormatter().format_adhd_profile(
                         schema_row,
                         full_access
                     )
@@ -277,7 +276,7 @@ class CharacteristicMessageFormatter:
         if accuracy_percent < 0.24:
             verdict = "Эта характеристика не окончательная! Продолжайте рассказывать о себе!\n\n"
 
-        return MessageText.CHARACTERISTIC_LISTING.format(
+        return MessageText.CHARACTERISTIC_LISTING_GROUP.format(
             characteristic_name="Нейроотличия (Аутизм, СДВГ)",
             characteristic=all_text,
             accuracy_percent=accuracy_percent,
@@ -285,8 +284,8 @@ class CharacteristicMessageFormatter:
             verdict=verdict
         )
 
+    @staticmethod
     def format_mood_disorders(
-            self,
             schemas: list[list[S]],
             full_access: bool
     ) -> str:
@@ -297,12 +296,12 @@ class CharacteristicMessageFormatter:
         for schema_row in schemas:
             match schema_row[0].__class__.__name__:
                 case DepressionDisorderSchema.__name__:
-                    characteristic_info = self.format_depression_profile(
+                    characteristic_info = CharacteristicMessageFormatter().format_depression_profile(
                         schema_row,
                         full_access
                     )
                 case BipolarDisorderSchema.__name__:
-                    characteristic_info = self.format_bipolar_profile(
+                    characteristic_info = CharacteristicMessageFormatter().format_bipolar_profile(
                         schema_row,
                         full_access
                     )
@@ -328,7 +327,7 @@ class CharacteristicMessageFormatter:
         if accuracy_percent < 0.24:
             verdict = "Эта характеристика не окончательная! Продолжайте рассказывать о себе!\n\n"
 
-        return MessageText.CHARACTERISTIC_LISTING.format(
+        return MessageText.CHARACTERISTIC_LISTING_GROUP.format(
             characteristic_name="Депрессия и биполярное расстройство",
             characteristic=all_text,
             accuracy_percent=accuracy_percent,
@@ -336,8 +335,8 @@ class CharacteristicMessageFormatter:
             verdict=verdict
         )
 
+    @staticmethod
     def format_bpd(
-            self,
             schemas: list[list[S]],
             full_access: bool
     ) -> str:
@@ -348,7 +347,7 @@ class CharacteristicMessageFormatter:
         for schema_row in schemas:
             match schema_row[0].__class__.__name__:
                 case BPDSchema.__name__:
-                    characteristic_info = self.format_bpd_profile(
+                    characteristic_info = CharacteristicMessageFormatter().format_bpd_profile(
                         schema_row,
                         full_access
                     )
@@ -374,16 +373,15 @@ class CharacteristicMessageFormatter:
         if accuracy_percent < 0.24:
             verdict = "Эта характеристика не окончательная! Продолжайте рассказывать о себе!\n\n"
 
-        return MessageText.CHARACTERISTIC_LISTING.format(
-            characteristic_name="Пограничное расстройство личности",
+        return MessageText.CHARACTERISTIC_LISTING_SINGLE.format(
             characteristic=all_text,
             accuracy_percent=accuracy_percent,
             last_update=last_update_text,
             verdict=verdict
         )
 
+    @staticmethod
     def format_dissociative(
-            self,
             schemas: list[list[S]],
             full_access: bool
     ) -> str:
@@ -394,7 +392,7 @@ class CharacteristicMessageFormatter:
         for schema_row in schemas:
             match schema_row[0].__class__.__name__:
                 case DissociativeSchema.__name__:
-                    characteristic_info = self.format_dissociative_profile(
+                    characteristic_info = CharacteristicMessageFormatter().format_dissociative_profile(
                         schema_row,
                         full_access
                     )
@@ -420,16 +418,15 @@ class CharacteristicMessageFormatter:
         if accuracy_percent < 0.24:
             verdict = "Эта характеристика не окончательная! Продолжайте рассказывать о себе!\n\n"
 
-        return MessageText.CHARACTERISTIC_LISTING.format(
-            characteristic_name="Нарушения личности",
+        return MessageText.CHARACTERISTIC_LISTING_SINGLE.format(
             characteristic=all_text,
             accuracy_percent=accuracy_percent,
             last_update=last_update_text,
             verdict=verdict
         )
 
+    @staticmethod
     def format_anxiety_stress(
-            self,
             schemas: list[list[S]],
             full_access: bool
     ) -> str:
@@ -440,17 +437,17 @@ class CharacteristicMessageFormatter:
         for schema_row in schemas:
             match schema_row[0].__class__.__name__:
                 case PanicSchema.__name__:
-                    characteristic_info = self.format_panic_profile(
+                    characteristic_info = CharacteristicMessageFormatter().format_panic_profile(
                         schema_row,
                         full_access
                     )
                 case GDRSchema.__name__:
-                    characteristic_info = self.format_gdr_profile(
+                    characteristic_info = CharacteristicMessageFormatter().format_gdr_profile(
                         schema_row,
                         full_access
                     )
                 case PTSDSchema.__name__:
-                    characteristic_info = self.format_ptsd_profile(
+                    characteristic_info = CharacteristicMessageFormatter().format_ptsd_profile(
                         schema_row,
                         full_access
                     )
@@ -476,7 +473,7 @@ class CharacteristicMessageFormatter:
         if accuracy_percent < 0.24:
             verdict = "Эта характеристика не окончательная! Продолжайте рассказывать о себе!\n\n"
 
-        return MessageText.CHARACTERISTIC_LISTING.format(
+        return MessageText.CHARACTERISTIC_LISTING_GROUP.format(
             characteristic_name="Тревога и стресс",
             characteristic=all_text,
             accuracy_percent=accuracy_percent,
@@ -484,8 +481,8 @@ class CharacteristicMessageFormatter:
             verdict=verdict
         )
 
+    @staticmethod
     def format_body_image_eating(
-            self,
             schemas: list[list[S]],
             full_access: bool
     ) -> str:
@@ -496,12 +493,12 @@ class CharacteristicMessageFormatter:
         for schema_row in schemas:
             match schema_row[0].__class__.__name__:
                 case LooksSchema.__name__:
-                    characteristic_info = self.format_looks_profile(
+                    characteristic_info = CharacteristicMessageFormatter().format_looks_profile(
                         schema_row,
                         full_access
                     )
                 case EatingSchema.__name__:
-                    characteristic_info = self.format_eating_profile(
+                    characteristic_info = CharacteristicMessageFormatter().format_eating_profile(
                         schema_row,
                         full_access
                     )
@@ -527,7 +524,7 @@ class CharacteristicMessageFormatter:
         if accuracy_percent < 0.24:
             verdict = "Эта характеристика не окончательная! Продолжайте рассказывать о себе!\n\n"
 
-        return MessageText.CHARACTERISTIC_LISTING.format(
+        return MessageText.CHARACTERISTIC_LISTING_GROUP.format(
             characteristic_name="Дисморфофобия и РПП",
             characteristic=all_text,
             accuracy_percent=accuracy_percent,
@@ -535,8 +532,8 @@ class CharacteristicMessageFormatter:
             verdict=verdict
         )
 
+    @staticmethod
     def format_triads(
-            self,
             schemas: list[list[S]],
             full_access: bool
     ) -> str:
@@ -547,12 +544,12 @@ class CharacteristicMessageFormatter:
         for schema_row in schemas:
             match schema_row[0].__class__.__name__:
                 case DarkTriadsSchema.__name__:
-                    characteristic_info = self.format_dark_triad_profile(
+                    characteristic_info = CharacteristicMessageFormatter().format_dark_triad_profile(
                         schema_row,
                         full_access
                     )
                 case LightTriadsSchema.__name__:
-                    characteristic_info = self.format_light_triad_profile(
+                    characteristic_info = CharacteristicMessageFormatter().format_light_triad_profile(
                         schema_row,
                         full_access
                     )
@@ -578,7 +575,7 @@ class CharacteristicMessageFormatter:
         if accuracy_percent < 0.24:
             verdict = "Эта характеристика не окончательная! Продолжайте рассказывать о себе!\n\n"
 
-        return MessageText.CHARACTERISTIC_LISTING.format(
+        return MessageText.CHARACTERISTIC_LISTING_GROUP.format(
             characteristic_name="Тёмная и Светлая триады",
             characteristic=all_text,
             accuracy_percent=accuracy_percent,
@@ -591,7 +588,11 @@ class CharacteristicMessageFormatter:
         fields: tuple
 
         schema: SocialProfileSchema = schemas[0]
-        previous: SocialProfileSchema = schemas[1]
+        previous: SocialProfileSchema
+        if len(schemas) > 1:
+            previous = schemas[1]
+        else:
+            previous = schema
 
         if full_access:
             fields = (
@@ -628,8 +629,13 @@ class CharacteristicMessageFormatter:
             full_access: bool
     ) -> CharacteristicInfo:
         fields: tuple
+
         schema = schemas[0]
-        previous = schemas[1]
+        previous: CognitiveProfileSchema
+        if len(schemas) > 1:
+            previous = schemas[1]
+        else:
+            previous = schema
 
         if full_access:
             fields = (
@@ -667,7 +673,11 @@ class CharacteristicMessageFormatter:
         fields: tuple
 
         schema: EmotionalProfileSchema = schemas[0]
-        previous: EmotionalProfileSchema = schemas[1]
+        previous: EmotionalProfileSchema
+        if len(schemas) > 1:
+            previous = schemas[1]
+        else:
+            previous = schema
 
         if full_access:
             fields = (
@@ -701,7 +711,11 @@ class CharacteristicMessageFormatter:
         fields: tuple
 
         schema: BehavioralProfileSchema = schemas[0]
-        previous: BehavioralProfileSchema = schemas[1]
+        previous: BehavioralProfileSchema
+        if len(schemas) > 1:
+            previous = schemas[1]
+        else:
+            previous = schema
 
         if full_access:
             fields = (
@@ -733,7 +747,11 @@ class CharacteristicMessageFormatter:
     @staticmethod
     def format_dark_triads(schemas: list[DarkTriadsSchema]) -> str:
         schema: DarkTriadsSchema = schemas[0]
-        previous: DarkTriadsSchema = schemas[1]
+        previous: DarkTriadsSchema
+        if len(schemas) > 1:
+            previous = schemas[1]
+        else:
+            previous = schema
 
         fields = (
             f"Цинизм: {format_value(schema.cynicism, 'cynicism', previous)}% (доверчивость ←→ цинизм)" if schema.cynicism is not None else "",
@@ -753,7 +771,7 @@ class CharacteristicMessageFormatter:
 
         last_update: str = get_date_word_from_iso(schema.updated_at)
 
-        return MessageText.CHARACTERISTIC_LISTING.format(
+        return MessageText.CHARACTERISTIC_LISTING_GROUP.format(
             characteristic_name=characteristic_name,
             characteristic=characteristic,
             accuracy_percent=math.ceil(schema.accuracy_percent * 100),
@@ -765,7 +783,11 @@ class CharacteristicMessageFormatter:
         fields: tuple
 
         schema: AutismSchema = schemas[0]
-        previous: AutismSchema = schemas[1]
+        previous: AutismSchema
+        if len(schemas) > 1:
+            previous = schemas[1]
+        else:
+            previous = schema
 
         if full_access:
             fields = (
@@ -797,7 +819,11 @@ class CharacteristicMessageFormatter:
         fields: tuple
 
         schema: ADHDSchema = schemas[0]
-        previous: ADHDSchema = schemas[1]
+        previous: ADHDSchema
+        if len(schemas) > 1:
+            previous = schemas[1]
+        else:
+            previous = schema
 
         if full_access:
             fields = (
@@ -831,34 +857,38 @@ class CharacteristicMessageFormatter:
         fields: tuple
 
         schema: HumorProfileSchema = schemas[0]
-        previous: HumorProfileSchema = schemas[1]
+        previous: HumorProfileSchema
+        if len(schemas) > 1:
+            previous = schemas[1]
+        else:
+            previous = schema
 
         if full_access:
             fields = (
+                f"<b>— Частота использования юмора:</b> {format_value(schema.humor_frequency, 'humor_frequency', previous)}" if schema.humor_frequency is not None else "",
                 f"<b>— Аффилиативный юмор:</b> {format_value(schema.affiliative_humor, 'affiliative_humor', previous)}" if schema.affiliative_humor is not None else "",
                 f"<b>— Игры слов / каламбуры:</b> {format_value(schema.puns_wordplay, 'puns_wordplay', previous)}" if schema.puns_wordplay is not None else "",
                 f"<b>— Физический юмор:</b> {format_value(schema.slapstick_physical, 'slapstick_physical', previous)}" if schema.slapstick_physical is not None else "",
                 f"<b>— Наблюдательный юмор:</b> {format_value(schema.observational_humor, 'observational_humor', previous)}" if schema.observational_humor is not None else "",
                 f"<b>— Самоподдерживающий юмор:</b> {format_value(schema.self_enhancing_humor, 'self_enhancing_humor', previous)}" if schema.self_enhancing_humor is not None else "",
-                f"<b>— Частота использования юмора:</b> {format_value(schema.humor_frequency, 'humor_frequency', previous)}" if schema.humor_frequency is not None else "",
+                f"<b>— Самоуничижительный юмор:</b> {format_value(schema.self_defeating_humor, 'self_defeating_humor', previous)}" if schema.self_defeating_humor is not None else "",
                 f"<b>— Юмор в стрессе:</b> {format_value(schema.humor_in_stress, 'humor_in_stress', previous)}" if schema.humor_in_stress is not None else "",
                 f"<b>— Агрессивный юмор:</b> {format_value(schema.aggressive_humor, 'aggressive_humor', previous)}" if schema.aggressive_humor is not None else "",
                 f"<b>— Сарказм:</b> {format_value(schema.sarcasm_level, 'sarcasm_level', previous)}" if schema.sarcasm_level is not None else "",
                 f"<b>— Чёрный юмор:</b> {format_value(schema.dark_humor, 'dark_humor', previous)}" if schema.dark_humor is not None else "",
-                f"<b>— Самоуничижительный юмор:</b> {format_value(schema.self_defeating_humor, 'self_defeating_humor', previous)}" if schema.self_defeating_humor is not None else "",
-                f"<b>— Остроумный / быстрый юмор:</b> {format_value(schema.witty_quick, 'witty_quick', previous)}" if schema.witty_quick is not None else "",
+                f"<b>— Остроумный:</b> {format_value(schema.witty_quick, 'witty_quick', previous)}" if schema.witty_quick is not None else "",
                 f"<b>— Абсурдный юмор:</b> {format_value(schema.absurd_surreal, 'absurd_surreal', previous)}" if schema.absurd_surreal is not None else "",
-                f"<b>— Сухой / deadpan юмор:</b> {format_value(schema.dry_deadpan, 'dry_deadpan', previous)}" if schema.dry_deadpan is not None else "",
+                f"<b>— Сухой юмор:</b> {format_value(schema.dry_deadpan, 'dry_deadpan', previous)}" if schema.dry_deadpan is not None else "",
             )
         else:
             fields = (
-                f"<b>— Аффилиативный юмор:</b> {format_value(schema.affiliative_humor, 'affiliative_humor', previous)}" if schema.affiliative_humor is not None else "",
-                f"<b>— Игры слов / каламбуры:</b> {format_value(schema.puns_wordplay, 'puns_wordplay', previous)}" if schema.puns_wordplay is not None else "",
+                f"<b>— Чёрный юмор:</b> {format_value(schema.dark_humor, 'dark_humor', previous)}" if schema.dark_humor is not None else "",
+                f"<b>— Частота использования юмора:</b> {format_value(schema.humor_frequency, 'humor_frequency', previous)}" if schema.humor_frequency is not None else "",
                 f"<b>— ...</b>",
                 f"<i>для просмотра ещё 12 полей необходим полный доступ</i>",
             )
 
-        characteristic: str = "😂 <b>Чувство юмора</b>\n" + "<blockquote>" + '\n'.join(
+        characteristic: str = "😵‍💫 <b>Чувство юмора</b>\n" + "<blockquote>" + '\n'.join(
             [field for field in fields if field]) + "</blockquote>\n\n"
 
         return CharacteristicInfo(
@@ -872,7 +902,11 @@ class CharacteristicMessageFormatter:
         fields: tuple
 
         schema: BipolarDisorderSchema = schemas[0]
-        previous: BipolarDisorderSchema = schemas[1]
+        previous: BipolarDisorderSchema
+        if len(schemas) > 1:
+            previous = schemas[1]
+        else:
+            previous = schema
 
         if full_access:
             fields = (
@@ -905,7 +939,11 @@ class CharacteristicMessageFormatter:
         fields: tuple
 
         schema: DepressionDisorderSchema = schemas[0]
-        previous: DepressionDisorderSchema = schemas[1]
+        previous: DepressionDisorderSchema
+        if len(schemas) > 1:
+            previous = schemas[1]
+        else:
+            previous = schema
 
         if full_access:
             fields = (
@@ -938,7 +976,11 @@ class CharacteristicMessageFormatter:
         fields: tuple
 
         schema: PanicSchema = schemas[0]
-        previous: PanicSchema = schemas[1]
+        previous: PanicSchema
+        if len(schemas) > 1:
+            previous = schemas[1]
+        else:
+            previous = schema
 
         if full_access:
             fields = (
@@ -970,7 +1012,11 @@ class CharacteristicMessageFormatter:
         fields: tuple
 
         schema: GDRSchema = schemas[0]
-        previous: GDRSchema = schemas[1]
+        previous: GDRSchema
+        if len(schemas) > 1:
+            previous = schemas[1]
+        else:
+            previous = schema
 
         if full_access:
             fields = (
@@ -1006,7 +1052,11 @@ class CharacteristicMessageFormatter:
         fields: tuple
 
         schema: PTSDSchema = schemas[0]
-        previous: PTSDSchema = schemas[1]
+        previous: PTSDSchema
+        if len(schemas) > 1:
+            previous = schemas[1]
+        else:
+            previous = schema
 
         if full_access:
             fields = (
@@ -1040,7 +1090,11 @@ class CharacteristicMessageFormatter:
         fields: tuple
 
         schema: DissociativeSchema = schemas[0]
-        previous: DissociativeSchema = schemas[1]
+        previous: DissociativeSchema
+        if len(schemas) > 1:
+            previous = schemas[1]
+        else:
+            previous = schema
 
         if full_access:
             fields = (
@@ -1070,7 +1124,11 @@ class CharacteristicMessageFormatter:
         fields: tuple
 
         schema: BPDSchema = schemas[0]
-        previous: BPDSchema = schemas[1]
+        previous: BPDSchema
+        if len(schemas) > 1:
+            previous = schemas[1]
+        else:
+            previous = schema
 
         if full_access:
             fields = (
@@ -1107,7 +1165,11 @@ class CharacteristicMessageFormatter:
         fields: tuple
 
         schema: LooksSchema = schemas[0]
-        previous: LooksSchema = schemas[1]
+        previous: LooksSchema
+        if len(schemas) > 1:
+            previous = schemas[1]
+        else:
+            previous = schema
 
         if full_access:
             fields = (
@@ -1145,7 +1207,11 @@ class CharacteristicMessageFormatter:
         fields: tuple
 
         schema: EatingSchema = schemas[0]
-        previous: EatingSchema = schemas[1]
+        previous: EatingSchema
+        if len(schemas) > 1:
+            previous = schemas[1]
+        else:
+            previous = schema
 
         if full_access:
             fields = (
@@ -1178,7 +1244,11 @@ class CharacteristicMessageFormatter:
         fields: tuple
 
         schema: DarkTriadsSchema = schemas[0]
-        previous: DarkTriadsSchema = schemas[1]
+        previous: DarkTriadsSchema
+        if len(schemas) > 1:
+            previous = schemas[1]
+        else:
+            previous = schema
 
         if full_access:
             fields = (
@@ -1209,7 +1279,11 @@ class CharacteristicMessageFormatter:
         fields: tuple
 
         schema: LightTriadsSchema = schemas[0]
-        previous: LightTriadsSchema = schemas[1]
+        previous: LightTriadsSchema
+        if len(schemas) > 1:
+            previous = schemas[1]
+        else:
+            previous = schema
 
         if full_access:
             fields = (
@@ -1241,7 +1315,7 @@ class CharacteristicMessageFormatter:
         @staticmethod
         def get_characteristic_text_by_schema(
                 formatter_name: str
-        ):
+        ) -> Callable[[list[list[S]], bool], str]:
             # [ base ]
             TRAITS_CORE = CharacteristicMessageFormatter.format_traits_core
 
@@ -1279,3 +1353,5 @@ class CharacteristicMessageFormatter:
                     return ANXIETY_DISORDERS
                 case CharacteristicGroups.LOOKS:
                     return LOOKS_DISORDER
+                case _:
+                    raise ValueError(f"Unknown characteristic group: {formatter_name}")
